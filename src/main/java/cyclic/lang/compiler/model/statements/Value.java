@@ -1,8 +1,10 @@
 package cyclic.lang.compiler.model.statements;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.model.FieldReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.TypeResolver;
+import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -11,7 +13,7 @@ import java.util.List;
 
 public abstract class Value{
 	
-	public static Value fromAst(CyclicLangParser.ValueContext ctx, List<String> imports){
+	public static Value fromAst(CyclicLangParser.ValueContext ctx, List<String> imports, CyclicMethod method){
 		if(ctx instanceof CyclicLangParser.NullLitContext)
 			return new NullLiteralValue();
 		if(ctx instanceof CyclicLangParser.IntLitContext intLit)
@@ -20,6 +22,25 @@ public abstract class Value{
 			return new DecimalLiteralValue(Double.parseDouble(decLit.DECLIT().getText()));
 		if(ctx instanceof CyclicLangParser.BoolLitContext boolLit)
 			return new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0);
+		if(ctx instanceof CyclicLangParser.StrLitContext strLit){
+			String text = strLit.getText();
+			return new StringLiteralValue(text.substring(1, text.length() - 1));
+		}
+		if(ctx instanceof CyclicLangParser.TypeValueContext type){
+			String text = type.id().getText();
+			return new TypeValue(TypeResolver.resolve(text, imports));
+		}
+		if(ctx instanceof CyclicLangParser.VarValueContext val){
+			// if a value is present, it's a field value
+			if(val.value() != null)
+				return new FieldValue(val.ID().getText(), fromAst(val.value(), imports, method));
+			// otherwise, it could be a local variable, or a static field of the current type,
+			// or an instance field of the current type for a non-static method
+		}
+		if(ctx instanceof CyclicLangParser.FunctionValueContext func){
+		
+		}
+		System.out.println("Unknown expression " + ctx.getText());
 		return null;
 	}
 	
@@ -106,7 +127,52 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return TypeResolver.resolve("java.lang.String").orElseThrow(() -> new IllegalStateException("Couldn't resolve java.lang.String for string constant!"));
+			return TypeResolver.resolveOptional("java.lang.String").orElseThrow(() -> new IllegalStateException("Couldn't resolve java.lang.String for string constant!"));
+		}
+	}
+	
+	/**
+	 * If the target is a singleton type, this is the single value of that type.
+	 * Otherwise, it's an exception to use this value directly.
+	 * Calls, field references, and anything else that can be applied to types statically should check for this.
+	 */
+	public static class TypeValue extends Value{
+		TypeReference target;
+		
+		public TypeValue(TypeReference target){
+			this.target = target;
+		}
+		
+		public void write(MethodVisitor mv){
+			// TODO: check for singleton types
+			throw new IllegalStateException("Tried to write the value of a non-singleton type!");
+		}
+		
+		public TypeReference type(){
+			return target;
+		}
+	}
+	
+	public static class FieldValue extends Value{
+		String fieldName;
+		Value from;
+		FieldReference ref;
+		
+		public FieldValue(String fieldName, Value from){
+			this.fieldName = fieldName;
+			this.from = from;
+			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow();
+		}
+		
+		public void write(MethodVisitor mv){
+			// TODO: consider singletons
+			if(!(from instanceof TypeValue))
+				from.write(mv);
+			ref.writeFetch(mv);
+		}
+		
+		public TypeReference type(){
+			return ref.type();
 		}
 	}
 }

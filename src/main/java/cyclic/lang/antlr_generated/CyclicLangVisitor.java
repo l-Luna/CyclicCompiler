@@ -1,4 +1,3 @@
-// Generated from C:/ezz/Mods/CyclicCompiler/src/main/resources\CyclicLang.g4 by ANTLR 4.9.2
 package cyclic.lang.antlr_generated;
 
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
@@ -228,13 +227,6 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNullLit(CyclicLangParser.NullLitContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code idValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIdValue(CyclicLangParser.IdValueContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code initialisationValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -298,6 +290,13 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStrLit(CyclicLangParser.StrLitContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code varValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVarValue(CyclicLangParser.VarValueContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code binaryOpValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -339,6 +338,13 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSwitchValue(CyclicLangParser.SwitchValueContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code typeValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeValue(CyclicLangParser.TypeValueContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code inlineDecleration}
 	 * labeled alternative in {@link CyclicLangParser#value}.

@@ -2,15 +2,21 @@ package cyclic.lang.compiler.model.external;
 
 import cyclic.lang.compiler.model.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SystemTypeRef implements TypeReference{
 	
 	Class<?> underlying;
+	List<SystemFieldRef> fields;
+	List<SystemMethodRef> methods;
 	
 	public SystemTypeRef(Class<?> underlying){
 		this.underlying = underlying;
+		fields = Arrays.stream(underlying.getFields()).map(k -> new SystemFieldRef(k, this)).collect(Collectors.toList());
+		methods = Arrays.stream(underlying.getMethods()).map(SystemMethodRef::new).collect(Collectors.toList());
 	}
 	
 	public String shortName(){
@@ -38,20 +44,28 @@ public class SystemTypeRef implements TypeReference{
 		return null;
 	}
 	
+	public TypeReference superClass(){
+		return underlying.getSuperclass() != null ? Utils.forAnyClass(underlying.getSuperclass()) : null;
+	}
+	
+	public List<? extends TypeReference> superInterfaces(){
+		return Arrays.stream(underlying.getInterfaces()).map(Utils::forAnyClass).collect(Collectors.toList());
+	}
+	
 	public List<? extends TypeReference> innerClasses(){
 		return Collections.emptyList();
 	}
 	
-	// TODO
 	public List<? extends MethodReference> methods(){
-		return null;
+		return methods;
 	}
 	
 	public List<? extends FieldReference> fields(){
-		return null;
+		return fields;
 	}
 	
+	// TODO:
 	public List<? extends ConstructorReference> constructors(){
-		return null;
+		return Collections.emptyList();
 	}
 }

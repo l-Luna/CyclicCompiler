@@ -1,4 +1,3 @@
-// Generated from C:/ezz/Mods/CyclicCompiler/src/main/resources\CyclicLang.g4 by ANTLR 4.9.2
 package cyclic.lang.antlr_generated;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
@@ -256,13 +255,6 @@ public class CyclicLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitIdValue(CyclicLangParser.IdValueContext ctx) { return visitChildren(ctx); }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.</p>
-	 */
 	@Override public T visitInitialisationValue(CyclicLangParser.InitialisationValueContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
@@ -326,6 +318,13 @@ public class CyclicLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitVarValue(CyclicLangParser.VarValueContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitBinaryOpValue(CyclicLangParser.BinaryOpValueContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
@@ -362,6 +361,13 @@ public class CyclicLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitSwitchValue(CyclicLangParser.SwitchValueContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitTypeValue(CyclicLangParser.TypeValueContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

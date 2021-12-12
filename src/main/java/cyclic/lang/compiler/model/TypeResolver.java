@@ -11,16 +11,21 @@ public final class TypeResolver{
 	
 	private static final Map<String, TypeReference> cache = new HashMap<>();
 	
-	public static Optional<TypeReference> resolve(String name, List<String> imports){
+	public static TypeReference resolve(String name, List<String> imports){
+		return resolveOptional(name, imports).orElseThrow(() -> new IllegalStateException("Type " + name + " not found in [" + String.join(", ", imports) + "]"));
+	}
+	
+	public static Optional<TypeReference> resolveOptional(String name, List<String> imports){
 		// if the type ends with [], it's an array type; wrap with ArrayTypeRef.
 		if(name.endsWith("[]"))
-			return resolve(name.substring(0, name.length() - 2), imports).map(ArrayTypeRef::new);
+			return resolveOptional(name.substring(0, name.length() - 2), imports).map(ArrayTypeRef::new);
 		
 		// imports: e.g. "cyclic.lang.compiler.Compiler", "cyclic.*"
 		List<String> candidates = new ArrayList<>();
 		candidates.add(name);
 		
 		// TODO: custom default imports
+		imports = new ArrayList<>(imports);
 		imports.add("java.lang.*");
 		
 		for(var im : imports){
@@ -32,7 +37,7 @@ public final class TypeResolver{
 			
 		Optional<TypeReference> ret = Optional.empty();
 		for(var candidate : candidates){
-			ret = resolve(candidate);
+			ret = resolveOptional(candidate);
 			if(ret.isPresent()){
 				cache.put(candidate, ret.get());
 				break;
@@ -42,7 +47,7 @@ public final class TypeResolver{
 		return ret;
 	}
 	
-	public static Optional<TypeReference> resolve(String fqName){
+	public static Optional<TypeReference> resolveOptional(String fqName){
 		if(cache.containsKey(fqName))
 			return Optional.of(cache.get(fqName));
 		

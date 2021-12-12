@@ -42,6 +42,14 @@ public class PrimitiveTypeRef implements TypeReference{
 		return null;
 	}
 	
+	public TypeReference superClass(){
+		return null; // TODO: autoboxing
+	}
+	
+	public List<? extends TypeReference> superInterfaces(){
+		return Collections.emptyList();
+	}
+	
 	public List<? extends TypeReference> innerClasses(){
 		return Collections.emptyList();
 	}

@@ -18,7 +18,7 @@ public final class CyclicClassWriter{
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, "java/lang/Object", null);
 		
 		for(var method : type.methods()){
-			MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), CyclicMethodWriter.getMethodDescriptor(method), null, null);
+			MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);
 			CyclicMethodWriter.writeMethod(mv, (CyclicMethod)method);
 			mv.visitEnd();
 		}

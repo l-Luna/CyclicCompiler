@@ -1,4 +1,3 @@
-// Generated from C:/ezz/Mods/CyclicCompiler/src/main/resources\CyclicLang.g4 by ANTLR 4.9.2
 package cyclic.lang.antlr_generated;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -373,18 +372,6 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 */
 	void exitNullLit(CyclicLangParser.NullLitContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code idValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void enterIdValue(CyclicLangParser.IdValueContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code idValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void exitIdValue(CyclicLangParser.IdValueContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code initialisationValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -493,6 +480,18 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 */
 	void exitStrLit(CyclicLangParser.StrLitContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code varValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 */
+	void enterVarValue(CyclicLangParser.VarValueContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code varValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 */
+	void exitVarValue(CyclicLangParser.VarValueContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code binaryOpValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -564,6 +563,18 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSwitchValue(CyclicLangParser.SwitchValueContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code typeValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeValue(CyclicLangParser.TypeValueContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code typeValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeValue(CyclicLangParser.TypeValueContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code inlineDecleration}
 	 * labeled alternative in {@link CyclicLangParser#value}.

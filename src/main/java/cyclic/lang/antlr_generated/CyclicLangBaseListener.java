@@ -1,5 +1,3 @@
-// Generated from C:/ezz/Mods/CyclicCompiler/src/main/resources\CyclicLang.g4 by ANTLR 4.9.2
-
 package cyclic.lang.antlr_generated;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -425,18 +423,6 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterIdValue(CyclicLangParser.IdValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitIdValue(CyclicLangParser.IdValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterInitialisationValue(CyclicLangParser.InitialisationValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -545,6 +531,18 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterVarValue(CyclicLangParser.VarValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitVarValue(CyclicLangParser.VarValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterBinaryOpValue(CyclicLangParser.BinaryOpValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -612,6 +610,18 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSwitchValue(CyclicLangParser.SwitchValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterTypeValue(CyclicLangParser.TypeValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitTypeValue(CyclicLangParser.TypeValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

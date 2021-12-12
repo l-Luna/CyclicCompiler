@@ -2,10 +2,13 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
+import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 // A type that will be compiled this run.
 public class CyclicType implements TypeReference{
@@ -16,6 +19,11 @@ public class CyclicType implements TypeReference{
 	
 	private List<CyclicMethod> methods = new ArrayList<>();
 	
+	private String superTypeName;
+	private List<String> interfaceNames;
+	private TypeReference superType;
+	private List<TypeReference> interfaces;
+	
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
 	public List<String> imports;
@@ -24,6 +32,8 @@ public class CyclicType implements TypeReference{
 		this.name = ast.ID().getText();
 		this.packageName = packageName;
 		this.imports = imports;
+		superTypeName = ast.objectExtends() != null ? ast.objectExtends().type().getText() : "java.lang.Object";
+		interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
 		
 		String typeText = ast.objectType().getText().toLowerCase(Locale.ROOT).replaceAll(" +", "");
 		kind = switch(typeText){
@@ -65,15 +75,23 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public List<? extends FieldReference> fields(){
-		return null;
+		return Collections.emptyList();
 	}
 	
 	public List<? extends ConstructorReference> constructors(){
-		return null;
+		return Collections.emptyList();
 	}
 	
 	public TypeReference outerClass(){
 		return outer;
+	}
+	
+	public TypeReference superClass(){
+		return superType;
+	}
+	
+	public List<? extends TypeReference> superInterfaces(){
+		return interfaces;
 	}
 	
 	public List<? extends TypeReference> innerClasses(){
@@ -82,5 +100,7 @@ public class CyclicType implements TypeReference{
 	
 	public void resolveRefs(){
 		methods.forEach(CyclicMethod::resolve);
+		superType = TypeResolver.resolve(superTypeName, imports);
+		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports)).collect(Collectors.toList());
 	}
 }

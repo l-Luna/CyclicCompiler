@@ -1,6 +1,8 @@
 package cyclic.lang.compiler.model;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.model.external.SystemTypeRef;
+import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.antlr.v4.runtime.RuleContext;
 import org.objectweb.asm.Opcodes;
 
@@ -46,5 +48,27 @@ public final class Utils{
 	
 	public static boolean isBitSet(int bitfield, int bit){
 		return (bitfield & bit) == bit;
+	}
+	
+	// may be a primitive type
+	public static TypeReference forAnyClass(Class<?> type){
+		if(byte.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BYTE);
+		else if(short.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.SHORT);
+		else if(int.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.INT);
+		else if(char.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.CHAR);
+		else if(long.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.LONG);
+		else if(float.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.FLOAT);
+		else if(double.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.DOUBLE);
+		else if(void.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.VOID);
+		else
+			return new SystemTypeRef(type);
 	}
 }

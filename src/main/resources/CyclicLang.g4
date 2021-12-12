@@ -9,7 +9,7 @@ importDecl: IMPORT STATIC? id (DOT STAR)? SEMICOLON;
 
 classDecl: modifiers objectType ID objectExtends? objectImplements? (LBRACE annotation* member* RBRACE | SEMICOLON);
 
-objectExtends: EXTENDS type (COMMA type)*;
+objectExtends: EXTENDS type;
 objectImplements: IMPLEMENTS type (COMMA type)*;
 
 objectType
@@ -86,6 +86,7 @@ value
     | value DOT call                      #functionValue
     | call                                #functionValue
     | value EXCLAMATION? INSTANCEOF type  #instanceCheckValue
+    | value DOT ID            #varValue // ID after another value
     | DO statement            #doValue
     | initialisation          #initialisationValue
     | LPAREN value RPAREN     #parenValue
@@ -103,7 +104,8 @@ value
     | STRLIT                  #strLit
     | BOOLLIT                 #boolLit
     | NULL                    #nullLit
-    | id                      #idValue
+    | ID                      #varValue
+    | LSQUAR id RSQUAR        #typeValue
     ;
 
 initialisation: NEW type LPAREN arguments RPAREN;
@@ -168,6 +170,9 @@ ABSTRACT: 'abstract';
 NATIVE: 'native';
 STATIC: 'static';
 FINAL: 'final';
+
+STRICTFP: 'strictfp';
+VOLATILE: 'volatile';
 
 INSTANCEOF: 'instanceof';
 RETURN: 'return';

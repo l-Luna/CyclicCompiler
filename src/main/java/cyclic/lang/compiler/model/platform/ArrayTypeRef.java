@@ -38,6 +38,14 @@ public class ArrayTypeRef implements TypeReference{
 		return null;
 	}
 	
+	public TypeReference superClass(){
+		return TypeResolver.resolveOptional("java.lang.Object").orElseThrow();
+	}
+	
+	public List<? extends TypeReference> superInterfaces(){
+		return Collections.emptyList();
+	}
+	
 	public List<? extends TypeReference> innerClasses(){
 		return Collections.emptyList();
 	}

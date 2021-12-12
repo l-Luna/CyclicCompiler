@@ -16,6 +16,10 @@ public interface TypeReference{
 	
 	TypeReference outerClass();
 	
+	TypeReference superClass();
+	
+	List<? extends TypeReference> superInterfaces();
+	
 	List<? extends TypeReference> innerClasses();
 	
 	List<? extends MethodReference> methods();
@@ -40,5 +44,20 @@ public interface TypeReference{
 	
 	default String descriptor(){
 		return "L" + internalName() + ";";
+	}
+	
+	default boolean isAssignableTo(TypeReference target){
+		// either we're the target, we're a subtype of the target, or we implement the target
+		if(fullyQualifiedName().equals(target.fullyQualifiedName()))
+			return false;
+		
+		TypeReference p = superClass();
+		while(p != null){
+			if(p.fullyQualifiedName().equals(target.fullyQualifiedName()))
+				return true;
+			p = p.superClass();
+		}
+		
+		return superInterfaces().stream().anyMatch(x -> x.isAssignableTo(target));
 	}
 }
