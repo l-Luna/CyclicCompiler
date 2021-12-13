@@ -20,6 +20,8 @@ public final class CyclicClassWriter{
 		for(var method : type.methods()){
 			MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);
 			CyclicMethodWriter.writeMethod(mv, (CyclicMethod)method);
+			mv.visitInsn(Opcodes.RETURN);
+			mv.visitMaxs(0, 0);
 			mv.visitEnd();
 		}
 		
@@ -28,6 +30,7 @@ public final class CyclicClassWriter{
 		
 		for(var inner : type.innerClasses())
 			writer.visitInnerClass(inner.internalName(), type.internalName(), inner.shortName(), getAccessFlags(inner));*/
+		writer.visitEnd();
 	}
 	
 	public static int getAccessFlagsForKind(TypeKind kind){

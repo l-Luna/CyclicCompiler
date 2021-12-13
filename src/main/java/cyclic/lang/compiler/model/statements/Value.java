@@ -1,9 +1,7 @@
 package cyclic.lang.compiler.model.statements;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
-import cyclic.lang.compiler.model.FieldReference;
-import cyclic.lang.compiler.model.TypeReference;
-import cyclic.lang.compiler.model.TypeResolver;
+import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
@@ -38,7 +36,9 @@ public abstract class Value{
 			// or an instance field of the current type for a non-static method
 		}
 		if(ctx instanceof CyclicLangParser.FunctionValueContext func){
-		
+			Value on = func.value() != null ? Value.fromAst(func.value(), imports, method) : null;
+			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, imports, method)).toList();
+			return new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
 		}
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
@@ -173,6 +173,34 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return ref.type();
+		}
+	}
+	
+	public static class CallValue extends Value{
+		
+		Value on;
+		List<Value> args;
+		MethodReference target;
+		
+		public CallValue(Value on, List<Value> args, MethodReference target){
+			this.on = on;
+			this.args = args;
+			this.target = target;
+		}
+		
+		public void write(MethodVisitor mv){
+			if(on != null && !(on instanceof Value.TypeValue)) // TODO: consider singletons
+				on.write(mv);
+			// implicit this for instance method calls with no explicit value
+			if(on == null && !target.isStatic())
+				mv.visitVarInsn(Opcodes.ALOAD, 0);
+			for(var v : args)
+				v.write(mv);
+			target.writeInvoke(mv);
+		}
+		
+		public TypeReference type(){
+			return target.returns();
 		}
 	}
 }

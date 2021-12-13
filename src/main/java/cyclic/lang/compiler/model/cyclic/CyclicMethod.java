@@ -61,7 +61,10 @@ public class CyclicMethod implements MethodReference{
 				.map(x -> TypeResolver.resolveOptional(x, imports))
 				.map(x -> x.orElseThrow(() -> new IllegalArgumentException("Unknown method parameter type")))
 				.collect(Collectors.toList());
-		
+	}
+	
+	public void resolveBody(){
+		var imports = in.imports;
 		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, imports, this)).collect(Collectors.toList()), methodScope) :
 				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, imports, this) :
 				new Statement.ReturnStatement(Value.fromAst(arrowVal, imports, this), methodScope);

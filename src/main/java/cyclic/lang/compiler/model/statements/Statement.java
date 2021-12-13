@@ -4,13 +4,13 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.MethodReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.TypeResolver;
+import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public abstract class Statement{
@@ -31,24 +31,9 @@ public abstract class Statement{
 		else if(ctx.varAssignment() != null)
 			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), imports, method), false);
 		else if(ctx.call() != null){
-			if(ctx.value() == null)
-				throw new IllegalStateException("can't yet call methods standalone");
-			Value on = Value.fromAst(ctx.value(), imports, method);
+			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), imports, method) : null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, imports, method)).toList();
-			Optional<MethodReference> found = Optional.empty();
-			candidates:
-			for(MethodReference x : on.type().methods())
-				if(x.name().equals(ctx.call().ID().getText())){
-					List<TypeReference> parameters = x.parameters();
-					if(parameters.size() != args.size())
-						continue;
-					for(int i = 0; i < parameters.size(); i++)
-						if(!args.get(i).type().isAssignableTo(parameters.get(i)))
-							continue candidates;
-					found = Optional.of(x);
-					break;
-				}
-			return new CallStatement(in, on, found.orElseThrow(), args);
+			return new CallStatement(in, on, Utils.resolveMethod(ctx.call().ID().getText(), on, args, method), args);
 		}
 		
 		return new NoopStatement(in);
@@ -157,6 +142,9 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			if(on != null && !(on instanceof Value.TypeValue)) // TODO: consider singletons
 				on.write(mv);
+			// implicit this for instance method calls with no explicit value
+			if(on == null && !target.isStatic())
+				mv.visitVarInsn(Opcodes.ALOAD, 0);
 			for(var v : args)
 				v.write(mv);
 			target.writeInvoke(mv);

@@ -30,6 +30,8 @@ public interface TypeReference{
 	
 	default void resolveRefs(){}
 	
+	default void resolveMethodBodies(){}
+	
 	/// Default implementations
 	
 	// e.g. cyclic.lang.compiler.types.TypeReference

@@ -34,9 +34,11 @@ public final class Compiler{
 			}
 		}
 		
+		toCompile.values().forEach(CyclicType::resolveRefs);
+		toCompile.values().forEach(CyclicType::resolveMethodBodies);
+		
 		for(var type : toCompile.values()){
-			type.resolveRefs();
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 			CyclicClassWriter.writeClass(writer, type);
 			try{
 				Files.write(Path.of(outputFolder, type.shortName() + ".class"), writer.toByteArray());
