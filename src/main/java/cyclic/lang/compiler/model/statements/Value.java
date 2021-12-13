@@ -11,7 +11,7 @@ import java.util.List;
 
 public abstract class Value{
 	
-	public static Value fromAst(CyclicLangParser.ValueContext ctx, List<String> imports, CyclicMethod method){
+	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, List<String> imports, CyclicMethod method){
 		if(ctx instanceof CyclicLangParser.NullLitContext)
 			return new NullLiteralValue();
 		if(ctx instanceof CyclicLangParser.IntLitContext intLit)
@@ -30,14 +30,22 @@ public abstract class Value{
 		}
 		if(ctx instanceof CyclicLangParser.VarValueContext val){
 			// if a value is present, it's a field value
+			String name = val.ID().getText();
 			if(val.value() != null)
-				return new FieldValue(val.ID().getText(), fromAst(val.value(), imports, method));
-			// otherwise, it could be a local variable, or a static field of the current type,
-			// or an instance field of the current type for a non-static method
+				return new FieldValue(name, fromAst(val.value(), scope, imports, method));
+			// otherwise, it could be a local variable,
+			Variable local = scope.get(name);
+			if(local != null)
+				return new LocalVarValue(local);
+			// or a static field of the current type, or an instance field of the current type for a non-static method
+			for(var field : method.in().fields()){
+				if(field.name().equals(name))
+					return new FieldValue(field);
+			}
 		}
 		if(ctx instanceof CyclicLangParser.FunctionValueContext func){
-			Value on = func.value() != null ? Value.fromAst(func.value(), imports, method) : null;
-			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, imports, method)).toList();
+			Value on = func.value() != null ? Value.fromAst(func.value(), scope, imports, method) : null;
+			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, imports, method)).toList();
 			return new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
 		}
 		System.out.println("Unknown expression " + ctx.getText());
@@ -164,15 +172,39 @@ public abstract class Value{
 			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow();
 		}
 		
+		public FieldValue(FieldReference ref){
+			this.ref = ref;
+		}
+		
 		public void write(MethodVisitor mv){
 			// TODO: consider singletons
-			if(!(from instanceof TypeValue))
+			if(!(from instanceof TypeValue) && from != null)
 				from.write(mv);
+			// implicit this when needed
+			if(from == null && !ref.isStatic())
+				mv.visitVarInsn(Opcodes.ALOAD, 0);
 			ref.writeFetch(mv);
 		}
 		
 		public TypeReference type(){
 			return ref.type();
+		}
+	}
+	
+	public static class LocalVarValue extends Value{
+		
+		Variable local;
+		
+		public LocalVarValue(Variable local){
+			this.local = local;
+		}
+		
+		public void write(MethodVisitor mv){
+			mv.visitVarInsn(type().localLoadOpcode(), local.getVarIndex());
+		}
+		
+		public TypeReference type(){
+			return local.type;
 		}
 	}
 	

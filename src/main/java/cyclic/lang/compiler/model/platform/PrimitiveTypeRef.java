@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.platform;
 
 import cyclic.lang.compiler.model.*;
+import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +77,41 @@ public class PrimitiveTypeRef implements TypeReference{
 			case LONG -> "J";
 			case FLOAT -> "F";
 			case DOUBLE -> "D";
-			case VOID, NULL -> "V";
+			case NULL -> "Ljava/lang/Object;";
+			case VOID -> "V";
+		};
+	}
+	
+	public int localLoadOpcode(){
+		return switch(type){
+			case NULL -> Opcodes.ALOAD;
+			case BYTE, BOOLEAN, CHAR, SHORT, INT -> Opcodes.ILOAD;
+			case LONG -> Opcodes.LLOAD;
+			case FLOAT -> Opcodes.FLOAD;
+			case DOUBLE -> Opcodes.DLOAD;
+			case VOID -> throw new IllegalStateException("Trying to load from a void local variable!");
+		};
+	}
+	
+	public int localStoreOpcode(){
+		return switch(type){
+			case NULL -> Opcodes.ASTORE;
+			case BYTE, BOOLEAN, CHAR, SHORT, INT -> Opcodes.ISTORE;
+			case LONG -> Opcodes.LSTORE;
+			case FLOAT -> Opcodes.FSTORE;
+			case DOUBLE -> Opcodes.DSTORE;
+			case VOID -> throw new IllegalStateException("Trying to store a void value in a local variable!");
+		};
+	}
+	
+	public int returnOpcode(){
+		return switch(type){
+			case NULL -> Opcodes.ARETURN;
+			case BYTE, BOOLEAN, CHAR, SHORT, INT -> Opcodes.IRETURN;
+			case LONG -> Opcodes.LRETURN;
+			case FLOAT -> Opcodes.FRETURN;
+			case DOUBLE -> Opcodes.DRETURN;
+			case VOID -> Opcodes.RETURN;
 		};
 	}
 }

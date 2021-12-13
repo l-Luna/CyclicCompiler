@@ -1,5 +1,7 @@
 package cyclic.lang.compiler.model;
 
+import org.objectweb.asm.Opcodes;
+
 import java.util.List;
 
 public interface TypeReference{
@@ -61,5 +63,17 @@ public interface TypeReference{
 		}
 		
 		return superInterfaces().stream().anyMatch(x -> x.isAssignableTo(target));
+	}
+	
+	default int returnOpcode(){
+		return Opcodes.ARETURN;
+	}
+	
+	default int localLoadOpcode(){
+		return Opcodes.ALOAD;
+	}
+	
+	default int localStoreOpcode(){
+		return Opcodes.ASTORE;
 	}
 }

@@ -16,12 +16,25 @@ public class Scope{
 		this.parent = parent;
 	}
 	
+	public List<Variable> getList(){
+		if(parent != null)
+			return parent.getList();
+		else
+			return variables;
+	}
+	
 	public Variable get(String name){
-		for(var var : variables)
+		for(var var : getList())
 			if(var.name.equals(name))
 				return var;
-		if(parent != null)
-			return parent.get(name);
 		return null;
+	}
+	
+	public int addVariable(Variable v){
+		if(get(v.name) != null)
+			throw new IllegalStateException("Trying to create a local variable " + v.name + " when one already exists in scope!");
+		List<Variable> list = getList();
+		list.add(v);
+		return list.indexOf(v);
 	}
 }

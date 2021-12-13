@@ -8,7 +8,7 @@ public class Variable{
 	TypeReference type;
 	Scope in;
 	Statement owner;
-	int firstAssignInstrIndex;
+	private int index;
 	
 	public Variable(String name, TypeReference type, Scope in, Statement owner){
 		this.name = name;
@@ -16,10 +16,10 @@ public class Variable{
 		this.in = in;
 		this.owner = owner;
 		
-		in.variables.add(this);
+		index = in.addVariable(this);
 	}
 	
 	public int getVarIndex(){
-		return in.variables.indexOf(this);
+		return index;
 	}
 }

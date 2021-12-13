@@ -104,4 +104,18 @@ public final class Utils{
 			throw new IllegalStateException("Could not find method " + name + " given candidates " + candidates.stream().map(x -> x.name() + x.descriptor()).collect(Collectors.joining(", ")));
 		return found;
 	}
+	
+	/*@SuppressWarnings("ConstantConditions") // NULL branch is never reached, but can only be replaced with a default branch
+	public int getReturnOpcode(TypeReference type){
+		if(type instanceof PrimitiveTypeRef prim && prim.type != PrimitiveTypeRef.Primitive.NULL){
+			return switch(prim.type){
+				case BYTE, SHORT, INT, BOOLEAN, CHAR -> Opcodes.IRETURN;
+				case LONG -> Opcodes.LRETURN;
+				case FLOAT -> Opcodes.FRETURN;
+				case DOUBLE -> Opcodes.DRETURN;
+				case VOID, NULL -> throw new IllegalArgumentException("Tried to return a void value!");
+			};
+		}else
+			return Opcodes.ARETURN;
+	}*/
 }

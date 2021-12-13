@@ -6,7 +6,6 @@ import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.TypeResolver;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
-import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -27,12 +26,12 @@ public abstract class Statement{
 		if(ctx.block() != null)
 			return new BlockStatement(ctx.block().statement().stream().map(k -> fromAst(k, in, imports, method)).collect(Collectors.toList()), in);
 		else if(ctx.varDecl() != null)
-			return new VarStatement(in, ctx.varDecl().id().getText(), TypeResolver.resolveOptional(ctx.varDecl().type().getText(), imports).orElseThrow(), ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), imports, method) : null, true);
+			return new VarStatement(in, ctx.varDecl().id().getText(), TypeResolver.resolveOptional(ctx.varDecl().type().getText(), imports).orElseThrow(), ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, imports, method) : null, true);
 		else if(ctx.varAssignment() != null)
-			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), imports, method), false);
+			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), in, imports, method), false);
 		else if(ctx.call() != null){
-			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), imports, method) : null;
-			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, imports, method)).toList();
+			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, imports, method) : null;
+			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, imports, method)).toList();
 			return new CallStatement(in, on, Utils.resolveMethod(ctx.call().ID().getText(), on, args, method), args);
 		}
 		
@@ -81,17 +80,8 @@ public abstract class Statement{
 				return;
 			}
 			
-			returnValue.write(mv); // TODO: should I switch on variable type or value type?
-			if(returnValue.type() instanceof PrimitiveTypeRef prim && prim.type != PrimitiveTypeRef.Primitive.NULL){
-				mv.visitInsn(switch(prim.type){
-					case BYTE, SHORT, INT, BOOLEAN, CHAR -> Opcodes.IRETURN;
-					case LONG -> Opcodes.LRETURN;
-					case FLOAT -> Opcodes.FRETURN;
-					case DOUBLE -> Opcodes.DRETURN;
-					case VOID, NULL -> throw new IllegalArgumentException("Tried to return a void value!");
-				});
-			}else
-				mv.visitInsn(Opcodes.ARETURN);
+			returnValue.write(mv);
+			mv.visitInsn(returnValue.type().returnOpcode());
 		}
 	}
 	
@@ -112,16 +102,7 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			if(value != null){
 				value.write(mv);
-				if(v.type instanceof PrimitiveTypeRef prim && prim.type != PrimitiveTypeRef.Primitive.NULL)
-					mv.visitVarInsn(switch(prim.type){
-						case BYTE, SHORT, INT, BOOLEAN, CHAR -> Opcodes.ISTORE;
-						case LONG -> Opcodes.LSTORE;
-						case FLOAT -> Opcodes.FSTORE;
-						case DOUBLE -> Opcodes.DSTORE;
-						case VOID, NULL -> throw new IllegalArgumentException("Tried to store a void value in a local variable!");
-					}, v.getVarIndex());
-				else
-					mv.visitVarInsn(Opcodes.ASTORE, v.getVarIndex());
+				mv.visitVarInsn(value.type().localStoreOpcode(), v.getVarIndex());
 			}
 		}
 	}
