@@ -32,7 +32,7 @@ public abstract class Statement{
 			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), imports, method), false);
 		else if(ctx.call() != null){
 			if(ctx.value() == null)
-				throw new IllegalStateException("can't yet call static methods");
+				throw new IllegalStateException("can't yet call methods standalone");
 			Value on = Value.fromAst(ctx.value(), imports, method);
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, imports, method)).toList();
 			Optional<MethodReference> found = Optional.empty();

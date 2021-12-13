@@ -49,7 +49,7 @@ public interface TypeReference{
 	default boolean isAssignableTo(TypeReference target){
 		// either we're the target, we're a subtype of the target, or we implement the target
 		if(fullyQualifiedName().equals(target.fullyQualifiedName()))
-			return false;
+			return true;
 		
 		TypeReference p = superClass();
 		while(p != null){
