@@ -1,2 +1,2 @@
-# CyclicCompiler
-A compiler for a java-like pet JVM language. Not ready to use yet.
+# Cyclic Compiler
+A compiler for a java-like pet JVM language, Cyclic. Not ready to use yet.
