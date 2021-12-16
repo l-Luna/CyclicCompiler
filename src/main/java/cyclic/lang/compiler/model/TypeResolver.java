@@ -28,14 +28,14 @@ public final class TypeResolver{
 		imports.add("java.lang.*");
 		imports.add(fromPackage + ".*");
 		
+		candidates.add(name);
+		
 		for(var im : imports){
 			if(im.endsWith(".*"))
 				candidates.add(im.substring(0, im.length() - 1) + name);
 			else if(im.endsWith(name))
 				candidates.add(im);
 		}
-		
-		candidates.add(name); // primitives and default package types are checked last
 		
 		Optional<TypeReference> ret = Optional.empty();
 		for(var candidate : candidates){

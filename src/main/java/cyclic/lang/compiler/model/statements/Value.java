@@ -30,19 +30,29 @@ public abstract class Value{
 			return new TypeValue(TypeResolver.resolve(text, type.imports, type.packageName()));
 		}
 		if(ctx instanceof CyclicLangParser.VarValueContext val){
-			// if a value is present, it's a field value
 			String name = val.ID().getText();
-			if(val.value() != null)
-				return new FieldValue(name, fromAst(val.value(), scope, type, method));
+			// if a value is present, check if it's a partial type name, and add to it if so; otherwise return a field
+			if(val.value() != null){
+				Value on = fromAst(val.value(), scope, type, method);
+				if(on instanceof TypeValue v && v.getPartialTypeName() != null){
+					var newTypeName = v.getPartialTypeName() + "." + name;
+					var target = TypeResolver.resolveOptional(newTypeName, type.imports, type.packageName());
+					return target.map(TypeValue::new).orElseGet(() -> new TypeValue(newTypeName));
+				}else
+					return new FieldValue(name, on);
+			}
 			// otherwise, it could be a local variable,
 			Variable local = scope.get(name);
 			if(local != null)
 				return new LocalVarValue(local);
 			// or a static field of the current type, or an instance field of the current type for a non-static method
 			for(var field : method.in().fields()){
-				if(field.name().equals(name))
+				if(field.name().equals(name) && (field.isStatic() || !method.isStatic()))
 					return new FieldValue(field);
 			}
+			// or a partial or full type name
+			var target = TypeResolver.resolveOptional(name, type.imports, type.packageName());
+			return target.map(TypeValue::new).orElseGet(() -> new TypeValue(name));
 		}
 		if(ctx instanceof CyclicLangParser.FunctionValueContext func){
 			Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
@@ -147,9 +157,18 @@ public abstract class Value{
 	 */
 	public static class TypeValue extends Value{
 		TypeReference target;
+		String partialTypeName = null;
 		
 		public TypeValue(TypeReference target){
 			this.target = target;
+		}
+		
+		public TypeValue(String partialTypeName){
+			this.partialTypeName = partialTypeName;
+		}
+		
+		public String getPartialTypeName(){
+			return partialTypeName;
 		}
 		
 		public void write(MethodVisitor mv){
