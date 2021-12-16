@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.statements;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
@@ -20,7 +21,7 @@ public abstract class Value{
 		if(ctx instanceof CyclicLangParser.DecLitContext decLit)
 			return new DecimalLiteralValue(Double.parseDouble(decLit.DECLIT().getText()));
 		if(ctx instanceof CyclicLangParser.BoolLitContext boolLit)
-			return new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0);
+			return new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
 		if(ctx instanceof CyclicLangParser.StrLitContext strLit){
 			String text = strLit.getText();
 			return new StringLiteralValue(text.substring(1, text.length() - 1));
@@ -55,6 +56,11 @@ public abstract class Value{
 			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 			return new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
 		}
+		if(ctx instanceof CyclicLangParser.BinaryOpValueContext bin){
+			Value left = Value.fromAst(bin.left, scope, type, method);
+			Value right = Value.fromAst(bin.right, scope, type, method);
+			return Operations.resolve(bin.binaryop().getText(), left, right);
+		}
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
 	}
@@ -75,11 +81,16 @@ public abstract class Value{
 	}
 	
 	public static class IntLiteralValue extends Value{
-		
 		int value;
+		boolean isBool = false;
 		
 		public IntLiteralValue(int value){
 			this.value = value;
+		}
+		
+		public IntLiteralValue(int value, boolean isBool){
+			this.value = value;
+			this.isBool = isBool;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -103,7 +114,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.INT);
+			return isBool ? new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN) : new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.INT);
 		}
 	}
 	

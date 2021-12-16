@@ -95,7 +95,7 @@ value
     | switchStatement         #switchValue
     | id DOT CLASS            #classValue
     | cast                    #castValue
-    | invert                  #inverseValue
+    | unaryop value           #unaryOpValue
     | newArray                #newArrayValue
     | newListedArray          #newListedArrayValue
     | THIS                    #thisValue
@@ -109,7 +109,6 @@ value
 
 initialisation: NEW type LPAREN arguments RPAREN;
 cast: LPAREN type RPAREN value;
-invert: EXCLAMATION value;
 varAssignment: id ASSIGN value;
 call: ID LPAREN arguments RPAREN;
 newArray: NEW type LSQUAR value RSQUAR;
@@ -147,6 +146,12 @@ binaryop
     | LESSEREQ
     | GREATER
     | LESSER
+    ;
+
+unaryop
+    : PLUS
+    | MINUS
+    | EXCLAMATION
     ;
 
 modifier
