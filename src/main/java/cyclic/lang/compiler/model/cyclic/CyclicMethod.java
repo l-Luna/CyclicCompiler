@@ -56,18 +56,16 @@ public class CyclicMethod implements MethodReference{
 	
 	public void resolve(){
 		List<String> imports = in.imports;
-		returns = TypeResolver.resolveOptional(retType, imports).orElseThrow(() -> new IllegalArgumentException("Unknown method return type: " + retType));
+		returns = TypeResolver.resolve(retType, imports, in.packageName());
 		parameters = paramTypeNames.stream()
-				.map(x -> TypeResolver.resolveOptional(x, imports))
-				.map(x -> x.orElseThrow(() -> new IllegalArgumentException("Unknown method parameter type")))
+				.map(x -> TypeResolver.resolve(x, imports, in.packageName()))
 				.collect(Collectors.toList());
 	}
 	
 	public void resolveBody(){
-		var imports = in.imports;
-		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, imports, this)).collect(Collectors.toList()), methodScope) :
-				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, imports, this) :
-				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, imports, this), methodScope);
+		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
+				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
+				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope);
 	}
 	
 	public TypeReference in(){

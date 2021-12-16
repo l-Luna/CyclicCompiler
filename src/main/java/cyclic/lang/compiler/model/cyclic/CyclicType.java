@@ -100,8 +100,8 @@ public class CyclicType implements TypeReference{
 	
 	public void resolveRefs(){
 		methods.forEach(CyclicMethod::resolve);
-		superType = TypeResolver.resolve(superTypeName, imports);
-		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports)).collect(Collectors.toList());
+		superType = TypeResolver.resolve(superTypeName, imports, packageName());
+		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 	}
 	
 	public void resolveMethodBodies(){

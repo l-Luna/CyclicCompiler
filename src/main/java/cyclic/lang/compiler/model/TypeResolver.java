@@ -11,22 +11,22 @@ public final class TypeResolver{
 	
 	private static final Map<String, TypeReference> cache = new HashMap<>();
 	
-	public static TypeReference resolve(String name, List<String> imports){
-		return resolveOptional(name, imports).orElseThrow(() -> new IllegalStateException("Type " + name + " not found in [" + String.join(", ", imports) + "]"));
+	public static TypeReference resolve(String name, List<String> imports, String fromPackage){
+		return resolveOptional(name, imports, fromPackage).orElseThrow(() -> new IllegalStateException("Type " + name + " not found in [" + String.join(", ", imports) + "]"));
 	}
 	
-	public static Optional<TypeReference> resolveOptional(String name, List<String> imports){
+	public static Optional<TypeReference> resolveOptional(String name, List<String> imports, String fromPackage){
 		// if the type ends with [], it's an array type; wrap with ArrayTypeRef.
 		if(name.endsWith("[]"))
-			return resolveOptional(name.substring(0, name.length() - 2), imports).map(ArrayTypeRef::new);
+			return resolveOptional(name.substring(0, name.length() - 2), imports, fromPackage).map(ArrayTypeRef::new);
 		
 		// imports: e.g. "cyclic.lang.compiler.Compiler", "cyclic.*"
 		List<String> candidates = new ArrayList<>();
-		candidates.add(name);
 		
 		// TODO: custom default imports
 		imports = new ArrayList<>(imports);
 		imports.add("java.lang.*");
+		imports.add(fromPackage + ".*");
 		
 		for(var im : imports){
 			if(im.endsWith(".*"))
@@ -34,7 +34,9 @@ public final class TypeResolver{
 			else if(im.endsWith(name))
 				candidates.add(im);
 		}
-			
+		
+		candidates.add(name); // primitives and default package types are checked last
+		
 		Optional<TypeReference> ret = Optional.empty();
 		for(var candidate : candidates){
 			ret = resolveOptional(candidate);

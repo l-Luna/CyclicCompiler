@@ -17,8 +17,6 @@ public final class Compiler{
 	public static final Map<String, CyclicType> toCompile = new HashMap<>();
 	
 	public static void main(String[] args){
-		// build a compile context
-		var ctx = new CompileContext();
 		// go through all specified files and compile each
 		var inputFolder = args[0];
 		var outputFolder = args[1];

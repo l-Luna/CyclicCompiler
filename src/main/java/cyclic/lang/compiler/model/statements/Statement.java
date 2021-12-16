@@ -6,6 +6,7 @@ import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.TypeResolver;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
+import cyclic.lang.compiler.model.cyclic.CyclicType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -22,16 +23,17 @@ public abstract class Statement{
 	
 	public void write(MethodVisitor mv){}
 	
-	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, List<String> imports, CyclicMethod method){
+	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CyclicMethod method){
+		var imports = type.imports;
 		if(ctx.block() != null)
-			return new BlockStatement(ctx.block().statement().stream().map(k -> fromAst(k, in, imports, method)).collect(Collectors.toList()), in);
+			return new BlockStatement(ctx.block().statement().stream().map(k -> fromAst(k, in, type, method)).collect(Collectors.toList()), in);
 		else if(ctx.varDecl() != null)
-			return new VarStatement(in, ctx.varDecl().id().getText(), TypeResolver.resolveOptional(ctx.varDecl().type().getText(), imports).orElseThrow(), ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, imports, method) : null, true);
+			return new VarStatement(in, ctx.varDecl().id().getText(), TypeResolver.resolve(ctx.varDecl().type().getText(), imports, type.packageName()), ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, method) : null, true);
 		else if(ctx.varAssignment() != null)
-			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), in, imports, method), false);
+			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), in, type, method), false);
 		else if(ctx.call() != null){
-			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, imports, method) : null;
-			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, imports, method)).toList();
+			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, method) : null;
+			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, method)).toList();
 			return new CallStatement(in, on, Utils.resolveMethod(ctx.call().ID().getText(), on, args, method), args);
 		}
 		

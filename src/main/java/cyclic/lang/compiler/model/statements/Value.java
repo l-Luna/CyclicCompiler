@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.statements;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
+import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -11,7 +12,7 @@ import java.util.List;
 
 public abstract class Value{
 	
-	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, List<String> imports, CyclicMethod method){
+	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CyclicMethod method){
 		if(ctx instanceof CyclicLangParser.NullLitContext)
 			return new NullLiteralValue();
 		if(ctx instanceof CyclicLangParser.IntLitContext intLit)
@@ -24,15 +25,15 @@ public abstract class Value{
 			String text = strLit.getText();
 			return new StringLiteralValue(text.substring(1, text.length() - 1));
 		}
-		if(ctx instanceof CyclicLangParser.TypeValueContext type){
-			String text = type.id().getText();
-			return new TypeValue(TypeResolver.resolve(text, imports));
+		if(ctx instanceof CyclicLangParser.TypeValueContext typeValue){
+			String text = typeValue.id().getText();
+			return new TypeValue(TypeResolver.resolve(text, type.imports, type.packageName()));
 		}
 		if(ctx instanceof CyclicLangParser.VarValueContext val){
 			// if a value is present, it's a field value
 			String name = val.ID().getText();
 			if(val.value() != null)
-				return new FieldValue(name, fromAst(val.value(), scope, imports, method));
+				return new FieldValue(name, fromAst(val.value(), scope, type, method));
 			// otherwise, it could be a local variable,
 			Variable local = scope.get(name);
 			if(local != null)
@@ -44,8 +45,8 @@ public abstract class Value{
 			}
 		}
 		if(ctx instanceof CyclicLangParser.FunctionValueContext func){
-			Value on = func.value() != null ? Value.fromAst(func.value(), scope, imports, method) : null;
-			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, imports, method)).toList();
+			Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
+			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 			return new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
 		}
 		System.out.println("Unknown expression " + ctx.getText());
