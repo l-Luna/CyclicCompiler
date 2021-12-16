@@ -8,6 +8,7 @@ public class Variable{
 	TypeReference type;
 	Scope in;
 	Statement owner;
+	public boolean isFinal = false;
 	private int index;
 	
 	public Variable(String name, TypeReference type, Scope in, Statement owner){

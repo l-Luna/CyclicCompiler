@@ -25,10 +25,6 @@ public abstract class Value{
 			String text = strLit.getText();
 			return new StringLiteralValue(text.substring(1, text.length() - 1));
 		}
-		if(ctx instanceof CyclicLangParser.TypeValueContext typeValue){
-			String text = typeValue.id().getText();
-			return new TypeValue(TypeResolver.resolve(text, type.imports, type.packageName()));
-		}
 		if(ctx instanceof CyclicLangParser.VarValueContext val){
 			String name = val.ID().getText();
 			// if a value is present, check if it's a partial type name, and add to it if so; otherwise return a field

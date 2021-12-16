@@ -105,7 +105,6 @@ value
     | BOOLLIT                 #boolLit
     | NULL                    #nullLit
     | ID                      #varValue
-    | LSQUAR id RSQUAR        #typeValue
     ;
 
 initialisation: NEW type LPAREN arguments RPAREN;
@@ -201,8 +200,8 @@ FOR: 'for';
 DO: 'do';
 IF: 'if';
 
-DECLIT: DIGIT+? DOT DIGIT+;
-INTLIT: DIGIT+;
+DECLIT: MINUS? DIGIT+? DOT DIGIT+;
+INTLIT: MINUS? DIGIT+;
 STRLIT: QUOTE (~'"')*? QUOTE;
 BOOLLIT: TRUE | FALSE;
 NULL: 'null';

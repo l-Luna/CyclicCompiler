@@ -29,10 +29,15 @@ public abstract class Statement{
 			BlockStatement statement = new BlockStatement(in);
 			statement.contains = ctx.block().statement().stream().map(k -> fromAst(k, statement.blockScope, type, method)).collect(Collectors.toList());
 			return statement;
-		}else if(ctx.varDecl() != null)
-			return new VarStatement(in, ctx.varDecl().id().getText(), TypeResolver.resolve(ctx.varDecl().type().getText(), imports, type.packageName()), ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, method) : null, true);
-		else if(ctx.varAssignment() != null)
-			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), in, type, method), false);
+		}else if(ctx.varDecl() != null){
+			boolean isFinal = ctx.varDecl().modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || ctx.varDecl().type().getText().equals("val");
+			boolean infer = ctx.varDecl().type().getText().equals("var") || ctx.varDecl().type().getText().equals("val");
+			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, method) : null;
+			if(infer && initial == null)
+				throw new IllegalStateException("Can't infer the type of a variable without an initial value.");
+			return new VarStatement(in, ctx.varDecl().id().getText(), infer ? initial.type() :  TypeResolver.resolve(ctx.varDecl().type().getText(), imports, type.packageName()), initial, true, isFinal);
+		}else if(ctx.varAssignment() != null)
+			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), in, type, method), false, false);
 		else if(ctx.call() != null){
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, method) : null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, method)).toList();
@@ -99,16 +104,20 @@ public abstract class Statement{
 		Variable v;
 		Value value;
 		
-		public VarStatement(Scope in, String varName, TypeReference varType, Value value, boolean declare){
+		public VarStatement(Scope in, String varName, TypeReference varType, Value value, boolean declare, boolean isFinal){
 			super(in);
 			if(declare)
 				v = new Variable(varName, varType, in, this);
 			else
 				v = in.get(varName);
+			v.isFinal |= isFinal;
 			this.value = value;
 		}
 		
 		public void write(MethodVisitor mv){
+			if(v.isFinal && this != v.owner){
+				throw new IllegalStateException("Can't assign the value of a final local variable outside of its declaration.");
+			}
 			if(value != null){
 				value.write(mv);
 				mv.visitVarInsn(value.type().localStoreOpcode(), v.getVarIndex());

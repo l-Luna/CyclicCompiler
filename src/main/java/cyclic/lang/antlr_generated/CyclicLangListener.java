@@ -564,18 +564,6 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 */
 	void exitSwitchValue(CyclicLangParser.SwitchValueContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code typeValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void enterTypeValue(CyclicLangParser.TypeValueContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code typeValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void exitTypeValue(CyclicLangParser.TypeValueContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code inlineDecleration}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree

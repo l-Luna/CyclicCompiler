@@ -615,18 +615,6 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTypeValue(CyclicLangParser.TypeValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTypeValue(CyclicLangParser.TypeValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterInlineDecleration(CyclicLangParser.InlineDeclerationContext ctx) { }
 	/**
 	 * {@inheritDoc}

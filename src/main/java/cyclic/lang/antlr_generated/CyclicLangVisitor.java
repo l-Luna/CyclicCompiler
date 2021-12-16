@@ -339,13 +339,6 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSwitchValue(CyclicLangParser.SwitchValueContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code typeValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypeValue(CyclicLangParser.TypeValueContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code inlineDecleration}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
