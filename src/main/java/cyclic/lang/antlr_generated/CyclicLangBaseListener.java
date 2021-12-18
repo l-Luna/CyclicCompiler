@@ -411,6 +411,18 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterUnaryOpValue(CyclicLangParser.UnaryOpValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUnaryOpValue(CyclicLangParser.UnaryOpValueContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterNullLit(CyclicLangParser.NullLitContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -466,18 +478,6 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitNewArrayValue(CyclicLangParser.NewArrayValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterInverseValue(CyclicLangParser.InverseValueContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitInverseValue(CyclicLangParser.InverseValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -646,18 +646,6 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCast(CyclicLangParser.CastContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterInvert(CyclicLangParser.InvertContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitInvert(CyclicLangParser.InvertContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -862,6 +850,18 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitBinaryop(CyclicLangParser.BinaryopContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterUnaryop(CyclicLangParser.UnaryopContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUnaryop(CyclicLangParser.UnaryopContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

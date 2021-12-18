@@ -16,10 +16,22 @@ public abstract class Value{
 	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CyclicMethod method){
 		if(ctx instanceof CyclicLangParser.NullLitContext)
 			return new NullLiteralValue();
-		if(ctx instanceof CyclicLangParser.IntLitContext intLit)
-			return new IntLiteralValue(Integer.parseInt(intLit.INTLIT().getText()));
-		if(ctx instanceof CyclicLangParser.DecLitContext decLit)
-			return new DoubleLiteralValue(Double.parseDouble(decLit.DECLIT().getText()));
+		if(ctx instanceof CyclicLangParser.IntLitContext intLit){
+			String text = intLit.INTLIT().getText();
+			if(text.endsWith("f"))
+				return new FloatLiteralValue(Float.parseFloat(text));
+			else if(text.endsWith("d"))
+				return new DoubleLiteralValue(Double.parseDouble(text));
+			else
+				return new IntLiteralValue(Integer.parseInt(text));
+		}
+		if(ctx instanceof CyclicLangParser.DecLitContext decLit){
+			String text = decLit.DECLIT().getText();
+			if(text.endsWith("f"))
+				return new FloatLiteralValue(Float.parseFloat(text));
+			else
+				return new DoubleLiteralValue(Double.parseDouble(text));
+		}
 		if(ctx instanceof CyclicLangParser.BoolLitContext boolLit)
 			return new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
 		if(ctx instanceof CyclicLangParser.StrLitContext strLit){

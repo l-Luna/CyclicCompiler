@@ -220,6 +220,13 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDoValue(CyclicLangParser.DoValueContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code unaryOpValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnaryOpValue(CyclicLangParser.UnaryOpValueContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code nullLit}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -254,13 +261,6 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNewArrayValue(CyclicLangParser.NewArrayValueContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code inverseValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInverseValue(CyclicLangParser.InverseValueContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code inlineAssignment}
 	 * labeled alternative in {@link CyclicLangParser#value}.
@@ -357,12 +357,6 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCast(CyclicLangParser.CastContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link CyclicLangParser#invert}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInvert(CyclicLangParser.InvertContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#varAssignment}.
 	 * @param ctx the parse tree
@@ -465,6 +459,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBinaryop(CyclicLangParser.BinaryopContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#unaryop}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnaryop(CyclicLangParser.UnaryopContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#modifier}.
 	 * @param ctx the parse tree

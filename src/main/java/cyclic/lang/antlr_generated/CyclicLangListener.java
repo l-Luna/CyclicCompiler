@@ -360,6 +360,18 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 */
 	void exitDoValue(CyclicLangParser.DoValueContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code unaryOpValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnaryOpValue(CyclicLangParser.UnaryOpValueContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code unaryOpValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnaryOpValue(CyclicLangParser.UnaryOpValueContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code nullLit}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -419,18 +431,6 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNewArrayValue(CyclicLangParser.NewArrayValueContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code inverseValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void enterInverseValue(CyclicLangParser.InverseValueContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code inverseValue}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void exitInverseValue(CyclicLangParser.InverseValueContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code inlineAssignment}
 	 * labeled alternative in {@link CyclicLangParser#value}.
@@ -595,16 +595,6 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCast(CyclicLangParser.CastContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link CyclicLangParser#invert}.
-	 * @param ctx the parse tree
-	 */
-	void enterInvert(CyclicLangParser.InvertContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link CyclicLangParser#invert}.
-	 * @param ctx the parse tree
-	 */
-	void exitInvert(CyclicLangParser.InvertContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CyclicLangParser#varAssignment}.
 	 * @param ctx the parse tree
@@ -775,6 +765,16 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitBinaryop(CyclicLangParser.BinaryopContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CyclicLangParser#unaryop}.
+	 * @param ctx the parse tree
+	 */
+	void enterUnaryop(CyclicLangParser.UnaryopContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CyclicLangParser#unaryop}.
+	 * @param ctx the parse tree
+	 */
+	void exitUnaryop(CyclicLangParser.UnaryopContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CyclicLangParser#modifier}.
 	 * @param ctx the parse tree

@@ -205,8 +205,8 @@ FOR: 'for';
 DO: 'do';
 IF: 'if';
 
-DECLIT: MINUS? DIGIT+? DOT DIGIT+;
-INTLIT: MINUS? DIGIT+;
+DECLIT: MINUS? DIGIT* DOT DIGIT+ ('f' | 'd')?;
+INTLIT: MINUS? DIGIT+ ('f' | 'd')?;
 STRLIT: QUOTE (~'"')*? QUOTE;
 BOOLLIT: TRUE | FALSE;
 NULL: 'null';
