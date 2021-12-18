@@ -61,6 +61,8 @@ public abstract class Value{
 			Value right = Value.fromAst(bin.right, scope, type, method);
 			return Operations.resolve(bin.binaryop().getText(), left, right);
 		}
+		if(ctx instanceof CyclicLangParser.ParenValueContext paren)
+			return fromAst(paren.value(), scope, type, method);
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
 	}
