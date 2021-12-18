@@ -19,7 +19,7 @@ public abstract class Value{
 		if(ctx instanceof CyclicLangParser.IntLitContext intLit)
 			return new IntLiteralValue(Integer.parseInt(intLit.INTLIT().getText()));
 		if(ctx instanceof CyclicLangParser.DecLitContext decLit)
-			return new DecimalLiteralValue(Double.parseDouble(decLit.DECLIT().getText()));
+			return new DoubleLiteralValue(Double.parseDouble(decLit.DECLIT().getText()));
 		if(ctx instanceof CyclicLangParser.BoolLitContext boolLit)
 			return new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
 		if(ctx instanceof CyclicLangParser.StrLitContext strLit){
@@ -90,11 +90,9 @@ public abstract class Value{
 			// widening conversion
 			if(target instanceof PrimitiveTypeRef to && to.type != p.type){
 				int op = p.wideningOpcode(to.type);
-				if(op == -1)
-					throw new IllegalStateException("Cannot convert between " + p.fullyQualifiedName() + " and " + to.fullyQualifiedName() + "!");
-				else if(op == 0)
+				if(op == 0)
 					ret = new SubstituteTypeValue(target, this);
-				else
+				else if(op != -1)
 					ret = new Operations.UnaryOpValue(to, this, op);
 			}
 		}
@@ -118,6 +116,7 @@ public abstract class Value{
 		}
 	}
 	
+	// TODO: combine primitive literal values?
 	public static class IntLiteralValue extends Value{
 		int value;
 		boolean isBool = false;
@@ -156,11 +155,35 @@ public abstract class Value{
 		}
 	}
 	
-	public static class DecimalLiteralValue extends Value{
+	public static class FloatLiteralValue extends Value{
+		
+		float value;
+		
+		public FloatLiteralValue(float value){
+			this.value = value;
+		}
+		
+		public void write(MethodVisitor mv){
+			if(value == 0)
+				mv.visitInsn(Opcodes.FCONST_0);
+			else if(value == 1)
+				mv.visitInsn(Opcodes.FCONST_1);
+			else if(value == 2)
+				mv.visitInsn(Opcodes.FCONST_2);
+			else
+				mv.visitLdcInsn(value);
+		}
+		
+		public TypeReference type(){
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.FLOAT);
+		}
+	}
+	
+	public static class DoubleLiteralValue extends Value{
 		
 		double value;
 		
-		public DecimalLiteralValue(double value){
+		public DoubleLiteralValue(double value){
 			this.value = value;
 		}
 		
@@ -175,6 +198,28 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.DOUBLE);
+		}
+	}
+	
+	public static class LongLiteralValue extends Value{
+		
+		long value;
+		
+		public LongLiteralValue(long value){
+			this.value = value;
+		}
+		
+		public void write(MethodVisitor mv){
+			if(value == 0)
+				mv.visitInsn(Opcodes.LCONST_0);
+			else if(value == 1)
+				mv.visitInsn(Opcodes.LCONST_1);
+			else
+				mv.visitLdcInsn(value);
+		}
+		
+		public TypeReference type(){
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.LONG);
 		}
 	}
 	

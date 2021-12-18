@@ -65,7 +65,7 @@ public class CyclicMethod implements MethodReference{
 	public void resolveBody(){
 		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
 				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
-				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope);
+				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns);
 	}
 	
 	public TypeReference in(){

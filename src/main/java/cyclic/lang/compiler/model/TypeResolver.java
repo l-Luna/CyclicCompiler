@@ -15,6 +15,10 @@ public final class TypeResolver{
 		return resolveOptional(name, imports, fromPackage).orElseThrow(() -> new IllegalStateException("Type " + name + " not found in [" + String.join(", ", imports) + "]"));
 	}
 	
+	public static TypeReference resolve(String fqName){
+		return resolveOptional(fqName).orElseThrow(() -> new IllegalStateException("Qualified type " + fqName + " not found!"));
+	}
+	
 	public static Optional<TypeReference> resolveOptional(String name, List<String> imports, String fromPackage){
 		// if the type ends with [], it's an array type; wrap with ArrayTypeRef.
 		if(name.endsWith("[]"))

@@ -73,6 +73,12 @@ public class PrimitiveTypeRef implements TypeReference{
 		return getPrimitiveDesc(type);
 	}
 	
+	public boolean isAssignableTo(TypeReference target){
+		if(type == NULL) // null is assignable to any non-primitive type
+			return !(target instanceof PrimitiveTypeRef other) || other.type == NULL;
+		return TypeReference.super.isAssignableTo(target);
+	}
+	
 	public static String getPrimitiveDesc(Primitive type){
 		return switch(type){
 			case BYTE -> "B";

@@ -82,10 +82,12 @@ public abstract class Statement{
 	
 	public static class ReturnStatement extends Statement{
 		Value returnValue;
+		private TypeReference toReturn;
 		
-		public ReturnStatement(Value returnValue, Scope in){
+		public ReturnStatement(Value returnValue, Scope in, TypeReference toReturn){
 			super(in);
 			this.returnValue = returnValue;
+			this.toReturn = toReturn;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -94,8 +96,13 @@ public abstract class Statement{
 				return;
 			}
 			
-			returnValue.write(mv);
-			mv.visitInsn(returnValue.type().returnOpcode());
+			var adjusted = returnValue.fit(toReturn);
+			if(adjusted == null)
+				throw new IllegalStateException("Value of type " + returnValue.type().fullyQualifiedName() + " cannot be returned from method of type " + toReturn.fullyQualifiedName() + "!");
+			
+			adjusted.write(mv);
+			mv.visitInsn(adjusted.type().returnOpcode());
+			double k = ((long)mv.hashCode());
 		}
 	}
 	
@@ -115,9 +122,8 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
-			if(v.isFinal && this != v.owner){
+			if(v.isFinal && this != v.owner)
 				throw new IllegalStateException("Can't assign the value of a final local variable outside of its declaration.");
-			}
 			if(value != null){
 				var adjusted = value.fit(v.type);
 				if(adjusted == null)
