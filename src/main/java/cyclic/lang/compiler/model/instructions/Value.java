@@ -78,6 +78,11 @@ public abstract class Value{
 		}
 		if(ctx instanceof CyclicLangParser.ParenValueContext paren)
 			return fromAst(paren.value(), scope, type, method);
+		if(ctx instanceof CyclicLangParser.ThisValueContext){
+			if(method.isStatic())
+				throw new IllegalStateException("Can't use \"this\" in a static method!");
+			return new ThisValue(method.in());
+		}
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
 	}
@@ -417,6 +422,22 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return substitute;
+		}
+	}
+	
+	public static class ThisValue extends Value{
+		TypeReference thisType;
+		
+		public ThisValue(TypeReference thisType){
+			this.thisType = thisType;
+		}
+		
+		public void write(MethodVisitor mv){
+			mv.visitVarInsn(Opcodes.ALOAD, 0);
+		}
+		
+		public TypeReference type(){
+			return thisType;
 		}
 	}
 }

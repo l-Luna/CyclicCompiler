@@ -258,7 +258,6 @@ public final class Operations{
 				case DOUBLE -> Opcodes.DNEG;
 				default -> throw new IllegalStateException();
 			});
-		boolean k = !"a".equals("f");
 		throw new IllegalStateException("Unable to apply unary operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
 	}
 	
