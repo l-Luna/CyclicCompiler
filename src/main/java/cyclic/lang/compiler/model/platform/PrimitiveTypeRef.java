@@ -6,6 +6,8 @@ import org.objectweb.asm.Opcodes;
 import java.util.Collections;
 import java.util.List;
 
+import static cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive.*;
+
 public class PrimitiveTypeRef implements TypeReference{
 	
 	// int, (boolean), long, float, double, char, void, (null)
@@ -68,6 +70,10 @@ public class PrimitiveTypeRef implements TypeReference{
 	}
 	
 	public String descriptor(){
+		return getPrimitiveDesc(type);
+	}
+	
+	public static String getPrimitiveDesc(Primitive type){
 		return switch(type){
 			case BYTE -> "B";
 			case SHORT -> "S";
@@ -112,6 +118,78 @@ public class PrimitiveTypeRef implements TypeReference{
 			case FLOAT -> Opcodes.FRETURN;
 			case DOUBLE -> Opcodes.DRETURN;
 			case VOID -> Opcodes.RETURN;
+		};
+	}
+	
+	public String boxedTypeName(){
+		return boxedTypeName(type);
+	}
+	
+	private static String boxedTypeName(Primitive type){
+		return switch(type){
+			case NULL, VOID -> "java.lang.Object";
+			case BOOLEAN -> "java.lang.Boolean";
+			case CHAR -> "java.lang.Character";
+			case SHORT -> "java.lang.Short";
+			case INT -> "java.lang.Integer";
+			case BYTE -> "java.lang.Byte";
+			case LONG -> "java.lang.Long";
+			case FLOAT -> "java.lang.Float";
+			case DOUBLE -> "java.lang.Double";
+		};
+	}
+	
+	public TypeReference boxedType(){
+		return TypeResolver.resolveOptional(boxedTypeName()).orElseThrow(() -> new IllegalStateException("Could not resolve box type " + boxedTypeName() + " for boxing conversions!"));
+	}
+	
+	// -1 for incompatible primitives, 0 for no-op conversions, or the conversion opcode for compatible types
+	public int wideningOpcode(Primitive target){
+		return switch(type){
+			case BYTE -> {
+				if(target == SHORT || target == INT)
+					yield 0;
+				else if(target == LONG)
+					yield Opcodes.I2L;
+				else if(target == FLOAT)
+					yield Opcodes.I2F;
+				else if(target == DOUBLE)
+					yield Opcodes.I2D;
+				yield -1;
+			}
+			case SHORT, CHAR -> {
+				if(target == INT)
+					yield 0;
+				else if(target == LONG)
+					yield Opcodes.I2L;
+				else if(target == FLOAT)
+					yield Opcodes.I2F;
+				else if(target == DOUBLE)
+					yield Opcodes.I2D;
+				yield -1;
+			}
+			case INT -> {
+				if(target == LONG)
+					yield Opcodes.I2L;
+				else if(target == FLOAT)
+					yield Opcodes.I2F;
+				else if(target == DOUBLE)
+					yield Opcodes.I2D;
+				yield -1;
+			}
+			case BOOLEAN, VOID, NULL, DOUBLE -> -1;
+			case LONG -> {
+				if(target == FLOAT)
+					yield Opcodes.L2F;
+				else if(target == DOUBLE)
+					yield Opcodes.L2D;
+				yield -1;
+			}
+			case FLOAT -> {
+				if(target == DOUBLE)
+					yield Opcodes.F2D;
+				yield -1;
+			}
 		};
 	}
 }

@@ -235,6 +235,27 @@ public final class Operations{
 		}
 	}
 	
+	public static class UnaryOpValue extends Value{
+		TypeReference type;
+		Value from;
+		int opcode;
+		
+		public UnaryOpValue(TypeReference type, Value from, int opcode){
+			this.type = type;
+			this.from = from;
+			this.opcode = opcode;
+		}
+		
+		public void write(MethodVisitor mv){
+			from.write(mv);
+			mv.visitInsn(opcode);
+		}
+		
+		public TypeReference type(){
+			return type;
+		}
+	}
+	
 	public static class BinaryOpValue extends Value{
 		Op operation; // set in resolve
 		TypeReference type;

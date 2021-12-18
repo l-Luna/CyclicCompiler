@@ -119,8 +119,11 @@ public abstract class Statement{
 				throw new IllegalStateException("Can't assign the value of a final local variable outside of its declaration.");
 			}
 			if(value != null){
-				value.write(mv);
-				mv.visitVarInsn(value.type().localStoreOpcode(), v.getVarIndex());
+				var adjusted = value.fit(v.type);
+				if(adjusted == null)
+					throw new IllegalStateException("Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
+				adjusted.write(mv);
+				mv.visitVarInsn(v.type.localStoreOpcode(), v.getVarIndex());
 			}
 		}
 	}

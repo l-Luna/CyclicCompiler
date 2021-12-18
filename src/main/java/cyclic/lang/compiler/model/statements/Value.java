@@ -65,6 +65,44 @@ public abstract class Value{
 		return null;
 	}
 	
+	/**
+	 * Returns a value equivalent to this value of the target type,
+	 * or null if no conversion exists between this type and the target.
+	 * May return the same value.
+	 *
+	 * @param target
+	 * 		The target type to convert to
+	 * @return An equivalent to this as the target, or null.
+	 */
+	public Value fit(TypeReference target){
+		if(type().isAssignableTo(target))
+			return this;
+		
+		Value ret = null;
+		// unboxing conversion
+		if(target instanceof PrimitiveTypeRef prim && type().fullyQualifiedName().equals(prim.boxedTypeName()))
+			ret = new UnboxValue(this, prim.type);
+		
+		if(type() instanceof PrimitiveTypeRef p){
+			// boxing conversion
+			if(p.boxedType().isAssignableTo(target) && p.type != PrimitiveTypeRef.Primitive.NULL && p.type != PrimitiveTypeRef.Primitive.VOID)
+				ret = new BoxValue(this, p.boxedType());
+			// widening conversion
+			if(target instanceof PrimitiveTypeRef to && to.type != p.type){
+				int op = p.wideningOpcode(to.type);
+				if(op == -1)
+					throw new IllegalStateException("Cannot convert between " + p.fullyQualifiedName() + " and " + to.fullyQualifiedName() + "!");
+				else if(op == 0)
+					ret = new SubstituteTypeValue(target, this);
+				else
+					ret = new Operations.UnaryOpValue(to, this, op);
+			}
+		}
+		
+		// allow for multi-step conversions
+		return ret != null ? ret.fit(target) : null;
+	}
+	
 	public void write(MethodVisitor mv){}
 	
 	public abstract TypeReference type();
@@ -196,7 +234,7 @@ public abstract class Value{
 		public FieldValue(String fieldName, Value from){
 			this.fieldName = fieldName;
 			this.from = from;
-			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow();
+			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow(() -> new IllegalStateException("Could not find field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
 		}
 		
 		public FieldValue(FieldReference ref){
@@ -260,6 +298,63 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return target.returns();
+		}
+	}
+	
+	// could just use call values
+	public static class UnboxValue extends Value{
+		Value underlying;
+		PrimitiveTypeRef.Primitive type;
+		
+		public UnboxValue(Value underlying, PrimitiveTypeRef.Primitive type){
+			this.underlying = underlying;
+			this.type = type;
+		}
+		
+		public void write(MethodVisitor mv){
+			underlying.write(mv); // is a boxed value
+			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, underlying.type().internalName(), type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
+		}
+		
+		public TypeReference type(){
+			return new PrimitiveTypeRef(type);
+		}
+	}
+	
+	public static class BoxValue extends Value{
+		Value underlying;
+		TypeReference targetType; // e.g. java.lang.Integer
+		
+		public BoxValue(Value underlying, TypeReference targetType){
+			this.underlying = underlying;
+			this.targetType = targetType;
+		}
+		
+		public void write(MethodVisitor mv){
+			underlying.write(mv);
+			mv.visitMethodInsn(Opcodes.INVOKESTATIC, targetType.internalName(), "valueOf", "(" + underlying.type().descriptor() + ")" + targetType.descriptor(), false);
+		}
+		
+		public TypeReference type(){
+			return targetType;
+		}
+	}
+	
+	public static class SubstituteTypeValue extends Value{
+		TypeReference substitute;
+		Value underlying;
+		
+		public SubstituteTypeValue(TypeReference substitute, Value underlying){
+			this.substitute = substitute;
+			this.underlying = underlying;
+		}
+		
+		public void write(MethodVisitor mv){
+			underlying.write(mv);
+		}
+		
+		public TypeReference type(){
+			return substitute;
 		}
 	}
 }
