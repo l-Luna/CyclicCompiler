@@ -2,8 +2,8 @@ package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.TypeResolver;
+import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
-import cyclic.lang.compiler.model.statements.Value;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 
+import static cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive.BOOLEAN;
 import static cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive.NULL;
 
 public final class Operations{
@@ -228,7 +229,7 @@ public final class Operations{
 		throw new IllegalArgumentException("Unknown operation: " + symbol);
 	}
 	
-	public static Value resolve(String symbol, Value left, Value right){
+	public static Value resolveBinary(String symbol, Value left, Value right){
 		Op op = forSymbol(symbol);
 		for(var handler : handlers)
 			if(handler.handles().contains(op))
@@ -239,6 +240,26 @@ public final class Operations{
 					return ret;
 				}
 		throw new IllegalArgumentException("Found no handlers for operation " + symbol + " that can handle values of types " + left.type().fullyQualifiedName() + " and " + right.type().fullyQualifiedName() + "!");
+	}
+	
+	// much simpler, no handlers
+	// since 1 unary op is a no-op, 1 is applicable to one type only, and the other has simple logic
+	public static Value resolveUnary(String symbol, Value value){
+		symbol = symbol.trim();
+		if(symbol.equals("+") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
+			return value; // no effect from +
+		else if(symbol.equals("!") && value.type() instanceof PrimitiveTypeRef prim && prim.type == BOOLEAN)
+			return new BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, value, null);
+		else if(symbol.equals("-") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
+			return new UnaryOpValue(prim, value, switch(prim.type){
+				case BYTE, SHORT, INT -> Opcodes.INEG;
+				case LONG -> Opcodes.LNEG;
+				case FLOAT -> Opcodes.FNEG;
+				case DOUBLE -> Opcodes.DNEG;
+				default -> throw new IllegalStateException();
+			});
+		boolean k = !"a".equals("f");
+		throw new IllegalStateException("Unable to apply unary operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
 	}
 	
 	public enum Op{

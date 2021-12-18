@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.statements;
+package cyclic.lang.compiler.model.instructions;
 
 import java.util.ArrayList;
 import java.util.List;

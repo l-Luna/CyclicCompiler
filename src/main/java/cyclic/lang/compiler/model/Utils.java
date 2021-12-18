@@ -3,8 +3,8 @@ package cyclic.lang.compiler.model;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.external.SystemTypeRef;
+import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
-import cyclic.lang.compiler.model.statements.Value;
 import org.antlr.v4.runtime.RuleContext;
 import org.objectweb.asm.Opcodes;
 

@@ -198,4 +198,8 @@ public class PrimitiveTypeRef implements TypeReference{
 			}
 		};
 	}
+	
+	public boolean isNumber(){
+		return type == BYTE || type == SHORT || type == INT || type == LONG || type == FLOAT || type == DOUBLE;
+	}
 }

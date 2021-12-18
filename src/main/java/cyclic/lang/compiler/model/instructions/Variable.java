@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.statements;
+package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.model.TypeReference;
 

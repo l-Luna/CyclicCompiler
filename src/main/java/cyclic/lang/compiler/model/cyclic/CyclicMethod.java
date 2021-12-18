@@ -2,9 +2,9 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
-import cyclic.lang.compiler.model.statements.Scope;
-import cyclic.lang.compiler.model.statements.Statement;
-import cyclic.lang.compiler.model.statements.Value;
+import cyclic.lang.compiler.model.instructions.Scope;
+import cyclic.lang.compiler.model.instructions.Statement;
+import cyclic.lang.compiler.model.instructions.Value;
 
 import java.util.ArrayList;
 import java.util.List;

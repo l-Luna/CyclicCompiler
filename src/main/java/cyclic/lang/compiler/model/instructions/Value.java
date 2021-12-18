@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.statements;
+package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.gen.Operations;
@@ -71,7 +71,10 @@ public abstract class Value{
 		if(ctx instanceof CyclicLangParser.BinaryOpValueContext bin){
 			Value left = Value.fromAst(bin.left, scope, type, method);
 			Value right = Value.fromAst(bin.right, scope, type, method);
-			return Operations.resolve(bin.binaryop().getText(), left, right);
+			return Operations.resolveBinary(bin.binaryop().getText(), left, right);
+		}
+		if(ctx instanceof CyclicLangParser.UnaryOpValueContext uop){
+			return Operations.resolveUnary(uop.unaryop().getText(), fromAst(uop.value(), scope, type, method));
 		}
 		if(ctx instanceof CyclicLangParser.ParenValueContext paren)
 			return fromAst(paren.value(), scope, type, method);
