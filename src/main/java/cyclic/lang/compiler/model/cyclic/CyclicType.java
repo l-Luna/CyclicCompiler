@@ -17,9 +17,13 @@ public class CyclicType implements TypeReference{
 	private TypeKind kind;
 	private AccessFlags flags;
 	
-	private List<CyclicMethod> methods = new ArrayList<>();
-	private List<CyclicConstructor> constructors = new ArrayList<>();
+	private List<CyclicMember> members = new ArrayList<>();
+	
 	public List<CyclicConstructor> initBlocks = new ArrayList<>();
+	
+	private List<CyclicField> fields = new ArrayList<>();
+	private List<CyclicConstructor> constructors = new ArrayList<>();
+	private List<CyclicMethod> methods = new ArrayList<>();
 	
 	private String superTypeName;
 	private List<String> interfaceNames;
@@ -57,7 +61,15 @@ public class CyclicType implements TypeReference{
 				constructors.add(new CyclicConstructor(member.constructor(), this));
 			else if(member.init() != null)
 				initBlocks.add(new CyclicConstructor(member.init(), this));
+			else if(member.varDecl() != null){
+				fields.add(new CyclicField(member.varDecl(), this));
+			}
 		}
+		
+		members.addAll(fields);
+		members.addAll(constructors);
+		members.addAll(initBlocks);
+		members.addAll(methods);
 		
 		// implicit constructor if none is present - ensures that init blocks and static field inits are written
 		if(constructors.size() == 0)
@@ -87,7 +99,7 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public List<? extends FieldReference> fields(){
-		return Collections.emptyList();
+		return fields;
 	}
 	
 	public List<? extends CallableReference> constructors(){
@@ -111,16 +123,19 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public void resolveRefs(){
-		methods.forEach(CyclicMethod::resolve);
-		constructors.forEach(CyclicConstructor::resolve);
-		initBlocks.forEach(CyclicConstructor::resolve);
+		members.forEach(CyclicMember::resolve);
+		
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 	}
 	
-	public void resolveMethodBodies(){
-		methods.forEach(CyclicMethod::resolveBody);
-		constructors.forEach(CyclicConstructor::resolveBody);
-		initBlocks.forEach(CyclicConstructor::resolveBody);
+	public void resolveBodies(){
+		members.forEach(CyclicMember::resolveBody);
+		
+		for(CyclicField field : fields){
+			var assign = field.assign();
+			if(assign != null)
+				initBlocks.add(assign);
+		}
 	}
 }

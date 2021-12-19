@@ -32,7 +32,7 @@ public interface TypeReference{
 	
 	default void resolveRefs(){}
 	
-	default void resolveMethodBodies(){}
+	default void resolveBodies(){}
 	
 	/// Default implementations
 	

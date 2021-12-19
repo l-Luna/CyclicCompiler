@@ -33,7 +33,7 @@ public final class Compiler{
 		}
 		
 		toCompile.values().forEach(CyclicType::resolveRefs);
-		toCompile.values().forEach(CyclicType::resolveMethodBodies);
+		toCompile.values().forEach(CyclicType::resolveBodies);
 		
 		for(var type : toCompile.values()){
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);

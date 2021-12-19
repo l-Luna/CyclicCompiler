@@ -1,13 +1,11 @@
 package cyclic.lang.compiler.gen;
 
-import cyclic.lang.compiler.model.AccessFlags;
-import cyclic.lang.compiler.model.MethodReference;
-import cyclic.lang.compiler.model.TypeKind;
-import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -18,6 +16,7 @@ public final class CyclicClassWriter{
 	public static void writeClass(ClassWriter writer, CyclicType type){
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, "java/lang/Object", null);
 		
+		// class init
 		MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
 		for(var init : type.initBlocks)
 			if(init.isStatic())
@@ -25,6 +24,12 @@ public final class CyclicClassWriter{
 		smv.visitInsn(Opcodes.RETURN);
 		smv.visitMaxs(0, 0);
 		smv.visitEnd();
+		
+		for(var field : type.fields()){
+			// default values are always handled through implicit init blocks
+			FieldVisitor fv = writer.visitField(getFieldAccessFlags(field), field.name(), field.type().descriptor(), null, null);
+			fv.visitEnd();
+		}
 		
 		for(var ctor : type.constructors()){
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
@@ -75,6 +80,12 @@ public final class CyclicClassWriter{
 				(method.isNative() ? Opcodes.ACC_NATIVE : 0) |
 				(method.isSynchronized() ? Opcodes.ACC_SYNCHRONIZED : 0) |
 				(method.isStatic() ? Opcodes.ACC_STATIC : 0);
+	}
+	
+	public static int getFieldAccessFlags(FieldReference field){
+		return getAccessFlags(field.flags()) |
+				(field.isVolatile() ? Opcodes.ACC_VOLATILE : 0) |
+				(field.isStatic() ? Opcodes.ACC_STATIC : 0);
 	}
 	
 	public static int getAccessFlags(AccessFlags flags){

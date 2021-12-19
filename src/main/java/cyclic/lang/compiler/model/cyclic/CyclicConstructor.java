@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CyclicConstructor implements CallableReference{
+public class CyclicConstructor implements CallableReference, CyclicMember{
 	
 	CyclicType in;
 	AccessFlags flags;
@@ -48,6 +48,7 @@ public class CyclicConstructor implements CallableReference{
 		flags = new AccessFlags(Visibility.PACKAGE_PRIVATE, false, false);
 		blockStatement = ctx.block();
 		isS = ctx.STATIC() != null;
+		parameters = new ArrayList<>();
 	}
 	
 	// for implicit ctors, including static ones for static field setup
@@ -56,6 +57,7 @@ public class CyclicConstructor implements CallableReference{
 		flags = new AccessFlags(Visibility.PACKAGE_PRIVATE, false, false);
 		body = null;
 		isS = isStatic;
+		parameters = new ArrayList<>();
 	}
 	
 	public void resolve(){
