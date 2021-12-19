@@ -262,13 +262,6 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNewArrayValue(CyclicLangParser.NewArrayValueContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code inlineAssignment}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInlineAssignment(CyclicLangParser.InlineAssignmentContext ctx);
-	/**
 	 * Visit a parse tree produced by the {@code instanceCheckValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -423,6 +416,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForStatement(CyclicLangParser.ForStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#foreachStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForeachStatement(CyclicLangParser.ForeachStatementContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#doWhile}.
 	 * @param ctx the parse tree

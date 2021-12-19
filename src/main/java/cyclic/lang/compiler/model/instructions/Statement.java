@@ -31,15 +31,23 @@ public abstract class Statement{
 			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, method) : null;
 			if(infer && initial == null)
 				throw new IllegalStateException("Can't infer the type of a variable without an initial value.");
-			return new VarStatement(in, ctx.varDecl().id().getText(), infer ? initial.type() :  TypeResolver.resolve(ctx.varDecl().type().getText(), imports, type.packageName()), initial, true, isFinal);
-		}else if(ctx.varAssignment() != null)
-			return new VarStatement(in, ctx.varAssignment().id().getText(), null, Value.fromAst(ctx.varAssignment().value(), in, type, method), false, false);
-		else if(ctx.call() != null){
+			return new VarStatement(in, ctx.varDecl().ID().getText(), infer ? initial.type() :  TypeResolver.resolve(ctx.varDecl().type().getText(), imports, type.packageName()), initial, true, isFinal);
+		}else if(ctx.varAssignment() != null){
+			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, method);
+			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, method);
+			// if the LHS is a LocalVarValue, reuse the variable
+			// if the LHS is a field value, assign to the field
+			if(left instanceof Value.LocalVarValue local)
+				return new VarStatement(in, local.local.name, null, right, false, false);
+			else if(left instanceof Value.FieldValue field)
+				return new AssignFieldStatement(in, field.ref, field.from, right);
+			else
+				throw new IllegalStateException("Can't assign value to " + ctx.varAssignment().value(0).getText());
+		}else if(ctx.call() != null){
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, method) : null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, method)).toList();
 			return new CallStatement(in, on, Utils.resolveMethod(ctx.call().ID().getText(), on, args, method), args);
 		}
-		
 		return new NoopStatement(in);
 	}
 	
@@ -98,12 +106,10 @@ public abstract class Statement{
 			
 			adjusted.write(mv);
 			mv.visitInsn(adjusted.type().returnOpcode());
-			double k = ((long)mv.hashCode());
 		}
 	}
 	
 	public static class VarStatement extends Statement{
-		
 		Variable v;
 		Value value;
 		
@@ -131,7 +137,6 @@ public abstract class Statement{
 	}
 	
 	public static class CallStatement extends Statement{
-		
 		Value on;
 		List<Value> args;
 		MethodReference target;
@@ -152,6 +157,26 @@ public abstract class Statement{
 			for(var v : args)
 				v.write(mv);
 			target.writeInvoke(mv);
+		}
+	}
+	
+	public static class AssignFieldStatement extends Statement{
+		FieldReference fieldRef;
+		Value on;
+		Value toSet;
+		
+		public AssignFieldStatement(Scope in, FieldReference fieldRef, Value on, Value toSet){
+			super(in);
+			this.fieldRef = fieldRef;
+			this.on = on instanceof Value.TypeValue ? null : on;
+			this.toSet = toSet;
+		}
+		
+		public void write(MethodVisitor mv){
+			if(on != null)
+				on.write(mv);
+			toSet.write(mv);
+			fieldRef.writePut(mv);
 		}
 	}
 }

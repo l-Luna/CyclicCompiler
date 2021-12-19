@@ -4,6 +4,7 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
+import cyclic.lang.compiler.model.instructions.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ public class CyclicConstructor implements CallableReference{
 		
 		for(var p : ctx.parameters().varDecl()){
 			paramTypeNames.add(p.type().getText());
-			paramNames.add(p.id().getText());
+			paramNames.add(p.ID().getText());
 		}
 		
 		if(ctx.statement() != null)
@@ -65,6 +66,11 @@ public class CyclicConstructor implements CallableReference{
 	}
 	
 	public void resolveBody(){
+		if(!isStatic())
+			new Variable("this", in(), methodScope, null);
+		for(int i = 0; i < parameters.size(); i++)
+			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
+		
 		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
 				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
 						null; // a semicolon just returns - no implicit return in case of init blocks

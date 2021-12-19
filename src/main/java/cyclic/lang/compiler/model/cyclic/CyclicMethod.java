@@ -5,6 +5,7 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.model.instructions.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class CyclicMethod implements MethodReference{
 	Scope methodScope = new Scope();
 	
 	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in){
-		name = ctx.id().getText();
+		name = ctx.ID().getText();
 		this.in = in;
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
 			isN |= modifier.equals("native");
@@ -42,7 +43,7 @@ public class CyclicMethod implements MethodReference{
 		retType = ctx.type().getText();
 		for(var p : ctx.parameters().varDecl()){
 			paramTypeNames.add(p.type().getText());
-			paramNames.add(p.id().getText());
+			paramNames.add(p.ID().getText());
 		}
 		
 		if(ctx.functionArrow() != null){
@@ -63,6 +64,11 @@ public class CyclicMethod implements MethodReference{
 	}
 	
 	public void resolveBody(){
+		if(!isStatic())
+			new Variable("this", in(), methodScope, null);
+		for(int i = 0; i < parameters.size(); i++)
+			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
+		
 		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
 				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
 				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns);

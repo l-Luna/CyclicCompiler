@@ -432,18 +432,6 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 */
 	void exitNewArrayValue(CyclicLangParser.NewArrayValueContext ctx);
 	/**
-	 * Enter a parse tree produced by the {@code inlineAssignment}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void enterInlineAssignment(CyclicLangParser.InlineAssignmentContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code inlineAssignment}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 */
-	void exitInlineAssignment(CyclicLangParser.InlineAssignmentContext ctx);
-	/**
 	 * Enter a parse tree produced by the {@code instanceCheckValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -705,6 +693,16 @@ public interface CyclicLangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitForStatement(CyclicLangParser.ForStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link CyclicLangParser#foreachStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterForeachStatement(CyclicLangParser.ForeachStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link CyclicLangParser#foreachStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitForeachStatement(CyclicLangParser.ForeachStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link CyclicLangParser#doWhile}.
 	 * @param ctx the parse tree

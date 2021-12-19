@@ -29,10 +29,11 @@ public final class CyclicClassWriter{
 		for(var ctor : type.constructors()){
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
 			
-			CyclicMethodWriter.writeCtor(mv, (CyclicConstructor)ctor);
-			for(var init : type.initBlocks)
+			for(var init : type.initBlocks) // init blocks go first so that field values can be setup for use
 				if(!init.isStatic() && init.body != null)
 					init.body.write(mv);
+			// TODO: calling super-constructors
+			CyclicMethodWriter.writeCtor(mv, (CyclicConstructor)ctor);
 			
 			mv.visitInsn(Opcodes.RETURN);
 			mv.visitMaxs(0, 0);

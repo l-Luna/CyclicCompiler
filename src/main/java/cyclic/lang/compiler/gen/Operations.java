@@ -134,6 +134,35 @@ public final class Operations{
 				Set.of(Op.XOR), Set.of(LONG),
 				(l, r) -> new BinaryOpValue(LONG, Opcodes.LXOR, l, r)));
 		
+		// bitshifts
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.LEFTSHIFT), Set.of(INT),
+				(l, r) -> new BinaryOpValue(INT, Opcodes.ISHL, l, r)));
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.LEFTSHIFT), Set.of(LONG),
+				(l, r) -> new BinaryOpValue(LONG, Opcodes.LSHL, l, r)));
+		
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.RIGHTSHIFT), Set.of(INT),
+				(l, r) -> new BinaryOpValue(INT, Opcodes.ISHR, l, r)));
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.RIGHTSHIFT), Set.of(LONG),
+				(l, r) -> new BinaryOpValue(LONG, Opcodes.LSHR, l, r)));
+		
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.ULSHIFT), Set.of(INT),
+				(l, r) -> new BinaryOpValue(INT, Opcodes.IUSHR, l, new UnaryOpValue(INT, r, Opcodes.INEG))));
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.ULSHIFT), Set.of(LONG),
+				(l, r) -> new BinaryOpValue(LONG, Opcodes.LUSHR, l, new UnaryOpValue(LONG, r, Opcodes.LNEG))));
+		
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.URSHIFT), Set.of(INT),
+				(l, r) -> new BinaryOpValue(INT, Opcodes.IUSHR, l, r)));
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.URSHIFT), Set.of(LONG),
+				(l, r) -> new BinaryOpValue(LONG, Opcodes.LUSHR, l, r)));
+		
 		// object equality
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(INT, BOOLEAN),
@@ -272,12 +301,18 @@ public final class Operations{
 		BITAND("&"),
 		BITOR("|"),
 		XOR("^"),
+		LEFTSHIFT("<<"),
+		RIGHTSHIFT(">>"),
+		ULSHIFT("<<<"),
+		URSHIFT(">>>"),
 		EQUALS("=="),
 		NOTEQUALS("!="),
 		GEQ(">="),
 		LEQ("<="),
 		GREATER(">"),
-		LESSER("<");
+		LESSER("<"),
+		ASSIGN("="),
+		PASS("|>");
 		
 		public final String symbol;
 		

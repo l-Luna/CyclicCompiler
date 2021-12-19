@@ -17,6 +17,7 @@ objectType
     | INTERFACE
     | ENUM
     | AT INTERFACE
+    | RECORD
     | SINGLE
     ;
 
@@ -32,26 +33,27 @@ member
 constructor: modifiers type LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
 init: STATIC? block;
 
-function: modifiers type id LPAREN parameters RPAREN (functionBlock | functionArrow);
+function: modifiers type ID LPAREN parameters RPAREN (functionBlock | functionArrow);
 
 functionBlock: (block | SEMICOLON);
 functionArrow: DASHARROW (value SEMICOLON | statement);
 
-varDecl: modifiers type id (ASSIGN value)?;
+varDecl: modifiers type ID (ASSIGN value)?;
 parameters: (varDecl (COMMA varDecl)*)?;
 
 block: LBRACE statement* RBRACE;
 
 statement
     : block
-    | varDecl SEMICOLON
-    | varAssignment SEMICOLON
     | returnStatement SEMICOLON
     | assertStatement SEMICOLON
+    | varDecl SEMICOLON
+    | varAssignment SEMICOLON
     | initialisation SEMICOLON
     | ifStatement
     | whileStatement
     | forStatement
+    | foreachStatement
     | switchStatement
     | doWhile
     | yieldStatement
@@ -91,7 +93,6 @@ value
     | initialisation          #initialisationValue
     | LPAREN value RPAREN     #parenValue
     | varDecl                 #inlineDecleration
-    | varAssignment           #inlineAssignment
     | switchStatement         #switchValue
     | id DOT CLASS            #classValue
     | cast                    #castValue
@@ -109,7 +110,7 @@ value
 
 initialisation: NEW type LPAREN arguments RPAREN;
 cast: LPAREN type RPAREN value;
-varAssignment: id ASSIGN value;
+varAssignment: value ASSIGN value;
 call: ID LPAREN arguments RPAREN;
 newArray: NEW type LSQUAR value RSQUAR;
 newListedArray: NEW type LSQUAR RSQUAR LBRACE (value (COMMA value)*)? RBRACE;
@@ -124,12 +125,13 @@ elseStatement: ELSE statement;
 
 whileStatement: WHILE LPAREN value RPAREN statement;
 forStatement: FOR LPAREN varDecl SEMICOLON value SEMICOLON value RPAREN statement;
+foreachStatement: FOR LPAREN type ID COLON value RPAREN statement;
 doWhile: DO block WHILE LPAREN value RPAREN SEMICOLON;
 
 switchStatement: SWITCH LPAREN value RPAREN LBRACE caseClause* defaultClause? RBRACE;
 caseClause: CASE value DASHARROW (statement | value SEMICOLON);
 defaultClause: DEFAULT DASHARROW (statement | value SEMICOLON);
-yieldStatement: YIELD value;
+yieldStatement: YIELD value SEMICOLON;
 
 binaryop
     : SLASH
@@ -146,6 +148,12 @@ binaryop
     | LESSEREQ
     | GREATER
     | LESSER
+    | LSHIFT
+    | RSHIFT
+    | ULSHIFT
+    | URSHIFT
+    | ASSIGN // can't use varAssign as a value because it's left-recursive with value, but its effectively a binary op anyways
+    | PASS
     ;
 
 unaryop
@@ -163,6 +171,8 @@ modifier
     | ABSTRACT
     | SYNCHRONISED
     | NATIVE
+    | STRICTFP
+    | VOLATILE
     ;
 
 PROTECTED: 'protected';
@@ -183,10 +193,11 @@ RETURN: 'return';
 ASSERT: 'assert';
 NEW: 'new';
 
-INTERFACE: 'interface';
-SINGLE: 'single';
 CLASS: 'class';
+INTERFACE: 'interface';
 ENUM: 'enum';
+RECORD: 'record';
+SINGLE: 'single';
 
 IMPORT: 'import';
 PACKAGE: 'package';
@@ -223,6 +234,11 @@ MINUS: '-';
 PERCENT: '%';
 AT: '@';
 
+LSHIFT: '<<';
+RSHIFT: '>>';
+ULSHIFT: '<<<';
+URSHIFT: '>>>';
+
 EQUAL: '==';
 INEQUAL: '!=';
 GREATEREQ: '>=';
@@ -231,6 +247,7 @@ GREATER: '>';
 LESSER: '<';
 
 ASSIGN: '=';
+PASS: '|>';
 
 LBRACE: '{';
 RBRACE: '}';
@@ -239,7 +256,7 @@ RPAREN: ')';
 LSQUAR: '[';
 RSQUAR: ']';
 
-COLON: ':'; // Unused
+COLON: ':';
 SEMICOLON: ';';
 QUOTE: '"';
 DOT: '.';

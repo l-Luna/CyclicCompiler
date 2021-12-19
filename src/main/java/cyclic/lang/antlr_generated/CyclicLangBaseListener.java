@@ -483,18 +483,6 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterInlineAssignment(CyclicLangParser.InlineAssignmentContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitInlineAssignment(CyclicLangParser.InlineAssignmentContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterInstanceCheckValue(CyclicLangParser.InstanceCheckValueContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -778,6 +766,18 @@ public class CyclicLangBaseListener implements CyclicLangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitForStatement(CyclicLangParser.ForStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterForeachStatement(CyclicLangParser.ForeachStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitForeachStatement(CyclicLangParser.ForeachStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
