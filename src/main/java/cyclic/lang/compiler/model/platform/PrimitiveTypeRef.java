@@ -46,7 +46,7 @@ public class PrimitiveTypeRef implements TypeReference{
 	}
 	
 	public TypeReference superClass(){
-		return null; // TODO: autoboxing
+		return null;
 	}
 	
 	public List<? extends TypeReference> superInterfaces(){
@@ -65,7 +65,7 @@ public class PrimitiveTypeRef implements TypeReference{
 		return Collections.emptyList();
 	}
 	
-	public List<? extends ConstructorReference> constructors(){
+	public List<? extends CallableReference> constructors(){
 		return Collections.emptyList();
 	}
 	

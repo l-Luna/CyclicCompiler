@@ -12,11 +12,13 @@ public class SystemTypeRef implements TypeReference{
 	Class<?> underlying;
 	List<SystemFieldRef> fields;
 	List<SystemMethodRef> methods;
+	List<SystemCtorRef> ctors;
 	
 	public SystemTypeRef(Class<?> underlying){
 		this.underlying = underlying;
 		fields = Arrays.stream(underlying.getFields()).map(k -> new SystemFieldRef(k, this)).collect(Collectors.toList());
 		methods = Arrays.stream(underlying.getMethods()).map(SystemMethodRef::new).collect(Collectors.toList());
+		ctors = Arrays.stream(underlying.getConstructors()).map(SystemCtorRef::new).collect(Collectors.toList());
 	}
 	
 	public String shortName(){
@@ -64,8 +66,7 @@ public class SystemTypeRef implements TypeReference{
 		return fields;
 	}
 	
-	// TODO:
-	public List<? extends ConstructorReference> constructors(){
-		return Collections.emptyList();
+	public List<? extends CallableReference> constructors(){
+		return ctors;
 	}
 }

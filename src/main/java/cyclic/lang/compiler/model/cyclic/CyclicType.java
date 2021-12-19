@@ -18,6 +18,8 @@ public class CyclicType implements TypeReference{
 	private AccessFlags flags;
 	
 	private List<CyclicMethod> methods = new ArrayList<>();
+	private List<CyclicConstructor> constructors = new ArrayList<>();
+	public List<CyclicConstructor> initBlocks = new ArrayList<>();
 	
 	private String superTypeName;
 	private List<String> interfaceNames;
@@ -51,7 +53,17 @@ public class CyclicType implements TypeReference{
 		for(var member : ast.member()){
 			if(member.function() != null)
 				methods.add(new CyclicMethod(member.function(), this));
+			else if(member.constructor() != null)
+				constructors.add(new CyclicConstructor(member.constructor(), this));
+			else if(member.init() != null)
+				initBlocks.add(new CyclicConstructor(member.init(), this));
 		}
+		
+		// implicit constructor if none is present - ensures that init blocks and static field inits are written
+		if(constructors.size() == 0)
+			constructors.add(new CyclicConstructor(false, this));
+		if(initBlocks.stream().noneMatch(k -> k.isS))
+			initBlocks.add(new CyclicConstructor(true, this));
 	}
 	
 	public String shortName(){
@@ -78,8 +90,8 @@ public class CyclicType implements TypeReference{
 		return Collections.emptyList();
 	}
 	
-	public List<? extends ConstructorReference> constructors(){
-		return Collections.emptyList();
+	public List<? extends CallableReference> constructors(){
+		return constructors;
 	}
 	
 	public TypeReference outerClass(){
@@ -100,11 +112,15 @@ public class CyclicType implements TypeReference{
 	
 	public void resolveRefs(){
 		methods.forEach(CyclicMethod::resolve);
+		constructors.forEach(CyclicConstructor::resolve);
+		initBlocks.forEach(CyclicConstructor::resolve);
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 	}
 	
 	public void resolveMethodBodies(){
 		methods.forEach(CyclicMethod::resolveBody);
+		constructors.forEach(CyclicConstructor::resolveBody);
+		initBlocks.forEach(CyclicConstructor::resolveBody);
 	}
 }

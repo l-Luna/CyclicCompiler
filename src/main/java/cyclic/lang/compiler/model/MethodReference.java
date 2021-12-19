@@ -3,28 +3,17 @@ package cyclic.lang.compiler.model;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
-public interface MethodReference{
-	
-	TypeReference in();
+public interface MethodReference extends CallableReference{
 	
 	String name();
 	
 	TypeReference returns();
 	
-	List<TypeReference> parameters();
-	
-	List<String> parameterNames();
-	
-	AccessFlags flags();
-	
 	boolean isNative();
 	
 	boolean isSynchronized();
-	
-	boolean isStatic();
 	
 	default String descriptor(){
 		return "(" + parameters().stream().map(TypeReference::descriptor).collect(Collectors.joining()) + ")" + returns().descriptor();

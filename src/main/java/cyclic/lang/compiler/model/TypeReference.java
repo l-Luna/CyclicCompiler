@@ -28,7 +28,7 @@ public interface TypeReference{
 	
 	List<? extends FieldReference> fields();
 	
-	List<? extends ConstructorReference> constructors();
+	List<? extends CallableReference> constructors();
 	
 	default void resolveRefs(){}
 	

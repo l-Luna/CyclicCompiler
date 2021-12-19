@@ -1,7 +1,6 @@
 package cyclic.lang.compiler.model;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
-import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.external.SystemTypeRef;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
@@ -77,7 +76,7 @@ public final class Utils{
 			return new SystemTypeRef(type);
 	}
 	
-	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CyclicMethod method){
+	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from){
 		// possible method references are:
 		// - from the value being called on, if present, OR
 		// - static members of the current type in a static method, OR
@@ -86,7 +85,7 @@ public final class Utils{
 		if(on != null)
 			candidates.addAll(on.type().methods());
 		else
-			candidates.addAll(method.isStatic() ? method.in().methods().stream().filter(MethodReference::isStatic).toList() : method.in().methods());
+			candidates.addAll(from.isStatic() ? from.in().methods().stream().filter(MethodReference::isStatic).toList() : from.in().methods());
 		MethodReference found = null;
 		candidates:
 		for(MethodReference x : candidates)
@@ -95,13 +94,31 @@ public final class Utils{
 				if(parameters.size() != args.size())
 					continue;
 				for(int i = 0; i < parameters.size(); i++)
-					if(!args.get(i).type().isAssignableTo(parameters.get(i)))
+					if(!args.get(i).type().isAssignableTo(parameters.get(i))) // TODO: fit args to parameter types
 						continue candidates;
 				found = x;
 				break;
 			}
-		if(found == null)
-			throw new IllegalStateException("Could not find method " + name + " given candidates " + candidates.stream().map(x -> x.name() + x.descriptor()).collect(Collectors.joining(", ")));
+		if(found == null) // TODO: return null and check in CallValue to allow for pass expressions
+			throw new IllegalStateException("Could not find method " + name + " given candidates [" + candidates.stream().map(x -> x.name() + x.descriptor()).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
+		return found;
+	}
+	
+	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, CallableReference from){
+		// TODO: constructor overloading (this(...), super(...))
+		CallableReference found = null;
+		candidates:
+		for(var x : of.constructors()){
+			if(x.parameters().size() != args.size())
+				continue;
+			for(int i = 0; i < x.parameters().size(); i++)
+				if(!args.get(i).type().isAssignableTo(x.parameters().get(i))) // TODO: fit args
+					continue candidates;
+			found = x;
+			break;
+		}
+		if(found == null)  // TODO: return null and check in CallValue to allow for pass expressions
+			throw new IllegalStateException("Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
 		return found;
 	}
 }

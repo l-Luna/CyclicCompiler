@@ -1,11 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
-import cyclic.lang.compiler.model.MethodReference;
-import cyclic.lang.compiler.model.TypeReference;
-import cyclic.lang.compiler.model.TypeResolver;
-import cyclic.lang.compiler.model.Utils;
-import cyclic.lang.compiler.model.cyclic.CyclicMethod;
+import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -23,7 +19,7 @@ public abstract class Statement{
 	
 	public void write(MethodVisitor mv){}
 	
-	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CyclicMethod method){
+	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CallableReference method){
 		var imports = type.imports;
 		if(ctx.block() != null){
 			BlockStatement statement = new BlockStatement(in);

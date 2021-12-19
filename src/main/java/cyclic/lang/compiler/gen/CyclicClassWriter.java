@@ -4,6 +4,7 @@ import cyclic.lang.compiler.model.AccessFlags;
 import cyclic.lang.compiler.model.MethodReference;
 import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import org.objectweb.asm.ClassWriter;
@@ -16,6 +17,27 @@ public final class CyclicClassWriter{
 	
 	public static void writeClass(ClassWriter writer, CyclicType type){
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, "java/lang/Object", null);
+		
+		MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+		for(var init : type.initBlocks)
+			if(init.isStatic())
+				CyclicMethodWriter.writeCtor(smv, init);
+		smv.visitInsn(Opcodes.RETURN);
+		smv.visitMaxs(0, 0);
+		smv.visitEnd();
+		
+		for(var ctor : type.constructors()){
+			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
+			
+			CyclicMethodWriter.writeCtor(mv, (CyclicConstructor)ctor);
+			for(var init : type.initBlocks)
+				if(!init.isStatic() && init.body != null)
+					init.body.write(mv);
+			
+			mv.visitInsn(Opcodes.RETURN);
+			mv.visitMaxs(0, 0);
+			mv.visitEnd();
+		}
 		
 		for(var method : type.methods()){
 			MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);

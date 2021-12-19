@@ -29,7 +29,7 @@ member
     | SEMICOLON
     ;
 
-constructor: modifiers type LPAREN parameters RPAREN (block | DASHARROW statement);
+constructor: modifiers type LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
 init: STATIC? block;
 
 function: modifiers type id LPAREN parameters RPAREN (functionBlock | functionArrow);

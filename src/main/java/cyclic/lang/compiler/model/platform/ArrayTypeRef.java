@@ -58,7 +58,7 @@ public class ArrayTypeRef implements TypeReference{
 		return Collections.emptyList();
 	}
 	
-	public List<? extends ConstructorReference> constructors(){
+	public List<? extends CallableReference> constructors(){
 		return Collections.emptyList();
 	}
 	

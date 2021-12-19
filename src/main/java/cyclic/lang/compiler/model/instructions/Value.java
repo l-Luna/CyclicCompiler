@@ -3,7 +3,6 @@ package cyclic.lang.compiler.model.instructions;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
-import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
@@ -13,7 +12,7 @@ import java.util.List;
 
 public abstract class Value{
 	
-	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CyclicMethod method){
+	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CallableReference method){
 		if(ctx instanceof CyclicLangParser.NullLitContext)
 			return new NullLiteralValue();
 		if(ctx instanceof CyclicLangParser.IntLitContext intLit){
@@ -55,10 +54,9 @@ public abstract class Value{
 			if(local != null)
 				return new LocalVarValue(local);
 			// or a static field of the current type, or an instance field of the current type for a non-static method
-			for(var field : method.in().fields()){
+			for(var field : method.in().fields())
 				if(field.name().equals(name) && (field.isStatic() || !method.isStatic()))
 					return new FieldValue(field);
-			}
 			// or a partial or full type name
 			var target = TypeResolver.resolveOptional(name, type.imports, type.packageName());
 			return target.map(TypeValue::new).orElseGet(() -> new TypeValue(name));
@@ -67,6 +65,11 @@ public abstract class Value{
 			Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
 			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 			return new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
+		}
+		if(ctx instanceof CyclicLangParser.InitialisationValueContext init){
+			List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
+			TypeReference of = TypeResolver.resolve(init.initialisation().type().getText(), type.imports, type.packageName());
+			return new InitializationValue(args, Utils.resolveConstructor(of, args, method));
 		}
 		if(ctx instanceof CyclicLangParser.BinaryOpValueContext bin){
 			Value left = Value.fromAst(bin.left, scope, type, method);
@@ -119,7 +122,7 @@ public abstract class Value{
 			}
 		}
 		
-		// allow for multi-step conversions
+		// allows for multi-step conversions
 		return ret != null ? ret.fit(target) : null;
 	}
 	
@@ -341,7 +344,6 @@ public abstract class Value{
 	}
 	
 	public static class CallValue extends Value{
-		
 		Value on;
 		List<Value> args;
 		MethodReference target;
@@ -438,6 +440,29 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return thisType;
+		}
+	}
+	
+	public static class InitializationValue extends Value{
+		List<Value> args;
+		CallableReference ctor;
+		
+		public InitializationValue(List<Value> args, CallableReference ctor){
+			this.args = args;
+			this.ctor = ctor;
+		}
+		
+		public void write(MethodVisitor mv){
+			// TODO: constructor overloading (this(...), super(...))
+			mv.visitTypeInsn(Opcodes.NEW, ctor.in().internalName());
+			mv.visitInsn(Opcodes.DUP);
+			for(var v : args)
+				v.write(mv);
+			ctor.writeInvoke(mv);
+		}
+		
+		public TypeReference type(){
+			return ctor.in();
 		}
 	}
 }
