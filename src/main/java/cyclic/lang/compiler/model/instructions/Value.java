@@ -287,8 +287,7 @@ public abstract class Value{
 		}
 		
 		public void write(MethodVisitor mv){
-			// TODO: check for singleton types
-			throw new IllegalStateException("Tried to write the value of a non-singleton type!");
+			// write singleton types
 		}
 		
 		public TypeReference type(){
@@ -312,8 +311,7 @@ public abstract class Value{
 		}
 		
 		public void write(MethodVisitor mv){
-			// TODO: consider singletons
-			if(!(from instanceof TypeValue) && from != null)
+			if(from != null)
 				from.write(mv);
 			// implicit this when needed
 			if(from == null && !ref.isStatic())
@@ -355,7 +353,7 @@ public abstract class Value{
 		}
 		
 		public void write(MethodVisitor mv){
-			if(on != null && !(on instanceof Value.TypeValue)) // TODO: consider singletons
+			if(on != null)
 				on.write(mv);
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())

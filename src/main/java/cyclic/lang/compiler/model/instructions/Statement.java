@@ -175,6 +175,8 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			if(on != null)
 				on.write(mv);
+			else if(!fieldRef.isStatic())
+				mv.visitVarInsn(Opcodes.ALOAD, 0);
 			toSet.write(mv);
 			fieldRef.writePut(mv);
 		}
