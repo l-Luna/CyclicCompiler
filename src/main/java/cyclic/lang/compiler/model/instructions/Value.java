@@ -95,6 +95,28 @@ public abstract class Value{
 			var check = new InstanceofValue(TypeResolver.resolve(inst.type().getText(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
 			return inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, check, null) : check;
 		}
+		if(ctx instanceof CyclicLangParser.CastValueContext castCtx){
+			TypeReference target = TypeResolver.resolve(castCtx.cast().type().getText(), type.imports, type.packageName());
+			Value casting = fromAst(castCtx.cast().value(), scope, type, method);
+			// if it fits, just pass it along
+			var fit = casting.fit(target);
+			if(fit != null)
+				return fit;
+			if(target instanceof PrimitiveTypeRef p){
+				if(p.type == PrimitiveTypeRef.Primitive.NULL)
+					return casting;
+				if(casting.type() instanceof PrimitiveTypeRef c){
+					if(c.narrowingOpcodes(p.type) == null)
+						throw new IllegalStateException("Cannot convert value of type " + c.type + " to " + p.type);
+					else
+						return new PrimitiveCastValue(casting, p.type);
+				}else
+					throw new IllegalStateException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.type);
+			}else if(casting.type() instanceof PrimitiveTypeRef p)
+				throw new IllegalStateException("Cannot convert primitive value of type " + p.type + " to non-primitive type " + target.fullyQualifiedName());
+			else
+				return new ClassCastValue(casting, target);
+		}
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
 	}
@@ -506,6 +528,50 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return TypeResolver.resolve("boolean");
+		}
+	}
+	
+	public static class PrimitiveCastValue extends Value{
+		Value casting;
+		PrimitiveTypeRef.Primitive to;
+		
+		public PrimitiveCastValue(Value casting, PrimitiveTypeRef.Primitive to){
+			this.casting = casting;
+			this.to = to;
+		}
+		
+		public void write(MethodVisitor mv){
+			casting.write(mv);
+			if(casting.type() instanceof PrimitiveTypeRef from){
+				List<Integer> opcodes = from.narrowingOpcodes(to);
+				if(opcodes == null)
+					throw new IllegalStateException("Can't convert from " + from.type + " to " + to + " by narrowing!");
+				for(var op : opcodes)
+					mv.visitInsn(op);
+			}
+		}
+		
+		public TypeReference type(){
+			return new PrimitiveTypeRef(to);
+		}
+	}
+	
+	public static class ClassCastValue extends Value{
+		Value casting;
+		TypeReference target;
+		
+		public ClassCastValue(Value casting, TypeReference target){
+			this.casting = casting;
+			this.target = target;
+		}
+		
+		public void write(MethodVisitor mv){
+			casting.write(mv);
+			mv.visitTypeInsn(Opcodes.CHECKCAST, target.internalName());
+		}
+		
+		public TypeReference type(){
+			return target;
 		}
 	}
 }

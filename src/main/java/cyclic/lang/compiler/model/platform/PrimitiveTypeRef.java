@@ -202,4 +202,71 @@ public class PrimitiveTypeRef implements TypeReference{
 	public boolean isNumber(){
 		return type == BYTE || type == SHORT || type == INT || type == LONG || type == FLOAT || type == DOUBLE;
 	}
+	
+	// empty list for free conversions, null for incompatible conversions, or a list of opcodes to convert types
+	public List<Integer> narrowingOpcodes(Primitive target){
+		switch(type){
+			case SHORT -> {
+				if(target == BYTE)
+					return List.of(Opcodes.I2B);
+				else if(target == CHAR)
+					return List.of(Opcodes.I2C);
+			}
+			case INT -> {
+				if(target == BYTE)
+					return List.of(Opcodes.I2B);
+				else if(target == CHAR)
+					return List.of(Opcodes.I2C);
+				else if(target == SHORT)
+					return List.of(Opcodes.I2S);
+			}
+			case BOOLEAN, NULL, VOID -> {
+				// NULL to non-primitive conversion is handled in CastValue
+				return null;
+			}
+			case LONG -> {
+				if(target == BYTE)
+					return List.of(Opcodes.L2I, Opcodes.I2B);
+				else if(target == CHAR)
+					return List.of(Opcodes.L2I, Opcodes.I2C);
+				else if(target == SHORT)
+					return List.of(Opcodes.L2I, Opcodes.I2S);
+				else if(target == INT)
+					return List.of(Opcodes.L2I);
+			}
+			case FLOAT -> {
+				if(target == BYTE)
+					return List.of(Opcodes.F2I, Opcodes.I2B);
+				else if(target == CHAR)
+					return List.of(Opcodes.F2I, Opcodes.I2C);
+				else if(target == SHORT)
+					return List.of(Opcodes.F2I, Opcodes.I2S);
+				else if(target == INT)
+					return List.of(Opcodes.F2I);
+				else if(target == LONG)
+					return List.of(Opcodes.F2L);
+			}
+			case DOUBLE -> {
+				if(target == BYTE)
+					return List.of(Opcodes.D2I, Opcodes.I2B);
+				else if(target == CHAR)
+					return List.of(Opcodes.D2I, Opcodes.I2C);
+				else if(target == SHORT)
+					return List.of(Opcodes.D2I, Opcodes.I2S);
+				else if(target == INT)
+					return List.of(Opcodes.D2I);
+				else if(target == LONG)
+					return List.of(Opcodes.D2L);
+				else if(target == FLOAT)
+					return List.of(Opcodes.D2F);
+			}
+			case CHAR -> {
+				if(target == BYTE)
+					return List.of(Opcodes.I2B);
+				else if(target == SHORT)
+					return List.of(Opcodes.I2S);
+			}
+		}
+		return List.of();
+	}
 }
