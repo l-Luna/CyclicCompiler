@@ -7,6 +7,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.util.List;
 
@@ -85,6 +86,10 @@ public abstract class Value{
 			if(method.isStatic())
 				throw new IllegalStateException("Can't use \"this\" in a static method!");
 			return new ThisValue(method.in());
+		}
+		if(ctx instanceof CyclicLangParser.ClassValueContext clss){
+			// TODO: generics
+			return new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
 		}
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
@@ -461,6 +466,23 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return ctor.in();
+		}
+	}
+	
+	public static class ClassValue extends Value{
+		private TypeReference of;
+		
+		public ClassValue(TypeReference of){
+			this.of = of;
+		}
+		
+		public void write(MethodVisitor mv){
+			mv.visitLdcInsn(Type.getType(of.descriptor()));
+		}
+		
+		public TypeReference type(){
+			// TODO: generics
+			return TypeResolver.resolve("java.lang.Class");
 		}
 	}
 }
