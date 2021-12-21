@@ -91,6 +91,10 @@ public abstract class Value{
 			// TODO: generics
 			return new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
 		}
+		if(ctx instanceof CyclicLangParser.InstanceCheckValueContext inst){
+			var check = new InstanceofValue(TypeResolver.resolve(inst.type().getText(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
+			return inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, check, null) : check;
+		}
 		System.out.println("Unknown expression " + ctx.getText());
 		return null;
 	}
@@ -483,6 +487,25 @@ public abstract class Value{
 		public TypeReference type(){
 			// TODO: generics
 			return TypeResolver.resolve("java.lang.Class");
+		}
+	}
+	
+	public static class InstanceofValue extends Value{
+		private TypeReference target;
+		Value checking;
+		
+		public InstanceofValue(TypeReference target, Value checking){
+			this.target = target;
+			this.checking = checking;
+		}
+		
+		public void write(MethodVisitor mv){
+			checking.write(mv);
+			mv.visitTypeInsn(Opcodes.INSTANCEOF, target.internalName());
+		}
+		
+		public TypeReference type(){
+			return TypeResolver.resolve("boolean");
 		}
 	}
 }
