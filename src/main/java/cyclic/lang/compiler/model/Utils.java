@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.external.SystemTypeRef;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.antlr.v4.runtime.RuleContext;
 import org.objectweb.asm.Opcodes;
@@ -54,7 +55,7 @@ public final class Utils{
 		return (bitfield & bit) == bit;
 	}
 	
-	// may be a primitive type
+	// may be a primitive or array type too
 	public static TypeReference forAnyClass(Class<?> type){
 		if(byte.class.equals(type))
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BYTE);
@@ -72,8 +73,11 @@ public final class Utils{
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.DOUBLE);
 		else if(void.class.equals(type))
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.VOID);
-		else
+		else{
+			if(type.isArray())
+				return new ArrayTypeRef(forAnyClass(type.componentType()));
 			return new SystemTypeRef(type);
+		}
 	}
 	
 	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from){
@@ -94,7 +98,7 @@ public final class Utils{
 				if(parameters.size() != args.size())
 					continue;
 				for(int i = 0; i < parameters.size(); i++)
-					if(!args.get(i).type().isAssignableTo(parameters.get(i))) // TODO: fit args to parameter types
+					if(args.get(i).fit(parameters.get(i)) == null)
 						continue candidates;
 				found = x;
 				break;
@@ -112,7 +116,7 @@ public final class Utils{
 			if(x.parameters().size() != args.size())
 				continue;
 			for(int i = 0; i < x.parameters().size(); i++)
-				if(!args.get(i).type().isAssignableTo(x.parameters().get(i))) // TODO: fit args
+				if(args.get(i).fit(x.parameters().get(i)) == null)
 					continue candidates;
 			found = x;
 			break;

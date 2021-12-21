@@ -59,6 +59,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitObjectType(CyclicLangParser.ObjectTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#recordComponents}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRecordComponents(CyclicLangParser.RecordComponentsContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#member}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -100,6 +106,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitVarDecl(CyclicLangParser.VarDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#parameter}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParameter(CyclicLangParser.ParameterContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#parameters}.
 	 * @param ctx the parse tree
@@ -212,6 +224,13 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCastValue(CyclicLangParser.CastValueContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code arrayIndexValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayIndexValue(CyclicLangParser.ArrayIndexValueContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code doValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
