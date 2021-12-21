@@ -149,12 +149,12 @@ public final class Operations{
 				Set.of(Op.RIGHTSHIFT), Set.of(LONG),
 				(l, r) -> new BinaryOpValue(LONG, Opcodes.LSHR, l, r)));
 		
-		handlers.add(new TypeSetOpHandler(
+		/*handlers.add(new TypeSetOpHandler(
 				Set.of(Op.ULSHIFT), Set.of(INT),
 				(l, r) -> new BinaryOpValue(INT, Opcodes.IUSHR, l, new UnaryOpValue(INT, r, Opcodes.INEG))));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.ULSHIFT), Set.of(LONG),
-				(l, r) -> new BinaryOpValue(LONG, Opcodes.LUSHR, l, new UnaryOpValue(LONG, r, Opcodes.LNEG))));
+				(l, r) -> new BinaryOpValue(LONG, Opcodes.LUSHR, l, new UnaryOpValue(LONG, r, Opcodes.LNEG))));*/
 		
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.URSHIFT), Set.of(INT),
