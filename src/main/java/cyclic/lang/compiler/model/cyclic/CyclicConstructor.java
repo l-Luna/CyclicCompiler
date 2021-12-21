@@ -31,7 +31,7 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		flags = Utils.fromModifiers(ctx.modifiers());
 		flags = new AccessFlags(flags.visibility(), false, false); // no final or abstract constructors
 		
-		for(var p : ctx.parameters().varDecl()){
+		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type().getText());
 			paramNames.add(p.ID().getText());
 		}

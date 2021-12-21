@@ -389,8 +389,10 @@ public abstract class Value{
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
-			for(var v : args)
-				v.write(mv);
+			for(int i = 0; i < args.size(); i++){
+				Value v = args.get(i);
+				v.fit(target.parameters().get(i)).write(mv);
+			}
 			target.writeInvoke(mv);
 		}
 		
@@ -485,8 +487,10 @@ public abstract class Value{
 			// TODO: constructor overloading (this(...), super(...))
 			mv.visitTypeInsn(Opcodes.NEW, ctor.in().internalName());
 			mv.visitInsn(Opcodes.DUP);
-			for(var v : args)
-				v.write(mv);
+			for(int i = 0; i < args.size(); i++){
+				Value v = args.get(i);
+				v.fit(ctor.parameters().get(i)).write(mv);
+			}
 			ctor.writeInvoke(mv);
 		}
 		

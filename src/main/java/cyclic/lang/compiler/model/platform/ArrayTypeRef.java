@@ -39,7 +39,7 @@ public class ArrayTypeRef implements TypeReference{
 	}
 	
 	public TypeReference superClass(){
-		return TypeResolver.resolveOptional("java.lang.Object").orElseThrow();
+		return underlying.superClass() != null ? new ArrayTypeRef(underlying.superClass()) : TypeResolver.resolve("java.lang.Object");
 	}
 	
 	public List<? extends TypeReference> superInterfaces(){
@@ -55,7 +55,7 @@ public class ArrayTypeRef implements TypeReference{
 	}
 	
 	public List<? extends FieldReference> fields(){
-		return Collections.emptyList();
+		return Collections.singletonList(new ArrayLengthField(this));
 	}
 	
 	public List<? extends CallableReference> constructors(){

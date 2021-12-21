@@ -41,7 +41,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		});
 		
 		retType = ctx.type().getText();
-		for(var p : ctx.parameters().varDecl()){
+		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type().getText());
 			paramNames.add(p.ID().getText());
 		}

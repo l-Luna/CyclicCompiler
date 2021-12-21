@@ -7,9 +7,9 @@ packageDecl: PACKAGE id SEMICOLON;
 imports: importDecl*;
 importDecl: IMPORT STATIC? id (DOT STAR)? SEMICOLON;
 
-classDecl: modifiers objectType ID objectExtends? objectImplements? (LBRACE annotation* member* RBRACE | SEMICOLON);
+classDecl: modifiers objectType ID recordComponents? objectExtends? objectImplements? (LBRACE annotation* member* RBRACE | SEMICOLON);
 
-objectExtends: EXTENDS type;
+objectExtends: EXTENDS type (COMMA type)*; // interfaces can have many
 objectImplements: IMPLEMENTS type (COMMA type)*;
 
 objectType
@@ -20,6 +20,8 @@ objectType
     | RECORD
     | SINGLE
     ;
+
+recordComponents: LPAREN (parameter (COMMA parameter)*)? RPAREN;
 
 member
     : function
@@ -39,7 +41,8 @@ functionBlock: (block | SEMICOLON);
 functionArrow: DASHARROW (value SEMICOLON | statement);
 
 varDecl: modifiers type ID (ASSIGN value)?;
-parameters: (varDecl (COMMA varDecl)*)?;
+parameter: FINAL? type ELIPSES? ID (ASSIGN value)?;
+parameters: (parameter (COMMA parameter)*)?;
 
 block: LBRACE statement* RBRACE;
 
@@ -65,7 +68,8 @@ annotation: AT id;
 
 type
     : annotation* rawType (LESSER type (COMMA type)* GREATER)?
-    | type LSQUAR RSQUAR
+    // e.g. @NonNull Integer @Nullable [] for a nullable array of nonnull integers
+    | type annotation* LSQUAR RSQUAR
     ;
 
 rawType
@@ -84,33 +88,34 @@ id: ID (DOT ID)*;
 modifiers: modifier*;
 
 value
-    : left=value binaryop right=value     #binaryOpValue
-    | value DOT call                      #functionValue
-    | call                                #functionValue
-    | value EXCLAMATION? INSTANCEOF type  #instanceCheckValue
-    | value DOT ID            #varValue // ID after another value
-    | DO statement            #doValue
-    | initialisation          #initialisationValue
-    | LPAREN value RPAREN     #parenValue
-    | varDecl                 #inlineDecleration
-    | switchStatement         #switchValue
-    | id DOT CLASS            #classValue
-    | cast                    #castValue
-    | unaryop value           #unaryOpValue
-    | newArray                #newArrayValue
-    | newListedArray          #newListedArrayValue
-    | THIS                    #thisValue
-    | DECLIT                  #decLit
-    | INTLIT                  #intLit
-    | STRLIT                  #strLit
-    | BOOLLIT                 #boolLit
-    | NULL                    #nullLit
-    | ID                      #varValue
+    : left=value binaryop right=value           #binaryOpValue
+    | value DOT call                            #functionValue
+    | call                                      #functionValue
+    | value EXCLAMATION? INSTANCEOF type        #instanceCheckValue
+    | array=value LSQUAR index=value RSQUAR     #arrayIndexValue
+    | value DOT ID                              #varValue
+    | DO statement                              #doValue
+    | initialisation                            #initialisationValue
+    | LPAREN value RPAREN                       #parenValue
+    | varDecl                                   #inlineDecleration
+    | switchStatement                           #switchValue
+    | id DOT CLASS                              #classValue
+    | cast                                      #castValue
+    | unaryop value                             #unaryOpValue
+    | newArray                                  #newArrayValue
+    | newListedArray                            #newListedArrayValue
+    | THIS                                      #thisValue
+    | DECLIT                                    #decLit
+    | INTLIT                                    #intLit
+    | STRLIT                                    #strLit
+    | BOOLLIT                                   #boolLit
+    | NULL                                      #nullLit
+    | ID                                        #varValue
     ;
 
 initialisation: NEW type LPAREN arguments RPAREN;
 cast: LPAREN type RPAREN value;
-varAssignment: value ASSIGN value;
+varAssignment: value binaryop? ASSIGN value;
 call: ID LPAREN arguments RPAREN;
 newArray: NEW type LSQUAR value RSQUAR;
 newListedArray: NEW type LSQUAR RSQUAR LBRACE (value (COMMA value)*)? RBRACE;
@@ -152,7 +157,7 @@ binaryop
     | RSHIFT
     | ULSHIFT
     | URSHIFT
-    | ASSIGN // can't use varAssign as a value because it's left-recursive with value, but its effectively a binary op anyways
+    | ASSIGN
     | PASS
     ;
 
@@ -263,6 +268,7 @@ DOT: '.';
 COMMA: ',';
 EXCLAMATION: '!';
 QUESTION: '?';
+ELIPSES: '...';
 
 DASHARROW: '->';
 EQARROW: '=>'; // Unused

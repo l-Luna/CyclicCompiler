@@ -38,7 +38,8 @@ public class CyclicType implements TypeReference{
 		this.name = ast.ID().getText();
 		this.packageName = packageName;
 		this.imports = imports;
-		superTypeName = ast.objectExtends() != null ? ast.objectExtends().type().getText() : "java.lang.Object";
+		// TODO: interface multiple inheritance
+		superTypeName = ast.objectExtends() != null ? ast.objectExtends().type(0).getText() : "java.lang.Object";
 		interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
 		
 		String typeText = ast.objectType().getText().toLowerCase(Locale.ROOT).replaceAll(" +", "");
