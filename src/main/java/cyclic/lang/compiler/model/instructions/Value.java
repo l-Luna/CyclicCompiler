@@ -128,7 +128,17 @@ public abstract class Value{
 			else
 				return new NewArrayValue(component, length);
 		}
-		
+		if(ctx instanceof CyclicLangParser.NewListedArrayValueContext array){
+			TypeReference component = TypeResolver.resolve(array.newListedArray().type().getText(), type.imports, type.packageName());
+			List<Value> entries = array.newListedArray().value().stream().map(k -> fromAst(k, scope, type, method)).toList();
+			Value length = new IntLiteralValue(entries.size());
+			Value arrayValue;
+			if(component instanceof PrimitiveTypeRef p)
+				arrayValue = new NewPrimitiveArrayValue(p, length);
+			else
+				arrayValue = new NewArrayValue(component, length);
+			return new NewListedArrayValue(arrayValue, entries, (ArrayTypeRef)arrayValue.type());
+		}
 		throw new IllegalStateException("Unknown expression " + ctx.getText());
 	}
 	
@@ -654,6 +664,33 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return new ArrayTypeRef(componentType);
+		}
+	}
+	
+	public static class NewListedArrayValue extends Value{
+		Value array;
+		List<Value> entries;
+		ArrayTypeRef arrayType;
+		
+		public NewListedArrayValue(Value array, List<Value> entries, ArrayTypeRef arrayType){
+			this.array = array;
+			this.entries = entries;
+			this.arrayType = arrayType;
+		}
+		
+		public void write(MethodVisitor mv){
+			array.write(mv);
+			for(int i = 0; i < entries.size(); i++){
+				Value e = entries.get(i);
+				mv.visitInsn(Opcodes.DUP);
+				new IntLiteralValue(i).write(mv);
+				e.write(mv);
+				mv.visitInsn(arrayType.getComponent().arrayStoreOpcode());
+			}
+		}
+		
+		public TypeReference type(){
+			return arrayType;
 		}
 	}
 }
