@@ -76,4 +76,12 @@ public interface TypeReference{
 	default int localStoreOpcode(){
 		return Opcodes.ASTORE;
 	}
+	
+	default int arrayLoadOpcode(){
+		return Opcodes.AALOAD;
+	}
+	
+	default int arrayStoreOpcode(){
+		return Opcodes.AASTORE;
+	}
 }

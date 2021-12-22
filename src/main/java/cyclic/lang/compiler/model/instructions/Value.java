@@ -4,6 +4,7 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
+import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -117,8 +118,9 @@ public abstract class Value{
 			else
 				return new ClassCastValue(casting, target);
 		}
-		System.out.println("Unknown expression " + ctx.getText());
-		return null;
+		if(ctx instanceof CyclicLangParser.ArrayIndexValueContext ind)
+			return new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
+		throw new IllegalStateException("Unknown expression " + ctx.getText());
 	}
 	
 	/**
@@ -383,6 +385,8 @@ public abstract class Value{
 			this.target = target;
 		}
 		
+		// make sure that changes here are mirrored in InitializationValue
+		// and CallStatement
 		public void write(MethodVisitor mv){
 			if(on != null)
 				on.write(mv);
@@ -576,6 +580,33 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return target;
+		}
+	}
+	
+	public static class ArrayIndexValue extends Value{
+		Value array, index;
+		ArrayTypeRef arrayType;
+		
+		public ArrayIndexValue(Value array, Value index){
+			this.array = array;
+			this.index = index.fit(TypeResolver.resolve("int"));
+			if(this.index == null){
+				throw new IllegalStateException("Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer!");
+			}
+			if(array.type() instanceof ArrayTypeRef a)
+				arrayType = a;
+			else
+				throw new IllegalStateException("Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array!");
+		}
+		
+		public void write(MethodVisitor mv){
+			array.write(mv);
+			index.write(mv);
+			mv.visitInsn(arrayType.getComponent().arrayLoadOpcode());
+		}
+		
+		public TypeReference type(){
+			return arrayType.getComponent();
 		}
 	}
 }

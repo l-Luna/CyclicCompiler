@@ -154,8 +154,10 @@ public abstract class Statement{
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
-			for(var v : args)
-				v.write(mv);
+			for(int i = 0; i < args.size(); i++){
+				Value v = args.get(i);
+				v.fit(target.parameters().get(i)).write(mv);
+			}
 			target.writeInvoke(mv);
 		}
 	}

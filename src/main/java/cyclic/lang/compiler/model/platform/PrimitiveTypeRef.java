@@ -116,6 +116,30 @@ public class PrimitiveTypeRef implements TypeReference{
 		};
 	}
 	
+	public int arrayLoadOpcode(){
+		return switch(type){
+			case NULL -> Opcodes.AALOAD;
+			case BYTE, BOOLEAN -> Opcodes.BALOAD;
+			case CHAR, SHORT, INT -> Opcodes.IALOAD;
+			case LONG -> Opcodes.LALOAD;
+			case FLOAT -> Opcodes.FALOAD;
+			case DOUBLE -> Opcodes.DALOAD;
+			case VOID -> throw new IllegalStateException("Trying to load from a void array!");
+		};
+	}
+	
+	public int arrayStoreOpcode(){
+		return switch(type){
+			case NULL -> Opcodes.AASTORE;
+			case BYTE, BOOLEAN -> Opcodes.BASTORE;
+			case CHAR, SHORT, INT -> Opcodes.IASTORE;
+			case LONG -> Opcodes.LASTORE;
+			case FLOAT -> Opcodes.FASTORE;
+			case DOUBLE -> Opcodes.DASTORE;
+			case VOID -> throw new IllegalStateException("Trying to store a void value in an array!");
+		};
+	}
+	
 	public int returnOpcode(){
 		return switch(type){
 			case NULL -> Opcodes.ARETURN;

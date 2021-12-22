@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ArrayTypeRef implements TypeReference{
 	
-	TypeReference underlying;
+	private TypeReference underlying;
 	
 	public ArrayTypeRef(TypeReference underlying){
 		this.underlying = underlying;
@@ -15,15 +15,15 @@ public class ArrayTypeRef implements TypeReference{
 	
 	// Most of these fields aren't properly applicable to arrays, and are given values that are useful for debugging.
 	public String shortName(){
-		return underlying.shortName() + "[]";
+		return getComponent().shortName() + "[]";
 	}
 	
 	public String packageName(){
-		return underlying.packageName();
+		return getComponent().packageName();
 	}
 	
 	public String internalName(){
-		return underlying.internalName() + "[]";
+		return getComponent().internalName() + "[]";
 	}
 	
 	public TypeKind kind(){
@@ -39,7 +39,7 @@ public class ArrayTypeRef implements TypeReference{
 	}
 	
 	public TypeReference superClass(){
-		return underlying.superClass() != null ? new ArrayTypeRef(underlying.superClass()) : TypeResolver.resolve("java.lang.Object");
+		return getComponent().superClass() != null ? new ArrayTypeRef(getComponent().superClass()) : TypeResolver.resolve("java.lang.Object");
 	}
 	
 	public List<? extends TypeReference> superInterfaces(){
@@ -63,6 +63,10 @@ public class ArrayTypeRef implements TypeReference{
 	}
 	
 	public String descriptor(){
-		return "[" + underlying.descriptor();
+		return "[" + getComponent().descriptor();
+	}
+	
+	public TypeReference getComponent(){
+		return underlying;
 	}
 }
