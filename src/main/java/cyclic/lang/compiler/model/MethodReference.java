@@ -21,7 +21,7 @@ public interface MethodReference extends CallableReference{
 	
 	default void writeInvoke(MethodVisitor mv){
 		if(isStatic()){
-			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), false);
+			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), in().kind() == TypeKind.INTERFACE);
 		}else{
 			boolean isIface = in().kind() == TypeKind.INTERFACE;
 			mv.visitMethodInsn(isIface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isIface);

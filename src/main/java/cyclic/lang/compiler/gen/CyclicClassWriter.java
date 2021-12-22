@@ -34,6 +34,10 @@ public final class CyclicClassWriter{
 		for(var ctor : type.constructors()){
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
 			
+			// implicit super(); TODO: constructor overloading and args super-constructors
+			mv.visitVarInsn(Opcodes.ALOAD, 0);
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", "()V", false);
+			
 			for(var init : type.initBlocks) // init blocks go first so that field values can be setup for use
 				if(!init.isStatic() && init.body != null)
 					init.body.write(mv);
