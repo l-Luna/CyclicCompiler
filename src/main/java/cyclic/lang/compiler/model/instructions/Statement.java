@@ -4,6 +4,7 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -51,6 +52,14 @@ public abstract class Statement{
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, method) : null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, method)).toList();
 			return new CallStatement(in, on, Utils.resolveMethod(ctx.call().ID().getText(), on, args, method), args);
+		}else if(ctx.ifStatement() != null){
+			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, method);
+			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			if(cond == null)
+				throw new IllegalStateException("Expression " + ctx.ifStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
+			Statement success = fromAst(ctx.ifStatement().statement(), in, type, method);
+			Statement fail = ctx.ifStatement().elseStatement() == null ? null : fromAst(ctx.ifStatement().elseStatement().statement(), in, type, method);
+			return new IfStatement(in, success, fail, cond);
 		}
 		return new NoopStatement(in);
 	}
@@ -205,6 +214,30 @@ public abstract class Statement{
 			index.write(mv);
 			val.write(mv);
 			mv.visitInsn(arrayType.getComponent().arrayStoreOpcode());
+		}
+	}
+	
+	public static class IfStatement extends Statement{
+		Statement success, fail;
+		Value condition;
+		
+		public IfStatement(Scope in, Statement success, Statement fail, Value condition){
+			super(in);
+			this.success = success;
+			this.fail = fail;
+			this.condition = condition;
+		}
+		
+		public void write(MethodVisitor mv){
+			Label preWrite = new Label(), postWrite = new Label();
+			condition.write(mv);
+			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
+			if(fail != null)
+				fail.write(mv);
+			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
+			mv.visitLabel(preWrite); // branch succeeded
+			success.write(mv); // success block
+			mv.visitLabel(postWrite);
 		}
 	}
 }

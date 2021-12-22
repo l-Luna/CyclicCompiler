@@ -57,7 +57,9 @@ public final class Utils{
 	
 	// may be a primitive or array type too
 	public static TypeReference forAnyClass(Class<?> type){
-		if(byte.class.equals(type))
+		if(boolean.class.equals(type))
+			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN);
+		else if(byte.class.equals(type))
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BYTE);
 		else if(short.class.equals(type))
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.SHORT);
