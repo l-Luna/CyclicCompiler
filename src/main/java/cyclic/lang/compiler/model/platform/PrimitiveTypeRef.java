@@ -293,4 +293,18 @@ public class PrimitiveTypeRef implements TypeReference{
 		}
 		return List.of();
 	}
+	
+	public int arrayTypeCode(){
+		return switch(type){
+			case BYTE -> Opcodes.T_BYTE;
+			case SHORT -> Opcodes.T_SHORT;
+			case INT -> Opcodes.T_INT;
+			case BOOLEAN -> Opcodes.T_BOOLEAN;
+			case LONG -> Opcodes.T_LONG;
+			case FLOAT -> Opcodes.T_FLOAT;
+			case DOUBLE -> Opcodes.T_DOUBLE;
+			case CHAR -> Opcodes.T_CHAR;
+			case VOID, NULL -> throw new IllegalStateException();
+		};
+	}
 }

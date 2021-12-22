@@ -120,6 +120,15 @@ public abstract class Value{
 		}
 		if(ctx instanceof CyclicLangParser.ArrayIndexValueContext ind)
 			return new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
+		if(ctx instanceof CyclicLangParser.NewArrayValueContext array){
+			TypeReference component = TypeResolver.resolve(array.newArray().type().getText(), type.imports, type.packageName());
+			Value length = fromAst(array.newArray().value(), scope, type, method);
+			if(component instanceof PrimitiveTypeRef p)
+				return new NewPrimitiveArrayValue(p, length);
+			else
+				return new NewArrayValue(component, length);
+		}
+		
 		throw new IllegalStateException("Unknown expression " + ctx.getText());
 	}
 	
@@ -607,6 +616,44 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return arrayType.getComponent();
+		}
+	}
+	
+	public static class NewArrayValue extends Value{
+		TypeReference componentType;
+		Value length;
+		
+		public NewArrayValue(TypeReference componentType, Value length){
+			this.componentType = componentType;
+			this.length = length;
+		}
+		
+		public void write(MethodVisitor mv){
+			length.write(mv);
+			mv.visitTypeInsn(Opcodes.ANEWARRAY, componentType.internalName());
+		}
+		
+		public TypeReference type(){
+			return new ArrayTypeRef(componentType);
+		}
+	}
+	
+	public static class NewPrimitiveArrayValue extends Value{
+		PrimitiveTypeRef componentType;
+		Value length;
+		
+		public NewPrimitiveArrayValue(PrimitiveTypeRef componentType, Value length){
+			this.componentType = componentType;
+			this.length = length;
+		}
+		
+		public void write(MethodVisitor mv){
+			length.write(mv);
+			mv.visitIntInsn(Opcodes.NEWARRAY, componentType.arrayTypeCode());
+		}
+		
+		public TypeReference type(){
+			return new ArrayTypeRef(componentType);
 		}
 	}
 }

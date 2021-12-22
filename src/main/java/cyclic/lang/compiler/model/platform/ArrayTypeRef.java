@@ -22,8 +22,9 @@ public class ArrayTypeRef implements TypeReference{
 		return getComponent().packageName();
 	}
 	
+	// For an array type, internal names are different
 	public String internalName(){
-		return getComponent().internalName() + "[]";
+		return descriptor();
 	}
 	
 	public TypeKind kind(){
