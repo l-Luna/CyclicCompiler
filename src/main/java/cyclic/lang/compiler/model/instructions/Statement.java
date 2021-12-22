@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.instructions;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
+import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -37,10 +38,13 @@ public abstract class Statement{
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, method);
 			// if the LHS is a LocalVarValue, reuse the variable
 			// if the LHS is a field value, assign to the field
+			// if the LHS is an array index value, assign to the array
 			if(left instanceof Value.LocalVarValue local)
 				return new VarStatement(in, local.local.name, null, right, false, false);
 			else if(left instanceof Value.FieldValue field)
 				return new AssignFieldStatement(in, field.ref, field.from, right);
+			else if(left instanceof Value.ArrayIndexValue idx)
+				return new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType);
 			else
 				throw new IllegalStateException("Can't assign value to " + ctx.varAssignment().value(0).getText());
 		}else if(ctx.call() != null){
@@ -181,6 +185,26 @@ public abstract class Statement{
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
 			toSet.write(mv);
 			fieldRef.writePut(mv);
+		}
+	}
+	
+	public static class AssignArrayStatement extends Statement{
+		Value on, index, val;
+		ArrayTypeRef arrayType;
+		
+		public AssignArrayStatement(Scope in, Value on, Value index, Value val, ArrayTypeRef arrayType){
+			super(in);
+			this.on = on;
+			this.index = index;
+			this.val = val;
+			this.arrayType = arrayType;
+		}
+		
+		public void write(MethodVisitor mv){
+			on.write(mv);
+			index.write(mv);
+			val.write(mv);
+			mv.visitInsn(arrayType.getComponent().arrayStoreOpcode());
 		}
 	}
 }
