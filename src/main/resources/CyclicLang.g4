@@ -144,6 +144,8 @@ binaryop
     | PLUS
     | MINUS
     | PERCENT
+    | BITAND
+    | BITOR
     | AND
     | OR
     | UP
@@ -222,14 +224,15 @@ DO: 'do';
 IF: 'if';
 
 DECLIT: MINUS? DIGIT* DOT DIGIT+ ('f' | 'd')?;
-INTLIT: MINUS? DIGIT+ ('f' | 'd')?;
+INTLIT: MINUS? DIGIT+ ('f' | 'd' | 'l')?;
 STRLIT: QUOTE (~'"')*? QUOTE;
 BOOLLIT: TRUE | FALSE;
 NULL: 'null';
 
+BITAND: '&';
+BITOR: '|';
 AND: '&&';
 OR: '||';
-
 UP: '^';
 
 STAR: '*';

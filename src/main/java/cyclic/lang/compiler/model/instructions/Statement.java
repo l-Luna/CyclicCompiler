@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
@@ -37,17 +38,9 @@ public abstract class Statement{
 		}else if(ctx.varAssignment() != null){
 			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, method);
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, method);
-			// if the LHS is a LocalVarValue, reuse the variable
-			// if the LHS is a field value, assign to the field
-			// if the LHS is an array index value, assign to the array
-			if(left instanceof Value.LocalVarValue local)
-				return new VarStatement(in, local.local.name, null, right, false, false);
-			else if(left instanceof Value.FieldValue field)
-				return new AssignFieldStatement(in, field.ref, field.from, right);
-			else if(left instanceof Value.ArrayIndexValue idx)
-				return new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType);
-			else
-				throw new IllegalStateException("Can't assign value to " + ctx.varAssignment().value(0).getText());
+			if(ctx.varAssignment().binaryop() != null)
+				right = Operations.resolveBinary(ctx.varAssignment().binaryop().getText(), left, right);
+			return createAssignStatement(ctx.varAssignment().value(0), in, left, right);
 		}else if(ctx.call() != null){
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, method) : null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, method)).toList();
@@ -69,6 +62,20 @@ public abstract class Statement{
 			return new WhileStatement(in, success, cond);
 		}
 		return new NoopStatement(in);
+	}
+	
+	private static Statement createAssignStatement(CyclicLangParser.ValueContext ctx, Scope in, Value left, Value right){
+		// if the LHS is a local variable value, reuse the variable
+		// if the LHS is a field value, assign to the field
+		// if the LHS is an array index value, assign to the array
+		if(left instanceof Value.LocalVarValue local)
+			return new VarStatement(in, local.local.name, null, right, false, false);
+		else if(left instanceof Value.FieldValue field)
+			return new AssignFieldStatement(in, field.ref, field.from, right);
+		else if(left instanceof Value.ArrayIndexValue idx)
+			return new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType);
+		else
+			throw new IllegalStateException("Can't assign value to " + ctx.getText());
 	}
 	
 	public static class NoopStatement extends Statement{

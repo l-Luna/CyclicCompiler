@@ -1,5 +1,4 @@
 package cyclic.lang.antlr_generated;
-
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
 /**
