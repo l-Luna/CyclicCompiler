@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.model;
 
+import cyclic.lang.compiler.Constants;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
@@ -51,13 +52,17 @@ public interface TypeReference{
 	}
 	
 	default boolean isAssignableTo(TypeReference target){
+		// special case Object for primitive arrays and interfaces
+		if(target.fullyQualifiedName().equals(Constants.OBJECT))
+			return true;
+		
 		// either we're the target, we're a subtype of the target, or we implement the target
 		if(fullyQualifiedName().equals(target.fullyQualifiedName()))
 			return true;
 		
 		TypeReference p = superClass();
 		while(p != null){
-			if(p.fullyQualifiedName().equals(target.fullyQualifiedName()))
+			if(p.isAssignableTo(target))
 				return true;
 			p = p.superClass();
 		}

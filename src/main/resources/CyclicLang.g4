@@ -290,7 +290,7 @@ FALSE: 'false';
 
 ID: NONDIGIT (DIGIT | NONDIGIT)*;
 DIGIT: [0-9];
-NONDIGIT: [a-zA-Z_~$£#];
+NONDIGIT: [a-zA-Z_$£#];
 
 SING_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 WS: [ \n\r\t] -> channel(HIDDEN);

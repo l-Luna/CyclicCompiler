@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.RuleContext;
 import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -126,5 +127,24 @@ public final class Utils{
 		if(found == null)  // TODO: return null and check in CallValue to allow for pass expressions
 			throw new IllegalStateException("Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
 		return found;
+	}
+	
+	public static MethodReference resolveSingleMethod(String from, String name, boolean isStatic, String... args){
+		return resolveSingleMethod(TypeResolver.resolve(from), name, isStatic, Arrays.stream(args).map(TypeResolver::resolve).toArray(TypeReference[]::new));
+	}
+	
+	public static MethodReference resolveSingleMethod(TypeReference from, String name, boolean isStatic, TypeReference... args){
+		candidates:
+		for(var c : from.methods()){
+			if((c.isStatic() == isStatic) && c.name().equals(name) && c.parameters().size() == args.length){
+				for(int i = 0; i < c.parameters().size(); i++){
+					TypeReference p = c.parameters().get(i);
+					if(!args[i].isAssignableTo(p))
+						continue candidates;
+				}
+				return c;
+			}
+		}
+		throw new IllegalStateException("Couldn't find " + (isStatic ? "static" : "non-static") + " method \"" + name + "\" in type " + from.fullyQualifiedName() + "!");
 	}
 }

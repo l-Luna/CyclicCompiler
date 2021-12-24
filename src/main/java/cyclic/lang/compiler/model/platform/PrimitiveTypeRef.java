@@ -76,7 +76,7 @@ public class PrimitiveTypeRef implements TypeReference{
 	public boolean isAssignableTo(TypeReference target){
 		if(type == NULL) // null is assignable to any non-primitive type
 			return !(target instanceof PrimitiveTypeRef other) || other.type == NULL;
-		return TypeReference.super.isAssignableTo(target);
+		return fullyQualifiedName().equals(target.fullyQualifiedName());
 	}
 	
 	public static String getPrimitiveDesc(Primitive type){
@@ -155,7 +155,7 @@ public class PrimitiveTypeRef implements TypeReference{
 		return boxedTypeName(type);
 	}
 	
-	private static String boxedTypeName(Primitive type){
+	public static String boxedTypeName(Primitive type){
 		return switch(type){
 			case NULL, VOID -> "java.lang.Object";
 			case BOOLEAN -> "java.lang.Boolean";

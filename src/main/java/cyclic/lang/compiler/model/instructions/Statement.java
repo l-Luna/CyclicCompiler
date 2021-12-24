@@ -9,8 +9,11 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static cyclic.lang.compiler.Constants.*;
 
 public abstract class Statement{
 	
@@ -78,6 +81,33 @@ public abstract class Statement{
 				throw new IllegalStateException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(ctx.doWhile().statement(), in, type, method);
 			return new DoWhileStatement(in, success, cond);
+		}else if(ctx.foreachStatement() != null){
+			var fe = ctx.foreachStatement();
+			/*    for(T t : x)
+			*         act;
+			*  becomes
+			*     Objects.requireNonNull(x);
+			*     Iterator iter = x.iterator();
+			*     while(iter.hasNext())
+			*         T t = iter.next();
+			*         act;
+			*/
+			Value iterating = Value.fromAst(fe.value(), in, type, method);
+			TypeReference iteratorType = TypeResolver.resolve(ITERATOR);
+			BlockStatement container = new BlockStatement(in);
+			Variable iterator = new Variable("~", iteratorType, container.blockScope, null);
+			Variable iterationVar = new Variable(fe.ID().getText(), TypeResolver.resolve(fe.type().getText(), type.imports, type.packageName()), container.blockScope, container);
+			Statement action = fromAst(fe.statement(), container.blockScope, type, method);
+			// TODO: generics
+			container.contains = List.of(
+					new CallStatement(container.blockScope, null, Utils.resolveSingleMethod(OBJECTS, OBJECTS_REQUIRE_NONNULL, true, OBJECT), Collections.singletonList(iterating)),
+					new VarStatement(container.blockScope, iterator, new Value.CallValue(iterating, List.of(), Utils.resolveSingleMethod(ITERABLE, ITERABLE_ITERATOR, false))),
+					new WhileStatement(container.blockScope,
+							List.of(new VarStatement(container.blockScope, iterationVar, new Value.CallValue(new Value.LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_NEXT, false))),
+								    action),
+							new Value.CallValue(new Value.LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_HAS_NEXT, false)))
+			);
+			return container;
 		}
 		return new NoopStatement(in);
 	}
@@ -165,6 +195,12 @@ public abstract class Statement{
 			else
 				v = in.get(varName);
 			v.isFinal |= isFinal;
+			this.value = value;
+		}
+		
+		public VarStatement(Scope in, Variable v, Value value){
+			super(in);
+			this.v = v;
 			this.value = value;
 		}
 		
@@ -281,6 +317,16 @@ public abstract class Statement{
 			super(in);
 			this.success = success;
 			this.condition = condition;
+		}
+		
+		public WhileStatement(Scope in, List<Statement> success, Value condition){
+			super(in);
+			this.condition = condition;
+			BlockStatement block = new BlockStatement(in);
+			for(var s : success)
+				s.in = block.blockScope;
+			block.contains = success;
+			this.success = block;
 		}
 		
 		public void write(MethodVisitor mv){

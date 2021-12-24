@@ -157,8 +157,11 @@ public abstract class Value{
 		
 		Value ret = null;
 		// unboxing conversion
-		if(target instanceof PrimitiveTypeRef prim && type().fullyQualifiedName().equals(prim.boxedTypeName()))
-			ret = new UnboxValue(this, prim.type);
+		if(target instanceof PrimitiveTypeRef prim)
+			if(type().fullyQualifiedName().equals(prim.boxedTypeName()))
+				ret = new UnboxValue(this, prim.type);
+			else
+				ret = new TryUnboxValue(this, prim.type);
 		
 		if(type() instanceof PrimitiveTypeRef p){
 			// boxing conversion
@@ -437,6 +440,28 @@ public abstract class Value{
 		public void write(MethodVisitor mv){
 			underlying.write(mv); // is a boxed value
 			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, underlying.type().internalName(), type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
+		}
+		
+		public TypeReference type(){
+			return new PrimitiveTypeRef(type);
+		}
+	}
+	
+	// when casting an unknown value to a primitive
+	public static class TryUnboxValue extends Value{
+		Value underlying;
+		PrimitiveTypeRef.Primitive type;
+		
+		public TryUnboxValue(Value underlying, PrimitiveTypeRef.Primitive type){
+			this.underlying = underlying;
+			this.type = type;
+		}
+		
+		public void write(MethodVisitor mv){
+			underlying.write(mv); // is a boxed value
+			String box = PrimitiveTypeRef.boxedTypeName(type).replace('.', '/');
+			mv.visitTypeInsn(Opcodes.CHECKCAST, box);
+			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, box, type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
 		}
 		
 		public TypeReference type(){
