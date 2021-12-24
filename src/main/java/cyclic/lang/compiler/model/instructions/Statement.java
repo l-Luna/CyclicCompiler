@@ -60,6 +60,13 @@ public abstract class Statement{
 			Statement success = fromAst(ctx.ifStatement().statement(), in, type, method);
 			Statement fail = ctx.ifStatement().elseStatement() == null ? null : fromAst(ctx.ifStatement().elseStatement().statement(), in, type, method);
 			return new IfStatement(in, success, fail, cond);
+		}else if(ctx.whileStatement() != null){
+			Value c = Value.fromAst(ctx.whileStatement().value(), in, type, method);
+			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			if(cond == null)
+				throw new IllegalStateException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
+			Statement success = fromAst(ctx.whileStatement().statement(), in, type, method);
+			return new WhileStatement(in, success, cond);
 		}
 		return new NoopStatement(in);
 	}
@@ -237,6 +244,30 @@ public abstract class Statement{
 			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
 			mv.visitLabel(preWrite); // branch succeeded
 			success.write(mv); // success block
+			mv.visitLabel(postWrite);
+		}
+	}
+	
+	public static class WhileStatement extends Statement{
+		Statement success;
+		Value condition;
+		
+		public WhileStatement(Scope in, Statement success, Value condition){
+			super(in);
+			this.success = success;
+			this.condition = condition;
+		}
+		
+		public void write(MethodVisitor mv){
+			Label preWrite = new Label(), postWrite = new Label(), preCheck = new Label();
+			mv.visitLabel(preCheck);
+			condition.write(mv);
+			mv.visitJumpInsn(Opcodes.IFNE, preWrite); // if true, go to success block
+			// no fail block
+			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
+			mv.visitLabel(preWrite); // branch succeeded
+			success.write(mv); // success block
+			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
 		}
 	}
