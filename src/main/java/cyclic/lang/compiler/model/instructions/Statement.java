@@ -71,6 +71,13 @@ public abstract class Statement{
 			Statement success = fromAst(f.action, in, type, method);
 			// could just implement it as synthetic block statements
 			return new ForStatement(in, success, setup, increment, cond);
+		}else if(ctx.doWhile() != null){
+			Value c = Value.fromAst(ctx.doWhile().value(), in, type, method);
+			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			if(cond == null)
+				throw new IllegalStateException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
+			Statement success = fromAst(ctx.doWhile().statement(), in, type, method);
+			return new DoWhileStatement(in, success, cond);
 		}
 		return new NoopStatement(in);
 	}
@@ -317,6 +324,25 @@ public abstract class Statement{
 			increment.write(mv);
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
+		}
+	}
+	
+	public static class DoWhileStatement extends Statement{
+		Statement success;
+		Value condition;
+		
+		public DoWhileStatement(Scope in, Statement success, Value condition){
+			super(in);
+			this.success = success;
+			this.condition = condition;
+		}
+		
+		public void write(MethodVisitor mv){
+			Label preWrite = new Label();
+			mv.visitLabel(preWrite);
+			success.write(mv);
+			condition.write(mv);
+			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
 		}
 	}
 }

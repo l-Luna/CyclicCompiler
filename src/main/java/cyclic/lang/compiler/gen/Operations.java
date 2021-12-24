@@ -15,7 +15,6 @@ import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 
 import static cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive.BOOLEAN;
-import static cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive.NULL;
 
 public final class Operations{
 	
@@ -27,6 +26,7 @@ public final class Operations{
 		var FLOAT = TypeResolver.resolve("float");
 		var DOUBLE = TypeResolver.resolve("double");
 		var BOOLEAN = TypeResolver.resolve("boolean");
+		var OBJECT = TypeResolver.resolve("java.lang.Object");
 		
 		// add, subtract, multiply, divide
 		handlers.add(new TypeSetOpHandler(
@@ -176,8 +176,8 @@ public final class Operations{
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(DOUBLE),
 				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
-		handlers.add(new NamedTypeOpHandler(
-				Set.of(Op.EQUALS), (l, r) -> (!(l instanceof PrimitiveTypeRef lr) || lr.type == NULL) && (!(r instanceof PrimitiveTypeRef rr) || rr.type == NULL),
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.EQUALS), Set.of(OBJECT), // op handlers are checked in order, this should only happen with objects or primitives w/ objects
 				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ACMPEQ, l, r)));
 		
 		handlers.add(new TypeSetOpHandler(
@@ -192,8 +192,8 @@ public final class Operations{
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.NOTEQUALS), Set.of(DOUBLE),
 				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
-		handlers.add(new NamedTypeOpHandler(
-				Set.of(Op.NOTEQUALS), (l, r) -> (!(l instanceof PrimitiveTypeRef lr) || lr.type == NULL) && (!(r instanceof PrimitiveTypeRef rr) || rr.type == NULL),
+		handlers.add(new TypeSetOpHandler(
+				Set.of(Op.NOTEQUALS), Set.of(OBJECT),
 				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ACMPNE, l, r)));
 		
 		// greater/eq, lesser/eq

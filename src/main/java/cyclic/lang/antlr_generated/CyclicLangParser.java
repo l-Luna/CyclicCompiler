@@ -3534,8 +3534,8 @@ public class CyclicLangParser extends Parser {
 
 	public static class DoWhileContext extends ParserRuleContext {
 		public TerminalNode DO() { return getToken(CyclicLangParser.DO, 0); }
-		public BlockContext block() {
-			return getRuleContext(BlockContext.class,0);
+		public StatementContext statement() {
+			return getRuleContext(StatementContext.class,0);
 		}
 		public TerminalNode WHILE() { return getToken(CyclicLangParser.WHILE, 0); }
 		public TerminalNode LPAREN() { return getToken(CyclicLangParser.LPAREN, 0); }
@@ -3564,7 +3564,7 @@ public class CyclicLangParser extends Parser {
 			setState(535);
 			match(DO);
 			setState(536);
-			block();
+			statement();
 			setState(537);
 			match(WHILE);
 			setState(538);
@@ -4238,7 +4238,7 @@ public class CyclicLangParser extends Parser {
 		"\2\2\u020d\u020e\7C\2\2\u020e\u020f\5(\25\2\u020fO\3\2\2\2\u0210\u0211"+
 		"\7!\2\2\u0211\u0212\7B\2\2\u0212\u0213\5,\27\2\u0213\u0214\7Y\2\2\u0214"+
 		"\u0215\7F\2\2\u0215\u0216\5\64\33\2\u0216\u0217\7C\2\2\u0217\u0218\5("+
-		"\25\2\u0218Q\3\2\2\2\u0219\u021a\7\"\2\2\u021a\u021b\5&\24\2\u021b\u021c"+
+		"\25\2\u0218Q\3\2\2\2\u0219\u021a\7\"\2\2\u021a\u021b\5(\25\2\u021b\u021c"+
 		"\7\35\2\2\u021c\u021d\7B\2\2\u021d\u021e\5\64\33\2\u021e\u021f\7C\2\2"+
 		"\u021f\u0220\7G\2\2\u0220S\3\2\2\2\u0221\u0222\7\34\2\2\u0222\u0223\7"+
 		"B\2\2\u0223\u0224\5\64\33\2\u0224\u0225\7C\2\2\u0225\u0229\7@\2\2\u0226"+

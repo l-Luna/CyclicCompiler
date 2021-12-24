@@ -131,7 +131,7 @@ elseStatement: ELSE statement;
 whileStatement: WHILE LPAREN value RPAREN statement;
 forStatement: FOR LPAREN start=statement? cond=value SEMICOLON end=statement? RPAREN action=statement;
 foreachStatement: FOR LPAREN type ID COLON value RPAREN statement;
-doWhile: DO block WHILE LPAREN value RPAREN SEMICOLON;
+doWhile: DO statement WHILE LPAREN value RPAREN SEMICOLON;
 
 switchStatement: SWITCH LPAREN value RPAREN LBRACE caseClause* defaultClause? RBRACE;
 caseClause: CASE value DASHARROW (statement | value SEMICOLON);
