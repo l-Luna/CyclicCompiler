@@ -60,6 +60,17 @@ public abstract class Statement{
 				throw new IllegalStateException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(ctx.whileStatement().statement(), in, type, method);
 			return new WhileStatement(in, success, cond);
+		}else if(ctx.forStatement() != null){
+			var f = ctx.forStatement();
+			Statement setup = f.start != null ? fromAst(f.start, in, type, method) : new NoopStatement(in);
+			Statement increment = f.end != null ? fromAst(f.end, in, type, method) : new NoopStatement(in);
+			Value c = Value.fromAst(f.cond, in, type, method);
+			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			if(cond == null)
+				throw new IllegalStateException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
+			Statement success = fromAst(f.action, in, type, method);
+			// could just implement it as synthetic block statements
+			return new ForStatement(in, success, setup, increment, cond);
 		}
 		return new NoopStatement(in);
 	}
@@ -274,6 +285,36 @@ public abstract class Statement{
 			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
 			mv.visitLabel(preWrite); // branch succeeded
 			success.write(mv); // success block
+			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
+			mv.visitLabel(postWrite);
+		}
+	}
+	
+	public static class ForStatement extends Statement{
+		Statement success;
+		Statement start;
+		Statement increment;
+		Value condition;
+		
+		public ForStatement(Scope in, Statement success, Statement start, Statement increment, Value condition){
+			super(in);
+			this.success = success;
+			this.start = start;
+			this.increment = increment;
+			this.condition = condition;
+		}
+		
+		public void write(MethodVisitor mv){
+			Label preWrite = new Label(), postWrite = new Label(), preCheck = new Label();
+			start.write(mv);
+			mv.visitLabel(preCheck);
+			condition.write(mv);
+			mv.visitJumpInsn(Opcodes.IFNE, preWrite); // if true, go to success block
+			// no fail block
+			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
+			mv.visitLabel(preWrite); // branch succeeded
+			success.write(mv); // success block
+			increment.write(mv);
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
 		}

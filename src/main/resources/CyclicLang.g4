@@ -129,7 +129,7 @@ ifStatement: IF LPAREN value RPAREN statement elseStatement?;
 elseStatement: ELSE statement;
 
 whileStatement: WHILE LPAREN value RPAREN statement;
-forStatement: FOR LPAREN varDecl SEMICOLON value SEMICOLON value RPAREN statement;
+forStatement: FOR LPAREN start=statement? cond=value SEMICOLON end=statement? RPAREN action=statement;
 foreachStatement: FOR LPAREN type ID COLON value RPAREN statement;
 doWhile: DO block WHILE LPAREN value RPAREN SEMICOLON;
 
