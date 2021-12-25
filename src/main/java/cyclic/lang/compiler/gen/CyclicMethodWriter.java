@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.gen;
 
+import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import org.objectweb.asm.MethodVisitor;
@@ -7,9 +8,9 @@ import org.objectweb.asm.MethodVisitor;
 public final class CyclicMethodWriter{
 	
 	public static void writeMethod(MethodVisitor mv, CyclicMethod method){
-		// TODO: allow hiding metadata
-		for(String paramName : method.parameterNames())
-			mv.visitParameter(paramName, 0);
+		if(Compiler.includeDebugInfo)
+			for(String paramName : method.parameterNames())
+				mv.visitParameter(paramName, 0);
 		
 		if(!(method.flags().isAbstract() || method.isNative())){
 			mv.visitCode();

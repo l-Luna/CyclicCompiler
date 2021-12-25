@@ -2,10 +2,12 @@ package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -19,12 +21,20 @@ import static cyclic.lang.compiler.Constants.*;
 public abstract class Statement{
 	
 	Scope in;
+	protected ParserRuleContext text;
 	
 	public Statement(Scope in){
 		this.in = in;
 	}
 	
-	public void write(MethodVisitor mv){}
+	public void write(MethodVisitor mv){
+		// may be null for e.g. the generated while loop from a foreach
+		if(Compiler.includeDebugInfo && text != null){
+			Label currentLine = new Label();
+			mv.visitLabel(currentLine);
+			mv.visitLineNumber(text.start.getLine(), currentLine);
+		}
+	}
 	
 	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CallableReference method){
 		Statement result;
@@ -118,6 +128,7 @@ public abstract class Statement{
 		}
 		
 		CompileTimeException.popContext();
+		result.text = ctx;
 		return result;
 	}
 	
@@ -142,6 +153,7 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			// explicit no-op for debugging
+			super.write(mv);
 			mv.visitInsn(Opcodes.NOP);
 		}
 	}
@@ -163,6 +175,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			for(Statement s : contains)
 				s.write(mv);
 		}
@@ -179,6 +192,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			if(returnValue == null){
 				mv.visitInsn(Opcodes.RETURN);
 				return;
@@ -186,7 +200,7 @@ public abstract class Statement{
 			
 			var adjusted = returnValue.fit(toReturn);
 			if(adjusted == null)
-				throw new IllegalStateException("Value of type " + returnValue.type().fullyQualifiedName() + " cannot be returned from method of type " + toReturn.fullyQualifiedName() + "!");
+				throw new CompileTimeException(text, "Value of type " + returnValue.type().fullyQualifiedName() + " cannot be returned from method of type " + toReturn.fullyQualifiedName() + "!");
 			
 			adjusted.write(mv);
 			mv.visitInsn(adjusted.type().returnOpcode());
@@ -214,12 +228,13 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			if(v.isFinal && this != v.owner)
-				throw new IllegalStateException("Can't assign the value of a final local variable outside of its declaration.");
+				throw new CompileTimeException(text, "Can't assign the value of a final local variable outside of its declaration!");
 			if(value != null){
 				var adjusted = value.fit(v.type);
 				if(adjusted == null)
-					throw new IllegalStateException("Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
+					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
 				adjusted.write(mv);
 				mv.visitVarInsn(v.type.localStoreOpcode(), v.getVarIndex());
 			}
@@ -239,6 +254,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			if(on != null && !(on instanceof Value.TypeValue)) // TODO: consider singletons
 				on.write(mv);
 			// implicit this for instance method calls with no explicit value
@@ -265,6 +281,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			if(on != null)
 				on.write(mv);
 			else if(!fieldRef.isStatic())
@@ -287,6 +304,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			on.write(mv);
 			index.write(mv);
 			val.write(mv);
@@ -306,6 +324,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			Label preWrite = new Label(), postWrite = new Label();
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
@@ -339,6 +358,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			Label preWrite = new Label(), postWrite = new Label(), preCheck = new Label();
 			mv.visitLabel(preCheck);
 			condition.write(mv);
@@ -367,6 +387,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			Label preWrite = new Label(), postWrite = new Label(), preCheck = new Label();
 			start.write(mv);
 			mv.visitLabel(preCheck);
@@ -393,6 +414,7 @@ public abstract class Statement{
 		}
 		
 		public void write(MethodVisitor mv){
+			super.write(mv);
 			Label preWrite = new Label();
 			mv.visitLabel(preWrite);
 			success.write(mv);
