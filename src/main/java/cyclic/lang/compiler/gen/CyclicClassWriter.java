@@ -14,7 +14,7 @@ public final class CyclicClassWriter{
 	public static int outputClassfileVersion = Opcodes.V16;
 	
 	public static void writeClass(ClassWriter writer, CyclicType type){
-		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, "java/lang/Object", null);
+		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, type.superClass().internalName(), type.superInterfaces().stream().map(TypeReference::internalName).toArray(String[]::new));
 		
 		// class init
 		MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
