@@ -19,6 +19,10 @@ public interface MethodReference extends CallableReference{
 		return "(" + parameters().stream().map(TypeReference::descriptor).collect(Collectors.joining()) + ")" + returns().descriptor();
 	}
 	
+	default String nameAndDescriptor(){
+		return name() + descriptor();
+	}
+	
 	default void writeInvoke(MethodVisitor mv){
 		if(isStatic()){
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), in().kind() == TypeKind.INTERFACE);

@@ -128,13 +128,9 @@ public class CyclicType implements TypeReference{
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
-		/*Set<String> fieldNames = new HashSet<>();
-		for(CyclicField field : fields){
-			if(fieldNames.contains(field.name()))
-				throw new CompileTimeException(null, "Duplicate field name \"" + field.name() + "\"");
-			fieldNames.add(field.name());
-		}*/
 		checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
+		checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");
+		checkDuplicates(constructors.stream().map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
 	}
 	
 	public void resolveBodies(){
