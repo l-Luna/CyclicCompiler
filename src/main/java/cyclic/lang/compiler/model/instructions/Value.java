@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
@@ -15,31 +16,33 @@ import java.util.List;
 public abstract class Value{
 	
 	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CallableReference method){
-		if(ctx instanceof CyclicLangParser.NullLitContext)
-			return new NullLiteralValue();
-		if(ctx instanceof CyclicLangParser.IntLitContext intLit){
+		CompileTimeException.pushContext(ctx);
+		
+		Value result = null;
+		if(ctx instanceof CyclicLangParser.NullLitContext){
+			result = new NullLiteralValue();
+		}else if(ctx instanceof CyclicLangParser.IntLitContext intLit){
 			String text = intLit.INTLIT().getText();
-			if(text.endsWith("f"))
-				return new FloatLiteralValue(Float.parseFloat(text));
-			else if(text.endsWith("d"))
-				return new DoubleLiteralValue(Double.parseDouble(text));
-			else
-				return new IntLiteralValue(Integer.parseInt(text));
-		}
-		if(ctx instanceof CyclicLangParser.DecLitContext decLit){
+			if(text.endsWith("f")){
+				result = new FloatLiteralValue(Float.parseFloat(text));
+			}else if(text.endsWith("d")){
+				result = new DoubleLiteralValue(Double.parseDouble(text));
+			}else{
+				result = new IntLiteralValue(Integer.parseInt(text));
+			}
+		}else if(ctx instanceof CyclicLangParser.DecLitContext decLit){
 			String text = decLit.DECLIT().getText();
-			if(text.endsWith("f"))
-				return new FloatLiteralValue(Float.parseFloat(text));
-			else
-				return new DoubleLiteralValue(Double.parseDouble(text));
-		}
-		if(ctx instanceof CyclicLangParser.BoolLitContext boolLit)
-			return new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
-		if(ctx instanceof CyclicLangParser.StrLitContext strLit){
+			if(text.endsWith("f")){
+				result = new FloatLiteralValue(Float.parseFloat(text));
+			}else{
+				result = new DoubleLiteralValue(Double.parseDouble(text));
+			}
+		}else if(ctx instanceof CyclicLangParser.BoolLitContext boolLit){
+			result = new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
+		}else if(ctx instanceof CyclicLangParser.StrLitContext strLit){
 			String text = strLit.getText();
-			return new StringLiteralValue(text.substring(1, text.length() - 1));
-		}
-		if(ctx instanceof CyclicLangParser.VarValueContext val){
+			result = new StringLiteralValue(text.substring(1, text.length() - 1));
+		}else if(ctx instanceof CyclicLangParser.VarValueContext val){
 			String name = val.ID().getText();
 			// if a value is present, check if it's a partial type name, and add to it if so; otherwise return a field
 			if(val.value() != null){
@@ -47,88 +50,85 @@ public abstract class Value{
 				if(on instanceof TypeValue v && v.getPartialTypeName() != null){
 					var newTypeName = v.getPartialTypeName() + "." + name;
 					var target = TypeResolver.resolveOptional(newTypeName, type.imports, type.packageName());
-					return target.map(TypeValue::new).orElseGet(() -> new TypeValue(newTypeName));
-				}else
-					return new FieldValue(name, on);
+					result = target.map(TypeValue::new).orElseGet(() -> new TypeValue(newTypeName));
+				}else{
+					result = new FieldValue(name, on);
+				}
+			}else{// otherwise, it could be a local variable,
+				Variable local = scope.get(name);
+				if(local != null)
+					result = new LocalVarValue(local);
+				else{// or a static field of the current type, or an instance field of the current type for a non-static method
+					for(var field : method.in().fields())
+						if(field.name().equals(name) && (field.isStatic() || !method.isStatic())){
+							result = new FieldValue(field);
+							break;
+						}
+					if(result == null){// or a partial or full type name
+						var target = TypeResolver.resolveOptional(name, type.imports, type.packageName());
+						result = target.map(TypeValue::new).orElseGet(() -> new TypeValue(name));
+					}
+				}
 			}
-			// otherwise, it could be a local variable,
-			Variable local = scope.get(name);
-			if(local != null)
-				return new LocalVarValue(local);
-			// or a static field of the current type, or an instance field of the current type for a non-static method
-			for(var field : method.in().fields())
-				if(field.name().equals(name) && (field.isStatic() || !method.isStatic()))
-					return new FieldValue(field);
-			// or a partial or full type name
-			var target = TypeResolver.resolveOptional(name, type.imports, type.packageName());
-			return target.map(TypeValue::new).orElseGet(() -> new TypeValue(name));
-		}
-		if(ctx instanceof CyclicLangParser.FunctionValueContext func){
+		}else if(ctx instanceof CyclicLangParser.FunctionValueContext func){
 			Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
 			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
-			return new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
-		}
-		if(ctx instanceof CyclicLangParser.InitialisationValueContext init){
+			result = new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
+		}else if(ctx instanceof CyclicLangParser.InitialisationValueContext init){
 			List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 			TypeReference of = TypeResolver.resolve(init.initialisation().type().getText(), type.imports, type.packageName());
-			return new InitializationValue(args, Utils.resolveConstructor(of, args, method));
-		}
-		if(ctx instanceof CyclicLangParser.BinaryOpValueContext bin){
+			result = new InitializationValue(args, Utils.resolveConstructor(of, args, method));
+		}else if(ctx instanceof CyclicLangParser.BinaryOpValueContext bin){
 			Value left = Value.fromAst(bin.left, scope, type, method);
 			Value right = Value.fromAst(bin.right, scope, type, method);
-			return Operations.resolveBinary(bin.binaryop().getText(), left, right);
-		}
-		if(ctx instanceof CyclicLangParser.UnaryOpValueContext uop){
-			return Operations.resolveUnary(uop.unaryop().getText(), fromAst(uop.value(), scope, type, method));
-		}
-		if(ctx instanceof CyclicLangParser.ParenValueContext paren)
-			return fromAst(paren.value(), scope, type, method);
-		if(ctx instanceof CyclicLangParser.ThisValueContext){
+			result = Operations.resolveBinary(bin.binaryop().getText(), left, right);
+		}else if(ctx instanceof CyclicLangParser.UnaryOpValueContext uop){
+			result = Operations.resolveUnary(uop.unaryop().getText(), fromAst(uop.value(), scope, type, method));
+		}else if(ctx instanceof CyclicLangParser.ParenValueContext paren){
+			result = fromAst(paren.value(), scope, type, method);
+		}else if(ctx instanceof CyclicLangParser.ThisValueContext){
 			if(method.isStatic())
-				throw new IllegalStateException("Can't use \"this\" in a static method!");
-			return new ThisValue(method.in());
-		}
-		if(ctx instanceof CyclicLangParser.ClassValueContext clss){
+				throw new CompileTimeException("Can't use \"this\" in a static method!");
+			result = new ThisValue(method.in());
+		}else if(ctx instanceof CyclicLangParser.ClassValueContext clss){
 			// TODO: generics
-			return new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
-		}
-		if(ctx instanceof CyclicLangParser.InstanceCheckValueContext inst){
+			result = new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
+		}else if(ctx instanceof CyclicLangParser.InstanceCheckValueContext inst){
 			var check = new InstanceofValue(TypeResolver.resolve(inst.type().getText(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
-			return inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, check, null) : check;
-		}
-		if(ctx instanceof CyclicLangParser.CastValueContext castCtx){
+			result = inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, check, null) : check;
+		}else if(ctx instanceof CyclicLangParser.CastValueContext castCtx){
 			TypeReference target = TypeResolver.resolve(castCtx.cast().type().getText(), type.imports, type.packageName());
 			Value casting = fromAst(castCtx.cast().value(), scope, type, method);
 			// if it fits, just pass it along
 			var fit = casting.fit(target);
-			if(fit != null)
-				return fit;
-			if(target instanceof PrimitiveTypeRef p){
-				if(p.type == PrimitiveTypeRef.Primitive.NULL)
-					return casting;
-				if(casting.type() instanceof PrimitiveTypeRef c){
+			if(fit != null){
+				result = fit;
+			}else if(target instanceof PrimitiveTypeRef p){
+				if(p.type == PrimitiveTypeRef.Primitive.NULL){
+					result = casting;
+				}else if(casting.type() instanceof PrimitiveTypeRef c){
 					if(c.narrowingOpcodes(p.type) == null)
-						throw new IllegalStateException("Cannot convert value of type " + c.type + " to " + p.type);
-					else
-						return new PrimitiveCastValue(casting, p.type);
+						throw new CompileTimeException("Cannot convert value of type " + c.type + " to " + p.type);
+					else{
+						result = new PrimitiveCastValue(casting, p.type);
+					}
 				}else
-					throw new IllegalStateException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.type);
+					throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.type);
 			}else if(casting.type() instanceof PrimitiveTypeRef p)
-				throw new IllegalStateException("Cannot convert primitive value of type " + p.type + " to non-primitive type " + target.fullyQualifiedName());
-			else
-				return new ClassCastValue(casting, target);
-		}
-		if(ctx instanceof CyclicLangParser.ArrayIndexValueContext ind)
-			return new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
-		if(ctx instanceof CyclicLangParser.NewArrayValueContext array){
+				throw new CompileTimeException("Cannot convert primitive value of type " + p.type + " to non-primitive type " + target.fullyQualifiedName());
+			else{
+				result = new ClassCastValue(casting, target);
+			}
+		}else if(ctx instanceof CyclicLangParser.ArrayIndexValueContext ind){
+			result = new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
+		}else if(ctx instanceof CyclicLangParser.NewArrayValueContext array){
 			TypeReference component = TypeResolver.resolve(array.newArray().type().getText(), type.imports, type.packageName());
 			Value length = fromAst(array.newArray().value(), scope, type, method);
 			if(component instanceof PrimitiveTypeRef p)
-				return new NewPrimitiveArrayValue(p, length);
+				result = new NewPrimitiveArrayValue(p, length);
 			else
-				return new NewArrayValue(component, length);
-		}
-		if(ctx instanceof CyclicLangParser.NewListedArrayValueContext array){
+				result = new NewArrayValue(component, length);
+		}else if(ctx instanceof CyclicLangParser.NewListedArrayValueContext array){
 			TypeReference component = TypeResolver.resolve(array.newListedArray().type().getText(), type.imports, type.packageName());
 			List<Value> entries = array.newListedArray().value().stream().map(k -> fromAst(k, scope, type, method)).toList();
 			Value length = new IntLiteralValue(entries.size());
@@ -137,9 +137,11 @@ public abstract class Value{
 				arrayValue = new NewPrimitiveArrayValue(p, length);
 			else
 				arrayValue = new NewArrayValue(component, length);
-			return new NewListedArrayValue(arrayValue, entries, (ArrayTypeRef)arrayValue.type());
+			result = new NewListedArrayValue(arrayValue, entries, (ArrayTypeRef)arrayValue.type());
 		}
-		throw new IllegalStateException("Unknown expression " + ctx.getText());
+		
+		CompileTimeException.popContext();
+		return result;
 	}
 	
 	/**

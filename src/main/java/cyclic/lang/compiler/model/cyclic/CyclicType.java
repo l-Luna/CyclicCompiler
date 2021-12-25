@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -124,6 +125,8 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public void resolveRefs(){
+		CompileTimeException.setFile(fullyQualifiedName());
+		
 		members.forEach(CyclicMember::resolve);
 		
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
@@ -131,6 +134,8 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public void resolveBodies(){
+		CompileTimeException.setFile(fullyQualifiedName());
+		
 		members.forEach(CyclicMember::resolveBody);
 		
 		for(CyclicField field : fields){
