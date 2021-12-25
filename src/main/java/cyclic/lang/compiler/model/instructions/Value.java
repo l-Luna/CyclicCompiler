@@ -2,11 +2,13 @@ package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -14,6 +16,8 @@ import org.objectweb.asm.Type;
 import java.util.List;
 
 public abstract class Value{
+	
+	protected ParserRuleContext text;
 	
 	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CallableReference method){
 		CompileTimeException.pushContext(ctx);
@@ -102,20 +106,19 @@ public abstract class Value{
 			// if it fits, just pass it along
 			var fit = casting.fit(target);
 			if(fit != null){
-				result = fit;
+				result = new SubstituteTypeValue(target, fit);
 			}else if(target instanceof PrimitiveTypeRef p){
-				if(p.type == PrimitiveTypeRef.Primitive.NULL){
+				if(p.type == PrimitiveTypeRef.Primitive.NULL)
 					result = casting;
-				}else if(casting.type() instanceof PrimitiveTypeRef c){
+				else if(casting.type() instanceof PrimitiveTypeRef c){
 					if(c.narrowingOpcodes(p.type) == null)
-						throw new CompileTimeException("Cannot convert value of type " + c.type + " to " + p.type);
-					else{
+						throw new CompileTimeException("Cannot convert value of type " + c.fullyQualifiedName() + " to " + p.fullyQualifiedName() + "!");
+					else
 						result = new PrimitiveCastValue(casting, p.type);
-					}
 				}else
-					throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.type);
+					throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.fullyQualifiedName() + "!");
 			}else if(casting.type() instanceof PrimitiveTypeRef p)
-				throw new CompileTimeException("Cannot convert primitive value of type " + p.type + " to non-primitive type " + target.fullyQualifiedName());
+				throw new CompileTimeException("Cannot convert primitive value of type " + p.fullyQualifiedName() + " to non-primitive type " + target.fullyQualifiedName() + "!");
 			else{
 				result = new ClassCastValue(casting, target);
 			}
@@ -141,6 +144,8 @@ public abstract class Value{
 		}
 		
 		CompileTimeException.popContext();
+		if(result != null)
+			result.text = ctx;
 		return result;
 	}
 	
@@ -162,7 +167,7 @@ public abstract class Value{
 		if(target instanceof PrimitiveTypeRef prim)
 			if(type().fullyQualifiedName().equals(prim.boxedTypeName()))
 				ret = new UnboxValue(this, prim.type);
-			else
+			else if(!(type() instanceof PrimitiveTypeRef))
 				ret = new TryUnboxValue(this, prim.type);
 		
 		if(type() instanceof PrimitiveTypeRef p){
@@ -318,14 +323,13 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return TypeResolver.resolveOptional("java.lang.String").orElseThrow(() -> new IllegalStateException("Couldn't resolve java.lang.String for string constant!"));
+			return TypeResolver.resolve(Constants.STRING);
 		}
 	}
 	
 	/**
 	 * If the target is a singleton type, this is the single value of that type.
-	 * Otherwise, it's an exception to use this value directly.
-	 * Calls, field references, and anything else that can be applied to types statically should check for this.
+	 * Otherwise, it simply provides static members.
 	 */
 	public static class TypeValue extends Value{
 		TypeReference target;
@@ -348,6 +352,8 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
+			if(target == null)
+				throw new CompileTimeException(text, "Invalid reference; there is no such type \"" + getPartialTypeName() + "\", nor are there any types that correspond to parts of that name!");
 			return target;
 		}
 	}
@@ -360,7 +366,7 @@ public abstract class Value{
 		public FieldValue(String fieldName, Value from){
 			this.fieldName = fieldName;
 			this.from = from;
-			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow(() -> new IllegalStateException("Could not find field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
+			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow(() -> new CompileTimeException(text, "Could not find field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
 		}
 		
 		public FieldValue(FieldReference ref){
@@ -599,7 +605,7 @@ public abstract class Value{
 			if(casting.type() instanceof PrimitiveTypeRef from){
 				List<Integer> opcodes = from.narrowingOpcodes(to);
 				if(opcodes == null)
-					throw new IllegalStateException("Can't convert from " + from.type + " to " + to + " by narrowing!");
+					throw new CompileTimeException(text, "Can't convert from " + from.type + " to " + to + " by narrowing!");
 				for(var op : opcodes)
 					mv.visitInsn(op);
 			}
@@ -637,12 +643,12 @@ public abstract class Value{
 			this.array = array;
 			this.index = index.fit(TypeResolver.resolve("int"));
 			if(this.index == null){
-				throw new IllegalStateException("Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer!");
+				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer!");
 			}
 			if(array.type() instanceof ArrayTypeRef a)
 				arrayType = a;
 			else
-				throw new IllegalStateException("Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array!");
+				throw new CompileTimeException(text, "Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array!");
 		}
 		
 		public void write(MethodVisitor mv){

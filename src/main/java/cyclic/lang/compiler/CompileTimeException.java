@@ -14,7 +14,10 @@ public class CompileTimeException extends RuntimeException{
 	private static String curFile;
 	private static Stack<Context> curText = new Stack<>();
 	
-	public CompileTimeException(){}
+	public CompileTimeException(ParserRuleContext context, String message){
+		super(message);
+		pushContext(context);
+	}
 	
 	public CompileTimeException(String message){
 		super(message);

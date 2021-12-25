@@ -291,7 +291,7 @@ public class PrimitiveTypeRef implements TypeReference{
 					return List.of(Opcodes.I2S);
 			}
 		}
-		return List.of();
+		return null;
 	}
 	
 	public int arrayTypeCode(){

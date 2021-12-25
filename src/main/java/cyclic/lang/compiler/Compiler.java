@@ -36,6 +36,7 @@ public final class Compiler{
 		toCompile.values().forEach(CyclicType::resolveBodies);
 		
 		for(var type : toCompile.values()){
+			CompileTimeException.setFile(type.fullyQualifiedName());
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 			CyclicClassWriter.writeClass(writer, type);
 			try{
