@@ -17,6 +17,15 @@ public class CyclicField implements FieldReference, CyclicMember{
 	
 	TypeReference type;
 	
+	public CyclicField(CyclicType in, String name, AccessFlags flags, boolean isS, boolean isV, String typeName){
+		this.in = in;
+		this.name = name;
+		this.flags = flags;
+		this.isS = isS;
+		this.isV = isV;
+		this.typeName = typeName;
+	}
+	
 	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in){
 		name = ctx.ID().getText();
 		this.in = in;

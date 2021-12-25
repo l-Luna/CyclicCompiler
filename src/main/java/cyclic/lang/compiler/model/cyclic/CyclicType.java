@@ -5,10 +5,7 @@ import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import org.antlr.v4.runtime.RuleContext;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // A type that will be compiled this run.
@@ -51,7 +48,7 @@ public class CyclicType implements TypeReference{
 			case "@interface" -> TypeKind.ANNOTATION;
 			case "record" -> TypeKind.RECORD; // not implemented yet
 			case "single" -> TypeKind.SINGLE;
-			default -> throw new IllegalStateException("Unexpected type kind: " + typeText);
+			default -> throw new IllegalStateException("Unexpected type kind: " + typeText + " in type " + fullyQualifiedName());
 		};
 		
 		flags = Utils.fromModifiers(ast.modifiers());
@@ -63,9 +60,8 @@ public class CyclicType implements TypeReference{
 				constructors.add(new CyclicConstructor(member.constructor(), this));
 			else if(member.init() != null)
 				initBlocks.add(new CyclicConstructor(member.init(), this));
-			else if(member.varDecl() != null){
+			else if(member.varDecl() != null)
 				fields.add(new CyclicField(member.varDecl(), this));
-			}
 		}
 		
 		members.addAll(fields);
@@ -131,6 +127,14 @@ public class CyclicType implements TypeReference{
 		
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
+		
+		/*Set<String> fieldNames = new HashSet<>();
+		for(CyclicField field : fields){
+			if(fieldNames.contains(field.name()))
+				throw new CompileTimeException(null, "Duplicate field name \"" + field.name() + "\"");
+			fieldNames.add(field.name());
+		}*/
+		checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
 	}
 	
 	public void resolveBodies(){
@@ -142,6 +146,15 @@ public class CyclicType implements TypeReference{
 			var assign = field.assign();
 			if(assign != null)
 				initBlocks.add(assign);
+		}
+	}
+	
+	private static <T> void checkDuplicates(List<T> in, String label){
+		Set<T> checked = new HashSet<>(in.size());
+		for(T t : in){
+			if(checked.contains(t))
+				throw new CompileTimeException(null, "Duplicate " + label + " \"" + t + "\"");
+			checked.add(t);
 		}
 	}
 }

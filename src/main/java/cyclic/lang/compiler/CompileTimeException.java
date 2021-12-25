@@ -28,7 +28,7 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public static void pushContext(ParserRuleContext context){
-		curText.push(new Context(getAllTokens(context).stream().map(ParseTree::getText).collect(Collectors.joining(" ")), context.start.getLine(), context.start.getCharPositionInLine()));
+		curText.push(context == null ? null : new Context(getAllTokens(context).stream().map(ParseTree::getText).collect(Collectors.joining(" ")), context.start.getLine(), context.start.getCharPositionInLine()));
 	}
 	
 	private static List<TerminalNode> getAllTokens(ParserRuleContext ctx){
@@ -47,7 +47,9 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public String getMessage(){
-		var message = "Error in class \"" + curFile + "\", at " + curText.peek();
+		var message = "Error in class \"" + curFile + "\"";
+		if(curText.peek() != null)
+			message += ", at " + curText.peek();
 		String details = super.getMessage();
 		if(details != null && !details.isBlank())
 			message += ": " + details;

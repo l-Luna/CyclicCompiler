@@ -1,5 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
+import cyclic.lang.compiler.CompileTimeException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class Scope{
 	
 	public int addVariable(Variable v){
 		if(get(v.name) != null)
-			throw new IllegalStateException("Trying to create a local variable " + v.name + " when one already exists in scope!");
+			throw new CompileTimeException("Trying to create a local variable \"" + v.name + "\" when one already exists in scope!");
 		List<Variable> list = getIndexList();
 		list.add(v);
 		variables.add(v);
