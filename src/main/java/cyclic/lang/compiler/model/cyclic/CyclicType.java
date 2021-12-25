@@ -54,10 +54,10 @@ public class CyclicType implements TypeReference{
 			superTypeName = "java.lang.Object";
 			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
 			if(ast.objectImplements() != null && ast.objectImplements().type().size() > 0)
-				throw new CompileTimeException(null, "Interface has " + ast.objectImplements().type().size() + " declared implemented interfaces, but must have 0!");
+				throw new CompileTimeException(null, "Interface has " + ast.objectImplements().type().size() + " declared implemented interfaces, but must have 0");
 		}else{
 			if(ast.objectExtends() != null && ast.objectExtends().type().size() > 1)
-				throw new CompileTimeException(null, "Non-interface has " + ast.objectExtends().type().size() + " declared supertypes, but can only have 1!");
+				throw new CompileTimeException(null, "Non-interface has " + ast.objectExtends().type().size() + " declared supertypes, but can only have 1");
 			superTypeName = ast.objectExtends() != null ? ast.objectExtends().type(0).getText() : "java.lang.Object";
 			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
 		}
@@ -140,9 +140,13 @@ public class CyclicType implements TypeReference{
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
 		if(superType.kind() == TypeKind.INTERFACE)
-			throw new CompileTimeException(null, "Cannot extend the interface type " + superType.fullyQualifiedName() + "!");
+			throw new CompileTimeException(null, "Cannot extend the interface type " + superType.fullyQualifiedName());
 		if(superType.flags().isFinal())
-			throw new CompileTimeException(null, "Cannot extend the final type " + superType.fullyQualifiedName() + "!");
+			throw new CompileTimeException(null, "Cannot extend the final type " + superType.fullyQualifiedName());
+		
+		for(TypeReference i : superInterfaces())
+			if(i.kind() != TypeKind.INTERFACE)
+				throw new CompileTimeException(null, "Cannot implement non-interface type " + i.fullyQualifiedName());
 		
 		checkDuplicates(constructors.stream().map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
 		checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");

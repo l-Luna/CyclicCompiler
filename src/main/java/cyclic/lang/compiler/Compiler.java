@@ -7,9 +7,12 @@ import org.objectweb.asm.ClassWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class Compiler{
@@ -47,7 +50,35 @@ public final class Compiler{
 				e.printStackTrace();
 			}
 		}
-		// output and possibly zip
 		
+		toCompile.clear();
+	}
+	
+	public static List<byte[]> compileText(String text){
+		var types = CyclicTypeBuilder.fromFile(text);
+		for(var type : types)
+			toCompile.put(type.fullyQualifiedName(), type);
+		toCompile.values().forEach(CyclicType::resolveRefs);
+		toCompile.values().forEach(CyclicType::resolveBodies);
+		
+		List<byte[]> ret = new ArrayList<>(toCompile.size());
+		
+		for(var type : toCompile.values()){
+			CompileTimeException.setFile(type.fullyQualifiedName());
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+			CyclicClassWriter.writeClass(writer, type);
+			ret.add(writer.toByteArray());
+		}
+		
+		toCompile.clear();
+		return ret;
+	}
+	
+	public static byte[] compileSingleClass(String text){
+		return compileText(text).get(0);
+	}
+	
+	public static Class<?> compileClass(String text, MethodHandles.Lookup defineWith) throws IllegalAccessException{
+		return defineWith.defineClass(compileSingleClass(text));
 	}
 }
