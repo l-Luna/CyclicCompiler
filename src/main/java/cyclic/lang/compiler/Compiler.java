@@ -10,10 +10,11 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 public final class Compiler{
@@ -24,7 +25,9 @@ public final class Compiler{
 	
 	public static void main(String[] args){
 		if(args.length < 2){
-			System.out.println("The Cyclic Compiler compiles files in the Cyclic language with the extension .cyc into JVM class files.\nPlease specify the input and output roots as arguments.");
+			System.out.println("""
+					The Cyclic Compiler compiles files in the Cyclic language with the extension .cyc into JVM class files.
+					Please specify the input and output root folders as arguments, and optionally whether debug info (line mappings and parameter names) should be included (true/false, defaults to true).""");
 			return;
 		}
 		
@@ -32,40 +35,33 @@ public final class Compiler{
 		var inputFolder = args[0];
 		var outputFolder = args[1];
 		
+		if(args.length >= 3)
+			includeDebugInfo = Boolean.parseBoolean(args[2]);
+		
 		File inputFile = new File(inputFolder);
+		Set<File> todo = new HashSet<>();
 		visitFiles(inputFile, file -> {
 			if(file.getName().endsWith(".cyc"))
-				try{
-					var content = String.join("\n", Files.readAllLines(file.toPath()));
-					var types = CyclicTypeBuilder.fromFile(content, Path.of(inputFolder).relativize(file.toPath()));
-					for(var type : types)
-						toCompile.put(type.fullyQualifiedName(), type);
-				}catch(IOException e){
-					e.printStackTrace();
-				}
+				todo.add(file);
 		});
 		
-		toCompile.values().forEach(CyclicType::resolveRefs);
-		toCompile.values().forEach(CyclicType::resolveBodies);
-		
-		for(var type : toCompile.values()){
-			CompileTimeException.setFile(type.fullyQualifiedName());
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-			CyclicClassWriter.writeClass(writer, type);
+		var out = compileFileSet(todo, Path.of(inputFolder));
+		AtomicInteger output = new AtomicInteger();
+		out.forEach((name, bytes) -> {
+			CompileTimeException.setFile(name);
 			try{
-				Path out = Path.of(outputFolder, type.internalName().replace('/', File.separatorChar) + ".class");
+				Path fileOut = Path.of(outputFolder, name.replace('.', File.separatorChar) + ".class");
 				// can fail if the folders already exist
 				//noinspection ResultOfMethodCallIgnored
-				out.getParent().toFile().mkdirs();
-				Files.write(out, writer.toByteArray());
+				fileOut.getParent().toFile().mkdirs();
+				Files.write(fileOut, bytes);
+				output.getAndIncrement();
 			}catch(IOException e){
 				e.printStackTrace();
 			}
-		}
+		});
 		
-		System.out.println("Compiled " + toCompile.size() + " classes.");
-		
-		toCompile.clear();
+		System.out.println("Written " + output + " class files.");
 	}
 	
 	private static void visitFiles(File root, Consumer<File> visitor){
@@ -78,20 +74,55 @@ public final class Compiler{
 					visitFiles(item, visitor);
 	}
 	
-	public static List<byte[]> compileText(String text){
+	public static Map<String, byte[]> compileFileSet(Set<File> files, Path root){
+		for(File file : files){
+			Path relative = root == null ? null : root.relativize(file.toPath());
+			if(file.getName().endsWith(".cyc")){
+				try{
+					var content = Files.readString(file.toPath());
+					var types = CyclicTypeBuilder.fromFile(content, relative);
+					for(var type : types)
+						toCompile.put(type.fullyQualifiedName(), type);
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+			}else{
+				System.out.println("File \"" + (relative != null ? relative.toString() : file.getName()) + "\" was asked to be compiled, but does not have \".cyc\" extension and will be ignored.");
+			}
+		}
+		
+		toCompile.values().forEach(CyclicType::resolveRefs);
+		toCompile.values().forEach(CyclicType::resolveBodies);
+		
+		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
+		
+		for(var type : toCompile.values()){
+			CompileTimeException.setFile(type.fullyQualifiedName());
+			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+			CyclicClassWriter.writeClass(writer, type);
+			ret.put(type.fullyQualifiedName(), writer.toByteArray());
+		}
+		
+		System.out.println("Compiled " + toCompile.size() + " classes.");
+		
+		toCompile.clear();
+		return ret;
+	}
+	
+	public static Map<String, byte[]> compileText(String text){
 		var types = CyclicTypeBuilder.fromFile(text, null);
 		for(var type : types)
 			toCompile.put(type.fullyQualifiedName(), type);
 		toCompile.values().forEach(CyclicType::resolveRefs);
 		toCompile.values().forEach(CyclicType::resolveBodies);
 		
-		List<byte[]> ret = new ArrayList<>(toCompile.size());
+		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
 		
 		for(var type : toCompile.values()){
 			CompileTimeException.setFile(type.fullyQualifiedName());
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 			CyclicClassWriter.writeClass(writer, type);
-			ret.add(writer.toByteArray());
+			ret.put(type.fullyQualifiedName(), writer.toByteArray());
 		}
 		
 		toCompile.clear();
@@ -99,9 +130,10 @@ public final class Compiler{
 	}
 	
 	public static byte[] compileSingleClass(String text){
-		return compileText(text).get(0);
+		return compileText(text).values().stream().findAny().orElseThrow(() -> new IllegalArgumentException("No classes were contained in the given text, but one was expected"));
 	}
 	
+	@SuppressWarnings("unused")
 	public static Class<?> compileClass(String text, MethodHandles.Lookup defineWith) throws IllegalAccessException{
 		return defineWith.defineClass(compileSingleClass(text));
 	}
