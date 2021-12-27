@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public final class Compiler{
 	
@@ -26,16 +27,18 @@ public final class Compiler{
 		var inputFolder = args[0];
 		var outputFolder = args[1];
 		
-		for(var file : new File(inputFolder).listFiles()){
-			try{
-				var content = String.join("\n", Files.readAllLines(file.toPath()));
-				var types = CyclicTypeBuilder.fromFile(content);
-				for(var type : types)
-					toCompile.put(type.fullyQualifiedName(), type);
-			}catch(IOException e){
-				e.printStackTrace();
-			}
-		}
+		File inputFile = new File(inputFolder);
+		visitFiles(inputFile, file -> {
+			if(file.getName().endsWith(".cyc"))
+				try{
+					var content = String.join("\n", Files.readAllLines(file.toPath()));
+					var types = CyclicTypeBuilder.fromFile(content, Path.of(inputFolder).relativize(file.toPath()));
+					for(var type : types)
+						toCompile.put(type.fullyQualifiedName(), type);
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+		});
 		
 		toCompile.values().forEach(CyclicType::resolveRefs);
 		toCompile.values().forEach(CyclicType::resolveBodies);
@@ -45,7 +48,10 @@ public final class Compiler{
 			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 			CyclicClassWriter.writeClass(writer, type);
 			try{
-				Files.write(Path.of(outputFolder, type.shortName() + ".class"), writer.toByteArray());
+				Path out = Path.of(outputFolder, type.internalName().replace('/', File.separatorChar) + ".class");
+				//noinspection ResultOfMethodCallIgnored
+				out.getParent().toFile().mkdirs();
+				Files.write(out, writer.toByteArray());
 			}catch(IOException e){
 				e.printStackTrace();
 			}
@@ -54,8 +60,18 @@ public final class Compiler{
 		toCompile.clear();
 	}
 	
+	private static void visitFiles(File root, Consumer<File> visitor){
+		File[] files = root.listFiles();
+		if(files != null)
+			for(File item : files)
+				if(item.isFile())
+					visitor.accept(item);
+				else if(item.isDirectory())
+					visitFiles(item, visitor);
+	}
+	
 	public static List<byte[]> compileText(String text){
-		var types = CyclicTypeBuilder.fromFile(text);
+		var types = CyclicTypeBuilder.fromFile(text, null);
 		for(var type : types)
 			toCompile.put(type.fullyQualifiedName(), type);
 		toCompile.values().forEach(CyclicType::resolveRefs);
