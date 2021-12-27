@@ -2,8 +2,8 @@ plugins {
     java
 }
 
-group = "org.example"
-version = "1.0-SNAPSHOT"
+group = "com.github.l-Luna.CyclicCompiler"
+version = "0.0.1"
 
 repositories {
     mavenCentral()

@@ -23,6 +23,11 @@ public final class Compiler{
 	public static boolean includeDebugInfo = true; // line mappings, parameter names
 	
 	public static void main(String[] args){
+		if(args.length < 2){
+			System.out.println("The Cyclic Compiler compiles files in the Cyclic language with the extension .cyc into JVM class files.\nPlease specify the input and output roots as arguments.");
+			return;
+		}
+		
 		// go through all specified files and compile each
 		var inputFolder = args[0];
 		var outputFolder = args[1];
@@ -49,6 +54,7 @@ public final class Compiler{
 			CyclicClassWriter.writeClass(writer, type);
 			try{
 				Path out = Path.of(outputFolder, type.internalName().replace('/', File.separatorChar) + ".class");
+				// can fail if the folders already exist
 				//noinspection ResultOfMethodCallIgnored
 				out.getParent().toFile().mkdirs();
 				Files.write(out, writer.toByteArray());
@@ -56,6 +62,8 @@ public final class Compiler{
 				e.printStackTrace();
 			}
 		}
+		
+		System.out.println("Compiled " + toCompile.size() + " classes.");
 		
 		toCompile.clear();
 	}
