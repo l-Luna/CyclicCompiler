@@ -6,6 +6,8 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -15,11 +17,11 @@ import java.util.stream.Collectors;
 
 public final class CyclicTypeBuilder{
 	
-	public static List<CyclicType> fromFile(String file, Path from){
+	public static List<CyclicType> fromFile(@NotNull String file, @Nullable Path from){
 		return fromParsedFile(parser(file).file(), from);
 	}
 	
-	public static List<CyclicType> fromParsedFile(CyclicLangParser.FileContext file, Path from){
+	public static List<CyclicType> fromParsedFile(@NotNull CyclicLangParser.FileContext file, @Nullable Path from){
 		String packageName = file.packageDecl() != null ? file.packageDecl().id().getText() : "";
 		
 		List<String> imports = file.imports().importDecl().stream()
@@ -65,7 +67,7 @@ public final class CyclicTypeBuilder{
 		return ret;
 	}
 	
-	public static CyclicLangParser parser(String text){
+	public static CyclicLangParser parser(@NotNull String text){
 		return new CyclicLangParser(new CommonTokenStream(new CyclicLangLexer(CharStreams.fromString(text))));
 	}
 }

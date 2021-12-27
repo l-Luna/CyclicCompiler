@@ -12,10 +12,10 @@ class CyclicTypeTest{
 	@Test
 	void testSupertypeValidation(){
 		assertAll(
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileText("class T extends String;")),
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileText("class T extends java.util.List;")),
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileText("interface T implements java.util.List;")),
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileText("interface T extends Object;"))
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T extends String;")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T extends java.util.List;")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("interface T implements java.util.List;")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("interface T extends Object;"))
 		);
 	}
 }

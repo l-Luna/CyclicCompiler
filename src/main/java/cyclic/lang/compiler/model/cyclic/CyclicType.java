@@ -43,7 +43,7 @@ public class CyclicType implements TypeReference{
 			case "interface" -> TypeKind.INTERFACE;
 			case "enum" -> TypeKind.ENUM;
 			case "@interface" -> TypeKind.ANNOTATION;
-			case "record" -> TypeKind.RECORD; // not implemented yet
+			case "record" -> TypeKind.RECORD;
 			case "single" -> TypeKind.SINGLE;
 			default -> throw new IllegalStateException("Unexpected type kind: " + typeText + " in type " + fullyQualifiedName());
 		};
