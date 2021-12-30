@@ -4,10 +4,34 @@ import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CyclicTypeTest{
+	
+	@Test
+	void testDefinitions(){
+		assertAll(
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class T{}")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("interface T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("@interface T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("record T(int component);")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("single T;")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class permits;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation annotation;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class out;")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class T<A, in B, out C, in class D, out class E>;")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class T extends Object;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("class T implements Cloneable, java.io.Serializable;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("sealed class T permits F { final class F extends T; }"))
+		);
+	}
 	
 	@Test
 	void testSupertypeValidation(){

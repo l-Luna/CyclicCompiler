@@ -1,3 +1,4 @@
+// Generated from C:/ezz/Mods/CyclicCompiler/src/main/resources\CyclicLang.g4 by ANTLR 4.9.2
 package cyclic.lang.antlr_generated;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -51,6 +52,24 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitObjectImplements(CyclicLangParser.ObjectImplementsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#objectPermits}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitObjectPermits(CyclicLangParser.ObjectPermitsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#genericTypeDefs}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGenericTypeDefs(CyclicLangParser.GenericTypeDefsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#genericTypeDef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitGenericTypeDef(CyclicLangParser.GenericTypeDefContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#objectType}.
 	 * @param ctx the parse tree
@@ -142,67 +161,23 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitType(CyclicLangParser.TypeContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code intType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
+	 * Visit a parse tree produced by {@link CyclicLangParser#genericTypeUses}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitIntType(CyclicLangParser.IntTypeContext ctx);
+	T visitGenericTypeUses(CyclicLangParser.GenericTypeUsesContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code decType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
+	 * Visit a parse tree produced by {@link CyclicLangParser#genericTypeUse}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitDecType(CyclicLangParser.DecTypeContext ctx);
+	T visitGenericTypeUse(CyclicLangParser.GenericTypeUseContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code byteType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
+	 * Visit a parse tree produced by {@link CyclicLangParser#rawType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitByteType(CyclicLangParser.ByteTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code boolType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitBoolType(CyclicLangParser.BoolTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code voidType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitVoidType(CyclicLangParser.VoidTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code inferType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInferType(CyclicLangParser.InferTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code inferFinalType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInferFinalType(CyclicLangParser.InferFinalTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code idType}
-	 * labeled alternative in {@link CyclicLangParser#rawType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitIdType(CyclicLangParser.IdTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link CyclicLangParser#id}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitId(CyclicLangParser.IdContext ctx);
+	T visitRawType(CyclicLangParser.RawTypeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#modifiers}.
 	 * @param ctx the parse tree
@@ -482,6 +457,18 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitUnaryop(CyclicLangParser.UnaryopContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#id}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitId(CyclicLangParser.IdContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#idPart}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIdPart(CyclicLangParser.IdPartContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#modifier}.
 	 * @param ctx the parse tree

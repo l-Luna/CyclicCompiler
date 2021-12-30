@@ -33,7 +33,7 @@ public class CyclicType implements TypeReference{
 	public List<String> imports;
 	
 	public CyclicType(CyclicLangParser.ClassDeclContext ast, String packageName, List<String> imports){
-		this.name = ast.ID().getText();
+		this.name = ast.idPart().getText();
 		this.packageName = packageName;
 		this.imports = imports;
 		
@@ -42,7 +42,7 @@ public class CyclicType implements TypeReference{
 			case "class" -> TypeKind.CLASS;
 			case "interface" -> TypeKind.INTERFACE;
 			case "enum" -> TypeKind.ENUM;
-			case "@interface" -> TypeKind.ANNOTATION;
+			case "@interface", "annotation" -> TypeKind.ANNOTATION;
 			case "record" -> TypeKind.RECORD;
 			case "single" -> TypeKind.SINGLE;
 			default -> throw new IllegalStateException("Unexpected type kind: " + typeText + " in type " + fullyQualifiedName());

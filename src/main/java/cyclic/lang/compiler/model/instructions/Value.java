@@ -47,7 +47,7 @@ public abstract class Value{
 			String text = strLit.getText();
 			result = new StringLiteralValue(text.substring(1, text.length() - 1));
 		}else if(ctx instanceof CyclicLangParser.VarValueContext val){
-			String name = val.ID().getText();
+			String name = val.idPart().getText();
 			// if a value is present, check if it's a partial type name, and add to it if so; otherwise return a field
 			if(val.value() != null){
 				Value on = fromAst(val.value(), scope, type, method);
@@ -77,7 +77,7 @@ public abstract class Value{
 		}else if(ctx instanceof CyclicLangParser.FunctionValueContext func){
 			Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
 			List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
-			result = new CallValue(on, args, Utils.resolveMethod(func.call().ID().getText(), on, args, method));
+			result = new CallValue(on, args, Utils.resolveMethod(func.call().idPart().getText(), on, args, method));
 		}else if(ctx instanceof CyclicLangParser.InitialisationValueContext init){
 			List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 			TypeReference of = TypeResolver.resolve(init.initialisation().type().getText(), type.imports, type.packageName());

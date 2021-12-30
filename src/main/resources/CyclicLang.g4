@@ -7,16 +7,21 @@ packageDecl: PACKAGE id SEMICOLON;
 imports: importDecl*;
 importDecl: IMPORT STATIC? id (DOT STAR)? SEMICOLON;
 
-classDecl: modifiers objectType ID recordComponents? objectExtends? objectImplements? (LBRACE annotation* member* RBRACE | SEMICOLON);
+classDecl: annotation* modifiers objectType idPart genericTypeDefs? recordComponents? objectExtends? objectImplements? objectPermits? (LBRACE member* RBRACE | SEMICOLON);
 
 objectExtends: EXTENDS type (COMMA type)*; // interfaces can have many
 objectImplements: IMPLEMENTS type (COMMA type)*;
+objectPermits: PERMITS type (COMMA type)*;
+
+genericTypeDefs: LESSER genericTypeDef (COMMA genericTypeDef)* GREATER;
+genericTypeDef: (IN | OUT)? CLASS? type (EXTENDS type)?;
 
 objectType
     : CLASS
     | INTERFACE
     | ENUM
     | AT INTERFACE
+    | ANNOTATION
     | RECORD
     | SINGLE
     ;
@@ -32,16 +37,16 @@ member
     | SEMICOLON
     ;
 
-constructor: modifiers type LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
+constructor: annotation* modifiers type LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
 init: STATIC? block;
 
-function: modifiers type ID LPAREN parameters RPAREN (functionBlock | functionArrow);
+function: annotation* modifiers genericTypeDefs? type idPart LPAREN parameters RPAREN (functionBlock | functionArrow);
 
 functionBlock: (block | SEMICOLON);
 functionArrow: DASHARROW (value SEMICOLON | statement);
 
-varDecl: modifiers type ID (ASSIGN value)?;
-parameter: FINAL? type ELIPSES? ID (ASSIGN value)?;
+varDecl: annotation* modifiers type idPart (ASSIGN value)?;
+parameter: FINAL? type ELIPSES? idPart (ASSIGN value)?;
 parameters: (parameter (COMMA parameter)*)?;
 
 block: LBRACE statement* RBRACE;
@@ -67,23 +72,25 @@ statement
 annotation: AT id;
 
 type
-    : annotation* rawType (LESSER type (COMMA type)* GREATER)?
+    : annotation* rawType (genericTypeUses)?
     // e.g. @NonNull Integer @Nullable [] for a nullable array of nonnull integers
     | type annotation* LSQUAR RSQUAR
     ;
 
-rawType
-    : INT                      #intType
-    | DEC                      #decType
-    | BYTE                     #byteType
-    | BOOL                     #boolType
-    | VOID                     #voidType
-    | VAR                      #inferType
-    | VAL                      #inferFinalType
-    | id                       #idType
-    ;
+genericTypeUses: LESSER genericTypeUse (COMMA genericTypeUse)* GREATER;
+genericTypeUse: (QUESTION (EXTENDS | SUPER))? type;
 
-id: ID (DOT ID)*;
+rawType
+    : INT
+    | DEC
+    | DOUBLE
+    | BYTE
+    | BOOL
+    | VOID
+    | VAR
+    | VAL
+    | id
+    ;
 
 modifiers: modifier*;
 
@@ -93,7 +100,7 @@ value
     | call                                      #functionValue
     | value EXCLAMATION? INSTANCEOF type        #instanceCheckValue
     | array=value LSQUAR index=value RSQUAR     #arrayIndexValue
-    | value DOT ID                              #varValue
+    | value DOT idPart                          #varValue
     | DO statement                              #doValue
     | initialisation                            #initialisationValue
     | LPAREN value RPAREN                       #parenValue
@@ -110,13 +117,13 @@ value
     | STRLIT                                    #strLit
     | BOOLLIT                                   #boolLit
     | NULL                                      #nullLit
-    | ID                                        #varValue
+    | idPart                                    #varValue
     ;
 
 initialisation: NEW type LPAREN arguments RPAREN;
 cast: LPAREN type RPAREN value;
 varAssignment: value binaryop? ASSIGN value;
-call: ID LPAREN arguments RPAREN;
+call: idPart LPAREN arguments RPAREN;
 newArray: NEW type LSQUAR value RSQUAR;
 newListedArray: NEW type LSQUAR RSQUAR LBRACE (value (COMMA value)*)? RBRACE;
 
@@ -130,7 +137,7 @@ elseStatement: ELSE statement;
 
 whileStatement: WHILE LPAREN value RPAREN statement;
 forStatement: FOR LPAREN start=statement? cond=value SEMICOLON end=statement? RPAREN action=statement;
-foreachStatement: FOR LPAREN type ID COLON value RPAREN statement;
+foreachStatement: FOR LPAREN type idPart COLON value RPAREN statement;
 doWhile: DO statement WHILE LPAREN value RPAREN SEMICOLON;
 
 switchStatement: SWITCH LPAREN value RPAREN LBRACE caseClause* defaultClause? RBRACE;
@@ -169,6 +176,17 @@ unaryop
     | EXCLAMATION
     ;
 
+id: idPart (DOT idPart)*;
+// contextual keywords are valid identifiers
+idPart
+    : ID
+    | ANNOTATION
+    | IN
+    | OUT
+    | SEALED
+    | PERMITS
+    ;
+
 modifier
     : PUBLIC
     | STATIC
@@ -180,6 +198,8 @@ modifier
     | NATIVE
     | STRICTFP
     | VOLATILE
+    | SEALED
+    | NONSEALED
     ;
 
 PROTECTED: 'protected';
@@ -205,6 +225,7 @@ INTERFACE: 'interface';
 ENUM: 'enum';
 RECORD: 'record';
 SINGLE: 'single';
+ANNOTATION: 'annotation';
 
 IMPORT: 'import';
 PACKAGE: 'package';
@@ -212,6 +233,14 @@ EXTENDS: 'extends';
 IMPLEMENTS: 'implements';
 
 THIS: 'this';
+SUPER: 'super';
+
+IN: 'in';
+OUT: 'out';
+
+SEALED: 'sealed';
+PERMITS: 'permits';
+NONSEALED: 'non-sealed';
 
 DEFAULT: 'default';
 SWITCH: 'switch';
@@ -278,6 +307,7 @@ EQARROW: '=>'; // Unused
 
 INT: 'int';
 DEC: 'float';
+DOUBLE: 'double';
 BYTE: 'byte';
 BOOL: 'boolean';
 VOID: 'void';

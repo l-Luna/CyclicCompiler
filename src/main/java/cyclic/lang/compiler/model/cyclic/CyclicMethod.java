@@ -32,7 +32,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	Scope methodScope = new Scope();
 	
 	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in){
-		name = ctx.ID().getText();
+		name = ctx.idPart().getText();
 		this.in = in;
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
 			isN |= modifier.equals("native");
@@ -43,7 +43,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		retType = ctx.type().getText();
 		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type().getText());
-			paramNames.add(p.ID().getText());
+			paramNames.add(p.idPart().getText());
 		}
 		
 		if(ctx.functionArrow() != null){

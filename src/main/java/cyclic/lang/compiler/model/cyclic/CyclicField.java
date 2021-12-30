@@ -27,7 +27,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 	}
 	
 	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in){
-		name = ctx.ID().getText();
+		name = ctx.idPart().getText();
 		this.in = in;
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
 			isS |= modifier.equals("static");

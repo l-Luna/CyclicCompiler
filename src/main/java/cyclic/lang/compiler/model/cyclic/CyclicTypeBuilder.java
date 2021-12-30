@@ -37,7 +37,7 @@ public final class CyclicTypeBuilder{
 				if(ctx.getParent() instanceof CyclicLangParser.MemberContext m){
 					// we're an inner class
 					// our parent has already been visited
-					String parentName = ((CyclicLangParser.ClassDeclContext)m.getParent()).ID().getText();
+					String parentName = ((CyclicLangParser.ClassDeclContext)m.getParent()).idPart().getText();
 					for(var t : ret){
 						if(t.shortName().equals(parentName)){
 							t.inners.add(type);

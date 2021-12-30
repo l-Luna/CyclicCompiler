@@ -33,7 +33,7 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		
 		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type().getText());
-			paramNames.add(p.ID().getText());
+			paramNames.add(p.idPart().getText());
 		}
 		
 		if(ctx.statement() != null)
