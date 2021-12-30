@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cyclic.lang.compiler.Constants.*;
 
@@ -74,7 +75,7 @@ public class CyclicType implements TypeReference{
 		
 		for(var member : ast.member()){
 			if(member.function() != null)
-				methods.add(new CyclicMethod(member.function(), this));
+				methods.add(new CyclicMethod(member.function(), this, kind() == TypeKind.INTERFACE));
 			else if(member.constructor() != null)
 				constructors.add(new CyclicConstructor(member.constructor(), this));
 			else if(member.init() != null)
@@ -92,8 +93,9 @@ public class CyclicType implements TypeReference{
 		fieldsAndInherited.addAll(fields);
 		
 		// implicit constructor if none is present - ensures that init blocks and static field inits are written
-		if(constructors.size() == 0)
+		if(constructors.size() == 0 && kind() != TypeKind.INTERFACE)
 			constructors.add(new CyclicConstructor(false, this));
+		
 		if(initBlocks.stream().noneMatch(k -> k.isS))
 			initBlocks.add(new CyclicConstructor(true, this));
 	}
@@ -221,14 +223,18 @@ public class CyclicType implements TypeReference{
 			if(method.flags().isAbstract() && !flags().isAbstract())
 				throw new CompileTimeException(null, "Non-abstract type cannot have abstract method " + method.nameAndDescriptor());
 		
-		if(kind() == TypeKind.INTERFACE && fields.size() > 0)
-			throw new CompileTimeException(null, "Interfaces should have no fields, but found " + fields.size());
+		if(kind() == TypeKind.INTERFACE){
+			if(constructors.size() > 0)
+				throw new CompileTimeException(null, "Interfaces should have no constructors, but found " + constructors.size());
+			if(fields.stream().anyMatch(x -> !x.isStatic()))
+				throw new CompileTimeException(null, "Interfaces should have no instance fields, but found " + fields.stream().filter(x -> !x.isStatic()).count());
+		}
 	}
 	
 	public void resolveInheritance(){
 		CompileTimeException.setFile(fullyQualifiedName());
 		// don't inherit overridden methods
-		for(MethodReference method : superType.methods()){
+		for(MethodReference method : Stream.concat(superType.methods().stream(), interfaces.stream().flatMap(x -> x.methods().stream())).toList()){
 			if(methods.stream().noneMatch(x -> x.nameAndDescriptor().equals(method.nameAndDescriptor()))){
 				if(method.flags().isAbstract() && !flags.isAbstract())
 					throw new CompileTimeException(null, "Abstract supertype method " + method.nameAndDescriptor() + " must be overridden in concrete subclass");

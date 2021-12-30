@@ -32,7 +32,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	public Statement body;
 	Scope methodScope = new Scope();
 	
-	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in){
+	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in, boolean abstractByDefault){
 		name = ctx.idPart().getText();
 		this.in = in;
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
@@ -40,6 +40,18 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			isSyn |= modifier.equals("synchronised");
 			isSt |= modifier.equals("static");
 		});
+		
+		if(ctx.functionArrow() != null){
+			if(ctx.functionArrow().statement() != null)
+				arrowStatement = ctx.functionArrow().statement();
+			else
+				arrowVal = ctx.functionArrow().value();
+		}else
+			blockStatement = ctx.functionBlock().block();
+		
+		if(abstractByDefault && arrowStatement == null && arrowVal == null && blockStatement == null)
+			flags = new AccessFlags(flags.visibility(), true, flags.isFinal());
+		
 		boolean isA = isN || flags.isAbstract();
 		if(isA && flags.isFinal())
 			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be final and abstract or native");
@@ -53,14 +65,6 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			paramTypeNames.add(p.type().getText());
 			paramNames.add(p.idPart().getText());
 		}
-		
-		if(ctx.functionArrow() != null){
-			if(ctx.functionArrow().statement() != null)
-				arrowStatement = ctx.functionArrow().statement();
-			else
-				arrowVal = ctx.functionArrow().value();
-		}else
-			blockStatement = ctx.functionBlock().block();
 		
 		if(isA && (arrowStatement != null || arrowVal != null || blockStatement != null))
 			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");

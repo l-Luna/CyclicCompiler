@@ -4,6 +4,7 @@ import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 public final class CyclicMethodWriter{
 	
@@ -15,6 +16,7 @@ public final class CyclicMethodWriter{
 		if(!(method.flags().isAbstract() || method.isNative())){
 			mv.visitCode();
 			method.body.write(mv);
+			mv.visitInsn(Opcodes.RETURN);
 		}
 	}
 	
