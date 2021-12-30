@@ -5,7 +5,6 @@ import cyclic.lang.compiler.model.external.SystemTypeRef;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
-import org.antlr.v4.runtime.RuleContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
@@ -13,8 +12,6 @@ import org.objectweb.asm.Opcodes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -30,21 +27,22 @@ public final class Utils{
 		if(ctx == null)
 			return new AccessFlags(Visibility.PUBLIC, false, false);
 		
-		var visibility = new AtomicReference<>(Visibility.PACKAGE_PRIVATE);
-		var isA = new AtomicBoolean(false);
-		var isF = new AtomicBoolean(false);
-		ctx.modifier().stream().map(RuleContext::getText).forEach(modifier -> {
+		var visibility = Visibility.PACKAGE_PRIVATE;
+		var isA = false;
+		var isF = false;
+		for(CyclicLangParser.ModifierContext context : ctx.modifier()){
+			String modifier = context.getText();
 			switch(modifier){
-				case "private" -> visibility.set(Visibility.PRIVATE);
-				case "public" -> visibility.set(Visibility.PUBLIC);
-				case "protected" -> visibility.set(Visibility.PROTECTED);
+				case "private" -> visibility = Visibility.PRIVATE;
+				case "public" -> visibility = Visibility.PUBLIC;
+				case "protected" -> visibility = Visibility.PROTECTED;
 				
-				case "final" -> isF.set(true);
-				case "abstract" -> isA.set(true);
+				case "final" -> isF = true;
+				case "abstract" -> isA = true;
 			}
 			also.accept(modifier);
-		});
-		return new AccessFlags(visibility.get(), isA.get(), isF.get());
+		}
+		return new AccessFlags(visibility, isA, isF);
 	}
 	
 	@Contract("_ -> new")

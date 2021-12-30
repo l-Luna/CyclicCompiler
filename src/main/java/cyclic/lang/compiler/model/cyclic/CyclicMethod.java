@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
@@ -39,6 +40,13 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			isSyn |= modifier.equals("synchronised");
 			isSt |= modifier.equals("static");
 		});
+		boolean isA = isN || flags.isAbstract();
+		if(isA && flags.isFinal())
+			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be final and abstract or native");
+		if(isA && isStatic())
+			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be static and abstract or native");
+		if(isNative() && flags.isAbstract())
+			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be native and abstract");
 		
 		retType = ctx.type().getText();
 		for(var p : ctx.parameters().parameter()){
@@ -53,6 +61,9 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 				arrowVal = ctx.functionArrow().value();
 		}else
 			blockStatement = ctx.functionBlock().block();
+		
+		if(isA && (arrowStatement != null || arrowVal != null || blockStatement != null))
+			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");
 	}
 	
 	public void resolve(){

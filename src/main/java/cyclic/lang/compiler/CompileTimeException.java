@@ -55,7 +55,7 @@ public class CompileTimeException extends RuntimeException{
 			message += ", at " + curText.peek();
 		String details = super.getMessage();
 		if(details != null && !details.isBlank())
-			message += ": " + details;
+			message += ":\n\t\t" + details;
 		return message;
 	}
 	

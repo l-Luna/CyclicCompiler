@@ -15,8 +15,7 @@ public final class CyclicMethodWriter{
 		if(!(method.flags().isAbstract() || method.isNative())){
 			mv.visitCode();
 			method.body.write(mv);
-		}else if(method.flags().isAbstract() && !method.in().flags().isAbstract())
-			System.err.println("Found abstract method in non-abstract class: \"" + method.name() + method.descriptor() + "\" in " + method.in().fullyQualifiedName());
+		}
 	}
 	
 	public static void writeCtor(MethodVisitor mv, CyclicConstructor ctor){

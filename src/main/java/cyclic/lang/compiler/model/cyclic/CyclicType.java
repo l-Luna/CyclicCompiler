@@ -139,6 +139,10 @@ public class CyclicType implements TypeReference{
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
+		validate();
+	}
+	
+	private void validate(){
 		if(superType.kind() == TypeKind.INTERFACE)
 			throw new CompileTimeException(null, "Cannot extend the interface type " + superType.fullyQualifiedName());
 		if(superType.flags().isFinal())
@@ -152,6 +156,10 @@ public class CyclicType implements TypeReference{
 		checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
 		checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
 		checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");
+		
+		for(CyclicMethod method : methods)
+			if(method.flags().isAbstract() && !flags().isAbstract())
+				throw new CompileTimeException(null, "Non-abstract type cannot have abstract method " + method.nameAndDescriptor());
 	}
 	
 	public void resolveBodies(){
