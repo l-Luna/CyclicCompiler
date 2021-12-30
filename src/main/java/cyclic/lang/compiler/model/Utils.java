@@ -6,6 +6,8 @@ import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.antlr.v4.runtime.RuleContext;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
@@ -18,11 +20,16 @@ import java.util.stream.Collectors;
 
 public final class Utils{
 	
-	public static AccessFlags fromModifiers(CyclicLangParser.ModifiersContext ctx){
+	@Contract("_ -> new")
+	public static @NotNull AccessFlags fromModifiers(CyclicLangParser.ModifiersContext ctx){
 		return fromModifiers(ctx, x -> {});
 	}
 	
-	public static AccessFlags fromModifiers(CyclicLangParser.ModifiersContext ctx, Consumer<String> also){
+	@Contract("_, _ -> new")
+	public static @NotNull AccessFlags fromModifiers(CyclicLangParser.ModifiersContext ctx, Consumer<String> also){
+		if(ctx == null)
+			return new AccessFlags(Visibility.PUBLIC, false, false);
+		
 		var visibility = new AtomicReference<>(Visibility.PACKAGE_PRIVATE);
 		var isA = new AtomicBoolean(false);
 		var isF = new AtomicBoolean(false);
@@ -40,7 +47,8 @@ public final class Utils{
 		return new AccessFlags(visibility.get(), isA.get(), isF.get());
 	}
 	
-	public static AccessFlags fromBitfield(int access){
+	@Contract("_ -> new")
+	public static @NotNull AccessFlags fromBitfield(int access){
 		boolean isPublic = isBitSet(access, Opcodes.ACC_PUBLIC);
 		boolean isPrivate = isBitSet(access, Opcodes.ACC_PRIVATE);
 		boolean isProtected = isBitSet(access, Opcodes.ACC_PROTECTED);
@@ -56,8 +64,18 @@ public final class Utils{
 		return (bitfield & bit) == bit;
 	}
 	
-	// may be a primitive or array type too
-	public static TypeReference forAnyClass(Class<?> type){
+	/**
+	 * Creates a {@linkplain TypeReference} instance that represents the class passed in, handling
+	 * primitive and array types correctly.
+	 *
+	 * @param type
+	 * 		The class to create a reference to.
+	 * @return A reference to the class passed in.
+	 * @see TypeReference
+	 * @see TypeResolver
+	 */
+	@Contract("_ -> new")
+	public static @NotNull TypeReference forAnyClass(@NotNull Class<?> type){
 		if(boolean.class.equals(type))
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN);
 		else if(byte.class.equals(type))

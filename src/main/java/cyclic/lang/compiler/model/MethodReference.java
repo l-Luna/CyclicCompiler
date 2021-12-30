@@ -5,24 +5,60 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.stream.Collectors;
 
+/**
+ * A reference to a method. Unlike constructors, methods have names, return types, and can be synchronized or native.
+ *
+ * @see TypeReference
+ * @see CallableReference
+ */
 public interface MethodReference extends CallableReference{
 	
+	/**
+	 * Returns the name of this method.
+	 */
 	String name();
 	
+	/**
+	 * Returns the return type of this method. For a void method, this is an {@linkplain cyclic.lang.compiler.model.platform.PrimitiveTypeRef}
+	 * with a <code>VOID</code> type.
+	 *
+	 * @return The return type of this method.
+	 */
 	TypeReference returns();
 	
+	/**
+	 * Returns whether this method is marked as native.
+	 *
+	 * @return If this method is marked as native.
+	 */
 	boolean isNative();
 	
+	/**
+	 * Returns whether this method is synchronized.
+	 *
+	 * @return If this method is synchronized.
+	 */
 	boolean isSynchronized();
 	
+	/**
+	 * Returns the descriptor of this method, not including the name of this method.
+	 *
+	 * @return The descriptor of this method.
+	 */
 	default String descriptor(){
 		return "(" + parameters().stream().map(TypeReference::descriptor).collect(Collectors.joining()) + ")" + returns().descriptor();
 	}
 	
+	/**
+	 * Returns the name of this method followed by its descriptor.
+	 */
 	default String nameAndDescriptor(){
 		return name() + descriptor();
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	default void writeInvoke(MethodVisitor mv){
 		if(isStatic()){
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), in().kind() == TypeKind.INTERFACE);

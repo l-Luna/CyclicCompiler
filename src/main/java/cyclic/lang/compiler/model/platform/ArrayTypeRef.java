@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.model.platform;
 
+import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.*;
 
 import java.util.Collections;
@@ -69,5 +70,12 @@ public class ArrayTypeRef implements TypeReference{
 	
 	public TypeReference getComponent(){
 		return underlying;
+	}
+	
+	public boolean isAssignableTo(TypeReference target){
+		if(target.fullyQualifiedName().equals(Constants.OBJECT))
+			return true;
+		
+		return target instanceof ArrayTypeRef arrayTarget && getComponent().isAssignableTo(arrayTarget.getComponent());
 	}
 }

@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+/**
+ * Thrown when the Cyclic compiler encounters invalid code that is not a syntax error.
+ */
 public class CompileTimeException extends RuntimeException{
 	
 	private static String curFile;
