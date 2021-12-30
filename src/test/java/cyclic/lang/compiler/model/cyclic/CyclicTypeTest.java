@@ -29,6 +29,7 @@ class CyclicTypeTest{
 				
 				() -> assertDoesNotThrow(() -> Compiler.compileString("class T extends Object;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("class T implements Cloneable, java.io.Serializable;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("interface T extends Cloneable, java.io.Serializable;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("sealed class T permits F { final class F extends T; }"))
 		);
 	}
