@@ -1,4 +1,3 @@
-// Generated from C:/ezz/Mods/CyclicCompiler/src/main/resources\CyclicLang.g4 by ANTLR 4.9.2
 package cyclic.lang.antlr_generated;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
