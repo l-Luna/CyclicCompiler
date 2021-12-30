@@ -20,4 +20,15 @@ dependencies {
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+    jvmArgs("--enable-preview")
+}
+
+tasks.withType<JavaExec>{
+    jvmArgs("--enable-preview")
+}
+
+tasks.withType<JavaCompile>{
+    sourceCompatibility = JavaVersion.VERSION_17.toString()
+    targetCompatibility = JavaVersion.VERSION_17.toString()
+    options.compilerArgs.add("--enable-preview")
 }

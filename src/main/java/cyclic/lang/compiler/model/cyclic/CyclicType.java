@@ -8,6 +8,8 @@ import org.antlr.v4.runtime.RuleContext;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cyclic.lang.compiler.Constants.*;
+
 // A type that will be compiled this run.
 public class CyclicType implements TypeReference{
 	
@@ -22,6 +24,9 @@ public class CyclicType implements TypeReference{
 	private List<CyclicField> fields = new ArrayList<>();
 	private List<CyclicConstructor> constructors = new ArrayList<>();
 	private List<CyclicMethod> methods = new ArrayList<>();
+	
+	private List<FieldReference> fieldsAndInherited = new ArrayList<>();
+	private List<MethodReference> methodsAndInherited = new ArrayList<>();
 	
 	private String superTypeName;
 	private List<String> interfaceNames;
@@ -51,18 +56,21 @@ public class CyclicType implements TypeReference{
 		CompileTimeException.setFile(fullyQualifiedName());
 		
 		if(kind == TypeKind.INTERFACE){
-			superTypeName = "java.lang.Object";
+			superTypeName = OBJECT;
 			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
 			if(ast.objectImplements() != null && ast.objectImplements().type().size() > 0)
 				throw new CompileTimeException(null, "Interface has " + ast.objectImplements().type().size() + " declared implemented interfaces, but must have 0");
 		}else{
 			if(ast.objectExtends() != null && ast.objectExtends().type().size() > 1)
 				throw new CompileTimeException(null, "Non-interface has " + ast.objectExtends().type().size() + " declared supertypes, but can only have 1");
-			superTypeName = ast.objectExtends() != null ? ast.objectExtends().type(0).getText() : "java.lang.Object";
+			superTypeName = ast.objectExtends() != null ? ast.objectExtends().type(0).getText() : OBJECT;
 			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
 		}
 		
 		flags = Utils.fromModifiers(ast.modifiers());
+		
+		if(flags.isAbstract() && flags.isFinal())
+			throw new CompileTimeException(null, "Type cannot be abstract and final");
 		
 		for(var member : ast.member()){
 			if(member.function() != null)
@@ -79,6 +87,9 @@ public class CyclicType implements TypeReference{
 		members.addAll(constructors);
 		members.addAll(initBlocks);
 		members.addAll(methods);
+		
+		methodsAndInherited.addAll(methods);
+		fieldsAndInherited.addAll(fields);
 		
 		// implicit constructor if none is present - ensures that init blocks and static field inits are written
 		if(constructors.size() == 0)
@@ -104,11 +115,11 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public List<? extends MethodReference> methods(){
-		return methods;
+		return methodsAndInherited;
 	}
 	
 	public List<? extends FieldReference> fields(){
-		return fields;
+		return fieldsAndInherited;
 	}
 	
 	public List<? extends CallableReference> constructors(){
@@ -134,12 +145,61 @@ public class CyclicType implements TypeReference{
 	public void resolveRefs(){
 		CompileTimeException.setFile(fullyQualifiedName());
 		
-		members.forEach(CyclicMember::resolve);
-		
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
+		if(kind == TypeKind.INTERFACE){
+			if(flags.isFinal())
+				throw new CompileTimeException(null, "Interfaces must not be final");
+			flags = new AccessFlags(flags.visibility(), true, false);
+			
+		}else if(kind == TypeKind.ENUM){
+			if(flags.isAbstract())
+				throw new CompileTimeException(null, "Enums must not be abstract");
+			if(!superType.fullyQualifiedName().equals(OBJECT) && !superType.fullyQualifiedName().equals(ENUM))
+				throw new CompileTimeException(null, "Enums can only declare java.lang.Object or java.lang.Enum as super type");
+			flags = new AccessFlags(flags.visibility(), false, true);
+			superType = TypeResolver.resolve(ENUM);
+			
+		}else if(kind == TypeKind.RECORD){
+			if(flags.isAbstract())
+				throw new CompileTimeException(null, "Records must not be abstract");
+			if(!superType.fullyQualifiedName().equals(OBJECT) && !superType.fullyQualifiedName().equals(RECORD))
+				throw new CompileTimeException(null, "Records can only declare java.lang.Object or java.lang.Record as super type");
+			flags = new AccessFlags(flags.visibility(), false, true);
+			superType = TypeResolver.resolve(RECORD);
+			
+		}else if(kind == TypeKind.ANNOTATION){
+			if(flags.isFinal())
+				throw new CompileTimeException(null, "Annotations must not be marked as final");
+			if(!superType.fullyQualifiedName().equals(OBJECT))
+				throw new CompileTimeException(null, "Annotations can only declare java.lang.Object as super type");
+			
+			boolean markedAnnotation = false;
+			for(TypeReference i : interfaces)
+				// TODO: annotation interfaces for e.g. checkers
+				// requires a Cyclic stdlib
+				if(!i.fullyQualifiedName().equals(ANNOTATION))
+					throw new CompileTimeException(null, "Annotations can only declare java.lang.annotation.Annotation as implemented interface");
+				else markedAnnotation = true;
+			
+			flags = new AccessFlags(flags.visibility(), false, true);
+			superType = TypeResolver.resolve(OBJECT);
+			if(!markedAnnotation)
+				interfaces.add(TypeResolver.resolve(ANNOTATION));
+			
+		}else if(kind == TypeKind.SINGLE)
+			if(flags.isAbstract())
+				throw new CompileTimeException(null, "Single types must not be abstract");
+		
+		members.forEach(CyclicMember::resolve);
+		
+		generateMembersForKind();
 		validate();
+	}
+	
+	private void generateMembersForKind(){
+		// e.g. record members, single INSTANCE field, enum everything
 	}
 	
 	private void validate(){
@@ -160,6 +220,29 @@ public class CyclicType implements TypeReference{
 		for(CyclicMethod method : methods)
 			if(method.flags().isAbstract() && !flags().isAbstract())
 				throw new CompileTimeException(null, "Non-abstract type cannot have abstract method " + method.nameAndDescriptor());
+		
+		if(kind() == TypeKind.INTERFACE && fields.size() > 0)
+			throw new CompileTimeException(null, "Interfaces should have no fields, but found " + fields.size());
+	}
+	
+	public void resolveInheritance(){
+		CompileTimeException.setFile(fullyQualifiedName());
+		// don't inherit overridden methods
+		for(MethodReference method : superType.methods()){
+			if(methods.stream().noneMatch(x -> x.nameAndDescriptor().equals(method.nameAndDescriptor()))){
+				if(method.flags().isAbstract() && !flags.isAbstract())
+					throw new CompileTimeException(null, "Abstract supertype method " + method.nameAndDescriptor() + " must be overridden in concrete subclass");
+				methodsAndInherited.add(method);
+			}else if(method.flags().isFinal() && !(method.flags().visibility() == Visibility.PRIVATE))
+				throw new CompileTimeException(null, "Method " + method.nameAndDescriptor() + " cannot be overridden");
+		}
+		
+		for(FieldReference field : superType.fields()){
+			if(fields.stream().noneMatch(x -> x.name().equals(field.name())))
+				fieldsAndInherited.add(field);
+			else if(!(field.flags().visibility() == Visibility.PRIVATE))
+				throw new CompileTimeException(null, "Field " + field.name() + " is defined in supertype and cannot be duplicated");
+		}
 	}
 	
 	public void resolveBodies(){

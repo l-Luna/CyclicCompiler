@@ -18,7 +18,7 @@ class CyclicTypeTest{
 				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("@interface T;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation T;")),
-				() -> assertDoesNotThrow(() -> Compiler.compileString("record T(int component);")),
+				//() -> assertDoesNotThrow(() -> Compiler.compileString("record T(int component);")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("single T;")),
 				
 				() -> assertDoesNotThrow(() -> Compiler.compileString("class permits;")),
@@ -40,7 +40,26 @@ class CyclicTypeTest{
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T extends String;")),
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T extends java.util.List;")),
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("interface T implements java.util.List;")),
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("interface T extends Object;"))
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("interface T extends Object;")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation T extends Object;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation T implements java.lang.annotation.Annotation;")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("annotation T extends F { class F; }")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("annotation T implements java.io.Serializable;")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T extends Object;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T extends Enum;")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T implements java.io.Serializable;")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum T extends F { class F; }"))
+				
+				//() -> assertDoesNotThrow(() -> Compiler.compileString("record T extends Object;"))
 		);
+	}
+	
+	@Test
+	void testInheritanceValidation(){
+	
 	}
 }

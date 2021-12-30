@@ -50,11 +50,13 @@ public final class CyclicClassWriter{
 		}
 		
 		for(var method : type.methods()){
-			MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);
-			CyclicMethodWriter.writeMethod(mv, (CyclicMethod)method);
-			mv.visitInsn(Opcodes.RETURN);
-			mv.visitMaxs(0, 0);
-			mv.visitEnd();
+			if(method instanceof CyclicMethod cyc){ // inherited methods are not CyclicMethods
+				MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);
+				CyclicMethodWriter.writeMethod(mv, cyc);
+				mv.visitInsn(Opcodes.RETURN);
+				mv.visitMaxs(0, 0);
+				mv.visitEnd();
+			}
 		}
 		
 		/*if(type.outerClass() != null)

@@ -5,6 +5,10 @@ public final class Constants{
 	public static final String OBJECT = "java.lang.Object";
 	public static final String STRING = "java.lang.String";
 	
+	public static final String ENUM = "java.lang.Enum";
+	public static final String ANNOTATION = "java.lang.annotation.Annotation";
+	public static final String RECORD = "java.lang.Record";
+	
 	// For-each loop constants
 	public static final String ITERABLE = "java.lang.Iterable";
 	public static final String ITERABLE_ITERATOR = "iterator";

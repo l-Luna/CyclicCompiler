@@ -80,6 +80,7 @@ public interface TypeReference{
 	/**
 	 * Returns a list of references to the methods of this type, including inherited methods.
 	 * Non-public methods may not be included for externally defined types.
+	 * Inherited methods may be missing if {@linkplain TypeReference#resolveInheritance()} has not been called on this type.
 	 *
 	 * @return The methods of this type.
 	 */
@@ -88,6 +89,7 @@ public interface TypeReference{
 	/**
 	 * Returns a list of references to the fields of this type, including inherited fields.
 	 * Non-public fields may not be included for externally defined types.
+	 * Inherited fields may be missing if {@linkplain TypeReference#resolveInheritance()} has not been called on this type.
 	 *
 	 * @return The fields of this type.
 	 */
@@ -108,12 +110,17 @@ public interface TypeReference{
 	default void resolveRefs(){}
 	
 	/**
+	 * Resolves members inherited from supertypes. Should be called after {@linkplain TypeReference#resolveRefs()} has
+	 * been called on all types to be compiled.
+	 */
+	default void resolveInheritance(){}
+	
+	/**
 	 * Resolves the bodies of callable members and the default values of fields, required before this type
-	 * can be written to a file.
+	 * can be written to a file. Should be called after {@linkplain TypeReference#resolveInheritance()} has
+	 * been called on all types to be compiled.
 	 */
 	default void resolveBodies(){}
-	
-	/// Default implementations
 	
 	/**
 	 * Returns the fully qualified name of this type. This is usually the package name, followed by a dot, followed by its

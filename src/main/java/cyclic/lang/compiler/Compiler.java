@@ -118,6 +118,7 @@ public final class Compiler{
 		}
 		
 		toCompile.values().forEach(CyclicType::resolveRefs);
+		toCompile.values().forEach(CyclicType::resolveInheritance);
 		toCompile.values().forEach(CyclicType::resolveBodies);
 		
 		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
@@ -148,6 +149,7 @@ public final class Compiler{
 		for(var type : types)
 			toCompile.put(type.fullyQualifiedName(), type);
 		toCompile.values().forEach(CyclicType::resolveRefs);
+		toCompile.values().forEach(CyclicType::resolveInheritance);
 		toCompile.values().forEach(CyclicType::resolveBodies);
 		
 		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
