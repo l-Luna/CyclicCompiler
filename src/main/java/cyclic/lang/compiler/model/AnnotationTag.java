@@ -37,6 +37,11 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 	 */
 	record AnnotationParam(String name, TypeReference type, Object defaultValue){}
 	
+	public AnnotationTag{
+		if(arguments.values().stream().anyMatch(Guaranteed.NULL_MARKER::equals))
+			throw new IllegalStateException("Annotation " + annotationType.fullyQualifiedName() + " on " + on + " cannot accept null value");
+	}
+	
 	public static AnnotationTag fromAnnotation(Annotation annotation, AnnotatableElement on){
 		Class<? extends Annotation> annoType = annotation.annotationType();
 		var params = Arrays

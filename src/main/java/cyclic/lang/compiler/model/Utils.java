@@ -74,6 +74,8 @@ public final class Utils{
 	 */
 	@Contract("_ -> new")
 	public static @NotNull TypeReference forAnyClass(@NotNull Class<?> type){
+		// generates an invalid switch statement
+		//noinspection IfCanBeSwitch
 		if(boolean.class.equals(type))
 			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN);
 		else if(byte.class.equals(type))
