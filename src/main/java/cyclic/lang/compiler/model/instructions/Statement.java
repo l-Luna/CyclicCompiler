@@ -50,7 +50,7 @@ public abstract class Statement{
 			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, method) : null;
 			if(infer && initial == null)
 				throw new CompileTimeException("Can't infer the type of a variable without an initial value.");
-			result = new VarStatement(in, ctx.varDecl().idPart().getText(), infer ? initial.type() : TypeResolver.resolve(ctx.varDecl().type().getText(), imports, type.packageName()), initial, true, isFinal);
+			result = new VarStatement(in, ctx.varDecl().idPart().getText(), infer ? initial.type() : TypeResolver.resolve(ctx.varDecl().type(), imports, type.packageName()), initial, true, isFinal);
 		}else if(ctx.varAssignment() != null){
 			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, method);
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, method);
@@ -110,7 +110,7 @@ public abstract class Statement{
 			TypeReference iteratorType = TypeResolver.resolve(ITERATOR);
 			BlockStatement container = new BlockStatement(in);
 			Variable iterator = new Variable("~", iteratorType, container.blockScope, null);
-			Variable iterationVar = new Variable(fe.idPart().getText(), TypeResolver.resolve(fe.type().getText(), type.imports, type.packageName()), container.blockScope, container);
+			Variable iterationVar = new Variable(fe.idPart().getText(), TypeResolver.resolve(fe.type(), type.imports, type.packageName()), container.blockScope, container);
 			Statement action = fromAst(fe.statement(), container.blockScope, type, method);
 			// TODO: generics
 			container.contains = List.of(

@@ -84,7 +84,7 @@ public final class CyclicClassWriter{
 		writer.visitEnd();
 	}
 	
-	private static void writeAnnotation(AnnotationVisitor av, AnnotationTag annotation){
+	static void writeAnnotation(AnnotationVisitor av, AnnotationTag annotation){
 		annotation.arguments().forEach((name, value) -> {
 			if(value instanceof EnumConstant e)
 				av.visitEnum(name, e.enumType().descriptor(), e.name());

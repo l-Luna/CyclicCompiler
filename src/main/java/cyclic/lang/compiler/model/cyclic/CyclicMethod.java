@@ -9,7 +9,9 @@ import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.instructions.Variable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CyclicMethod implements MethodReference, CyclicMember{
@@ -20,8 +22,8 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	List<String> paramNames = new ArrayList<>();
 	boolean isN = false, isSyn = false, isSt = false;
 	
-	String retType;
-	List<String> paramTypeNames = new ArrayList<>();
+	CyclicLangParser.TypeContext retType;
+	List<CyclicLangParser.TypeContext> paramTypeNames = new ArrayList<>();
 	CyclicLangParser.BlockContext blockStatement;
 	CyclicLangParser.ValueContext arrowVal;
 	CyclicLangParser.StatementContext arrowStatement;
@@ -29,12 +31,19 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	TypeReference returns;
 	List<TypeReference> parameters;
 	
+	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
+	private Set<AnnotationTag> annotations = new HashSet<>();
+	private List<CyclicLangParser.AnnotationContext> unresolvedTypeAnnotations;
+	private Set<AnnotationTag> typeAnnotations = new HashSet<>();
+	
 	public Statement body;
 	Scope methodScope = new Scope();
 	
 	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in, boolean abstractByDefault){
 		name = ctx.idPart().getText();
 		this.in = in;
+		this.unresolvedAnnotations = ctx.annotation();
+		this.unresolvedTypeAnnotations = ctx.type().annotation();
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
 			isN |= modifier.equals("native");
 			isSyn |= modifier.equals("synchronised");
@@ -60,9 +69,9 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		if(isNative() && flags.isAbstract())
 			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be native and abstract");
 		
-		retType = ctx.type().getText();
+		retType = ctx.type();
 		for(var p : ctx.parameters().parameter()){
-			paramTypeNames.add(p.type().getText());
+			paramTypeNames.add(p.type());
 			paramNames.add(p.idPart().getText());
 		}
 		
@@ -76,6 +85,11 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		parameters = paramTypeNames.stream()
 				.map(x -> TypeResolver.resolve(x, imports, in.packageName()))
 				.collect(Collectors.toList());
+		
+		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
+			annotations.add(AnnotationTag.fromAst(annotation, this, in));
+		for(CyclicLangParser.AnnotationContext annotation : unresolvedTypeAnnotations)
+			typeAnnotations.add(AnnotationTag.fromAst(annotation, this, in));
 	}
 	
 	public void resolveBody(){
@@ -127,5 +141,13 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	
 	public Object defaultValueForAnnotation(){
 		return null;
+	}
+	
+	public Set<AnnotationTag> annotations(){
+		return annotations;
+	}
+	
+	public Set<AnnotationTag> returnTypeAnnotations(){
+		return typeAnnotations;
 	}
 }

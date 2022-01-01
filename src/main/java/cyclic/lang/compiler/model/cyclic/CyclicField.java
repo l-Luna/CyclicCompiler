@@ -39,7 +39,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 			flags = new AccessFlags(Visibility.PUBLIC, false, true);
 		}
 		
-		typeName = ctx.type().getText();
+		typeName = TypeResolver.getBaseName(ctx.type());
 		defaultVal = ctx.value();
 	}
 	

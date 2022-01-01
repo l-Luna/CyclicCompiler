@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.model;
 
+import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.model.external.ExternalTypeResolver;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
@@ -10,6 +11,18 @@ import java.util.*;
 public final class TypeResolver{
 	
 	private static final Map<String, TypeReference> cache = new HashMap<>();
+	
+	// TODO: handle generics and better handle annotations
+	public static String getBaseName(CyclicLangParser.TypeContext name){
+		if(name.LSQUAR() != null)
+			return getBaseName(name.type()) + "[]";
+		else
+			return name.rawType().getText();
+	}
+	
+	public static TypeReference resolve(CyclicLangParser.TypeContext name, List<String> imports, String fromPackage){
+		return resolve(getBaseName(name), imports, fromPackage);
+	}
 	
 	public static TypeReference resolve(String name, List<String> imports, String fromPackage){
 		return resolveOptional(name, imports, fromPackage).orElseThrow(() -> new IllegalStateException("Type " + name + " not found in [" + String.join(", ", imports) + "]"));

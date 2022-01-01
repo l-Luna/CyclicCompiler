@@ -79,7 +79,7 @@ public abstract class Value{
 			}
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
-				TypeReference of = TypeResolver.resolve(init.initialisation().type().getText(), type.imports, type.packageName());
+				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
 				yield new InitializationValue(args, Utils.resolveConstructor(of, args, method));
 			}
 			case CyclicLangParser.BinaryOpValueContext bin -> {
@@ -98,11 +98,11 @@ public abstract class Value{
 					// TODO: generics
 					new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
 			case CyclicLangParser.InstanceCheckValueContext inst -> {
-				var check = new InstanceofValue(TypeResolver.resolve(inst.type().getText(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
+				var check = new InstanceofValue(TypeResolver.resolve(inst.type(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
 				yield inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, check, null) : check;
 			}
 			case CyclicLangParser.CastValueContext castCtx -> {
-				TypeReference target = TypeResolver.resolve(castCtx.cast().type().getText(), type.imports, type.packageName());
+				TypeReference target = TypeResolver.resolve(castCtx.cast().type(), type.imports, type.packageName());
 				Value casting = fromAst(castCtx.cast().value(), scope, type, method);
 				// if it fits, just pass it along
 				var fit = casting.fit(target);
@@ -124,7 +124,7 @@ public abstract class Value{
 					yield new ClassCastValue(casting, target);
 			}
 			case CyclicLangParser.NewArrayValueContext array -> {
-				TypeReference component = TypeResolver.resolve(array.newArray().type().getText(), type.imports, type.packageName());
+				TypeReference component = TypeResolver.resolve(array.newArray().type(), type.imports, type.packageName());
 				Value length = fromAst(array.newArray().value(), scope, type, method);
 				if(component instanceof PrimitiveTypeRef p)
 					yield new NewPrimitiveArrayValue(p, length);
@@ -132,7 +132,7 @@ public abstract class Value{
 					yield new NewArrayValue(component, length);
 			}
 			case CyclicLangParser.NewListedArrayValueContext array -> {
-				TypeReference component = TypeResolver.resolve(array.newListedArray().type().getText(), type.imports, type.packageName());
+				TypeReference component = TypeResolver.resolve(array.newListedArray().type(), type.imports, type.packageName());
 				List<Value> entries = array.newListedArray().value().stream().map(k -> fromAst(k, scope, type, method)).toList();
 				Value length = new IntLiteralValue(entries.size());
 				Value arrayValue;

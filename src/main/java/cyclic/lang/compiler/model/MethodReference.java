@@ -4,6 +4,8 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +74,13 @@ public interface MethodReference extends CallableReference{
 	
 	default String elementType(){
 		return ElementType.METHOD.name();
+	}
+	
+	/**
+	 * Returns a set of references to the annotations on the return type of this method.
+	 */
+	default Set<AnnotationTag> returnTypeAnnotations(){
+		return Collections.emptySet();
 	}
 	
 	/**

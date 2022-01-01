@@ -1,15 +1,13 @@
 package cyclic.lang.compiler.model.external;
 
-import cyclic.lang.compiler.model.AccessFlags;
-import cyclic.lang.compiler.model.MethodReference;
-import cyclic.lang.compiler.model.TypeReference;
-import cyclic.lang.compiler.model.Utils;
+import cyclic.lang.compiler.model.*;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SystemMethodRef implements MethodReference{
@@ -54,6 +52,14 @@ public class SystemMethodRef implements MethodReference{
 	
 	public boolean isStatic(){
 		return Utils.isBitSet(underlying.getModifiers(), Opcodes.ACC_STATIC);
+	}
+	
+	public Set<AnnotationTag> annotations(){
+		return Arrays.stream(underlying.getAnnotations()).map(k -> AnnotationTag.fromAnnotation(k, this)).collect(Collectors.toSet());
+	}
+	
+	public Set<AnnotationTag> returnTypeAnnotations(){
+		return Arrays.stream(underlying.getAnnotatedReturnType().getAnnotations()).map(k -> AnnotationTag.fromAnnotation(k, this)).collect(Collectors.toSet());
 	}
 	
 	public Object defaultValueForAnnotation(){

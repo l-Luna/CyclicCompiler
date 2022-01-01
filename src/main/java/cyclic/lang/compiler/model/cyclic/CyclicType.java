@@ -3,7 +3,6 @@ package cyclic.lang.compiler.model.cyclic;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
-import org.antlr.v4.runtime.RuleContext;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,7 +33,7 @@ public class CyclicType implements TypeReference{
 	private List<TypeReference> interfaces;
 	
 	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
-	private List<AnnotationTag> annotations = new ArrayList<>();
+	private Set<AnnotationTag> annotations = new HashSet<>();
 	
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
@@ -61,14 +60,14 @@ public class CyclicType implements TypeReference{
 		
 		if(kind == TypeKind.INTERFACE){
 			superTypeName = OBJECT;
-			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
+			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
 			if(ast.objectImplements() != null && ast.objectImplements().type().size() > 0)
 				throw new CompileTimeException(null, "Interface has " + ast.objectImplements().type().size() + " declared implemented interfaces, but must have 0");
 		}else{
 			if(ast.objectExtends() != null && ast.objectExtends().type().size() > 1)
 				throw new CompileTimeException(null, "Non-interface has " + ast.objectExtends().type().size() + " declared supertypes, but can only have 1");
-			superTypeName = ast.objectExtends() != null ? ast.objectExtends().type(0).getText() : OBJECT;
-			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(RuleContext::getText).collect(Collectors.toList()) : Collections.emptyList();
+			superTypeName = ast.objectExtends() != null ? TypeResolver.getBaseName(ast.objectExtends().type(0)) : OBJECT;
+			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
 		}
 		
 		flags = Utils.fromModifiers(ast.modifiers());
@@ -149,7 +148,7 @@ public class CyclicType implements TypeReference{
 	}
 	
 	public Set<AnnotationTag> annotations(){
-		return new HashSet<>(annotations);
+		return annotations;
 	}
 	
 	public void resolveRefs(){

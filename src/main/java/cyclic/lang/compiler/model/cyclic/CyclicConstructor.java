@@ -17,7 +17,7 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	List<String> paramNames = new ArrayList<>();
 	boolean isS = false;
 	
-	List<String> paramTypeNames = new ArrayList<>();
+	List<CyclicLangParser.TypeContext> paramTypeNames = new ArrayList<>();
 	CyclicLangParser.BlockContext blockStatement;
 	CyclicLangParser.StatementContext arrowStatement;
 	
@@ -32,7 +32,7 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		flags = new AccessFlags(flags.visibility(), false, false); // no final or abstract constructors
 		
 		for(var p : ctx.parameters().parameter()){
-			paramTypeNames.add(p.type().getText());
+			paramTypeNames.add(p.type());
 			paramNames.add(p.idPart().getText());
 		}
 		
