@@ -21,7 +21,6 @@ public class CyclicType implements TypeReference{
 	private List<CyclicMember> members = new ArrayList<>();
 	
 	public List<CyclicConstructor> initBlocks = new ArrayList<>();
-	
 	private List<CyclicField> fields = new ArrayList<>();
 	private List<CyclicConstructor> constructors = new ArrayList<>();
 	private List<CyclicMethod> methods = new ArrayList<>();
@@ -34,6 +33,9 @@ public class CyclicType implements TypeReference{
 	private TypeReference superType;
 	private List<TypeReference> interfaces;
 	
+	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
+	private List<AnnotationTag> annotations = new ArrayList<>();
+	
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
 	public List<String> imports;
@@ -42,6 +44,7 @@ public class CyclicType implements TypeReference{
 		this.name = ast.idPart().getText();
 		this.packageName = packageName;
 		this.imports = imports;
+		this.unresolvedAnnotations = ast.annotation();
 		
 		String typeText = ast.objectType().getText().toLowerCase(Locale.ROOT).replaceAll(" +", "");
 		kind = switch(typeText){
@@ -145,6 +148,10 @@ public class CyclicType implements TypeReference{
 		return inners;
 	}
 	
+	public Set<AnnotationTag> annotations(){
+		return new HashSet<>(annotations);
+	}
+	
 	public void resolveRefs(){
 		CompileTimeException.setFile(fullyQualifiedName());
 		
@@ -198,6 +205,10 @@ public class CyclicType implements TypeReference{
 		members.forEach(CyclicMember::resolve);
 		
 		generateMembersForKind();
+		
+		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
+			annotations.add(AnnotationTag.fromAst(annotation, this, this));
+		
 		validate();
 	}
 	
@@ -271,5 +282,9 @@ public class CyclicType implements TypeReference{
 				throw new CompileTimeException(null, "Duplicate " + label + " \"" + t + "\"");
 			checked.add(t);
 		}
+	}
+	
+	public String toString(){
+		return "Cyclic:" + fullyQualifiedName();
 	}
 }

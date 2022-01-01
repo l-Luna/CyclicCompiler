@@ -54,6 +54,10 @@ public final class TypeResolver{
 	}
 	
 	public static Optional<TypeReference> resolveOptional(String fqName){
+		// it is allowable to reference fully qualified arrays
+		if(fqName.endsWith("[]"))
+			return Optional.of(new ArrayTypeRef(resolve(fqName.substring(0, fqName.length() - 2))));
+		
 		if(cache.containsKey(fqName))
 			return Optional.of(cache.get(fqName));
 		

@@ -78,4 +78,8 @@ public class ArrayTypeRef implements TypeReference{
 		
 		return target instanceof ArrayTypeRef arrayTarget && getComponent().isAssignableTo(arrayTarget.getComponent());
 	}
+	
+	public String toString(){
+		return getComponent().toString() + "[]";
+	}
 }

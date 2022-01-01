@@ -6,12 +6,14 @@ import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.ElementType;
+
 /**
  * A reference to a field in a class.
  *
  * @see TypeReference
  */
-public interface FieldReference{
+public interface FieldReference extends AnnotatableElement{
 	
 	/**
 	 * Returns a reference to the type that this field is declared in.
@@ -51,6 +53,17 @@ public interface FieldReference{
 	 * @return Whether this field is volatile.
 	 */
 	boolean isVolatile();
+	
+	/**
+	 * Returns whether this field is the definition of an enum constant value. This is independent of any access modifiers or
+	 * the type of this field.
+	 * @return Whether this field is the definition of an enum constant.
+	 */
+	boolean isEnumDefinition();
+	
+	default String elementType(){
+		return ElementType.FIELD.name();
+	}
 	
 	/**
 	 * Writes a fetch of this field using the given {@linkplain MethodVisitor}.

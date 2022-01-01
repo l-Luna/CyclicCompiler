@@ -41,4 +41,8 @@ public class SystemFieldRef implements FieldReference{
 	public boolean isVolatile(){
 		return Utils.isBitSet(underlying.getModifiers(), Opcodes.ACC_VOLATILE);
 	}
+	
+	public boolean isEnumDefinition(){
+		return underlying.isEnumConstant();
+	}
 }

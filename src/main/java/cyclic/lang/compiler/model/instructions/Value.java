@@ -9,6 +9,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -19,7 +20,7 @@ public abstract class Value{
 	
 	protected ParserRuleContext text;
 	
-	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, CallableReference method){
+	public static Value fromAst(CyclicLangParser.ValueContext ctx, Scope scope, CyclicType type, @Nullable CallableReference method){
 		CompileTimeException.pushContext(ctx);
 		
 		Value result = switch(ctx){
@@ -61,9 +62,10 @@ public abstract class Value{
 					if(local != null)
 						yield new LocalVarValue(local);
 					else{// or a static field of the current type, or an instance field of the current type for a non-static method
-						for(var field : method.in().fields())
-							if(field.name().equals(name) && (field.isStatic() || !method.isStatic()))
-								yield new FieldValue(field);
+						if(method != null)
+							for(var field : method.in().fields())
+								if(field.name().equals(name) && (field.isStatic() || !method.isStatic()))
+									yield new FieldValue(field);
 						// or a partial or full type name
 						var target = TypeResolver.resolveOptional(name, type.imports, type.packageName());
 						yield target.map(TypeValue::new).orElseGet(() -> new TypeValue(name));
@@ -86,8 +88,10 @@ public abstract class Value{
 				yield Operations.resolveBinary(bin.binaryop().getText(), left, right);
 			}
 			case CyclicLangParser.ThisValueContext i -> {
+				if(method == null)
+					throw new CompileTimeException("Can't use \"this\" outside of methods");
 				if(method.isStatic())
-					throw new CompileTimeException("Can't use \"this\" in a static method!");
+					throw new CompileTimeException("Can't use \"this\" in a static method");
 				yield new ThisValue(method.in());
 			}
 			case CyclicLangParser.ClassValueContext clss ->
@@ -109,13 +113,13 @@ public abstract class Value{
 						yield casting;
 					else if(casting.type() instanceof PrimitiveTypeRef c){
 						if(c.narrowingOpcodes(p.type) == null)
-							throw new CompileTimeException("Cannot convert value of type " + c.fullyQualifiedName() + " to " + p.fullyQualifiedName() + "!");
+							throw new CompileTimeException("Cannot convert value of type " + c.fullyQualifiedName() + " to " + p.fullyQualifiedName());
 						else
 							yield new PrimitiveCastValue(casting, p.type);
 					}else
-						throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.fullyQualifiedName() + "!");
+						throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.fullyQualifiedName());
 				}else if(casting.type() instanceof PrimitiveTypeRef p)
-					throw new CompileTimeException("Cannot convert primitive value of type " + p.fullyQualifiedName() + " to non-primitive type " + target.fullyQualifiedName() + "!");
+					throw new CompileTimeException("Cannot convert primitive value of type " + p.fullyQualifiedName() + " to non-primitive type " + target.fullyQualifiedName());
 				else
 					yield new ClassCastValue(casting, target);
 			}
@@ -203,8 +207,8 @@ public abstract class Value{
 	
 	// TODO: combine primitive literal values?
 	public static class IntLiteralValue extends Value{
-		int value;
-		boolean isBool = false;
+		public int value;
+		public boolean isBool = false;
 		
 		public IntLiteralValue(int value){
 			this.value = value;
@@ -242,7 +246,7 @@ public abstract class Value{
 	
 	public static class FloatLiteralValue extends Value{
 		
-		float value;
+		public float value;
 		
 		public FloatLiteralValue(float value){
 			this.value = value;
@@ -266,7 +270,7 @@ public abstract class Value{
 	
 	public static class DoubleLiteralValue extends Value{
 		
-		double value;
+		public double value;
 		
 		public DoubleLiteralValue(double value){
 			this.value = value;
@@ -288,7 +292,7 @@ public abstract class Value{
 	
 	public static class LongLiteralValue extends Value{
 		
-		long value;
+		public long value;
 		
 		public LongLiteralValue(long value){
 			this.value = value;
@@ -310,7 +314,7 @@ public abstract class Value{
 	
 	public static class StringLiteralValue extends Value{
 		
-		String value;
+		public String value;
 		
 		public StringLiteralValue(String value){
 			this.value = value;
@@ -359,7 +363,8 @@ public abstract class Value{
 	public static class FieldValue extends Value{
 		String fieldName;
 		Value from;
-		FieldReference ref;
+		
+		public FieldReference ref;
 		
 		public FieldValue(String fieldName, Value from){
 			this.fieldName = fieldName;
@@ -554,7 +559,7 @@ public abstract class Value{
 	}
 	
 	public static class ClassValue extends Value{
-		private TypeReference of;
+		public TypeReference of;
 		
 		public ClassValue(TypeReference of){
 			this.of = of;

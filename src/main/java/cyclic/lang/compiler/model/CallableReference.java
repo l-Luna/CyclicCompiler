@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.ElementType;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
  * @see TypeReference
  * @see MethodReference
  */
-public interface CallableReference{
+public interface CallableReference extends AnnotatableElement{
 	
 	/**
 	 * Returns a reference to the type that this callable is declared in.
@@ -50,6 +51,10 @@ public interface CallableReference{
 	 * @return Whether this callable is static.
 	 */
 	boolean isStatic();
+	
+	default String elementType(){
+		return ElementType.CONSTRUCTOR.name();
+	}
 	
 	/**
 	 * Returns the descriptor of this callable. For a constructor, this always has a return type of <code>V</code>.

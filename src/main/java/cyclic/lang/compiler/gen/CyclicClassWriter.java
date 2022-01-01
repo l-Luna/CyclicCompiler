@@ -1,14 +1,14 @@
 package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
+
+import java.lang.annotation.RetentionPolicy;
 
 public final class CyclicClassWriter{
 	
@@ -68,12 +68,36 @@ public final class CyclicClassWriter{
 		
 		currentMethod = null;
 		
+		for(AnnotationTag annotation : type.annotations()){
+			var retention = annotation.retention();
+			if(retention != RetentionPolicy.SOURCE){
+				var av = writer.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
+				writeAnnotation(av, annotation);
+			}
+		}
+		
 		/*if(type.outerClass() != null)
 			writer.visitOuterClass(type.outerClass().internalName(), null, null);
 		
 		for(var inner : type.innerClasses())
 			writer.visitInnerClass(inner.internalName(), type.internalName(), inner.shortName(), getAccessFlags(inner));*/
 		writer.visitEnd();
+	}
+	
+	private static void writeAnnotation(AnnotationVisitor av, AnnotationTag annotation){
+		annotation.arguments().forEach((name, value) -> {
+			if(value instanceof EnumConstant e)
+				av.visitEnum(name, e.enumType().descriptor(), e.name());
+			else if(value instanceof TypeReference ref)
+				av.visit(name, Type.getType(ref.descriptor()));
+			else if(value.getClass().isArray())
+				av.visit(name, value);
+			else if(value instanceof AnnotationTag ann)
+				writeAnnotation(av.visitAnnotation(name, ann.annotationType().descriptor()), ann);
+			else // assume it's a primitive or string
+				av.visit(name, value);
+		});
+		av.visitEnd();
 	}
 	
 	public static int getAccessFlagsForKind(TypeKind kind){

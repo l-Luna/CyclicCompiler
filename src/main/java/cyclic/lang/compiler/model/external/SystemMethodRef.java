@@ -55,4 +55,8 @@ public class SystemMethodRef implements MethodReference{
 	public boolean isStatic(){
 		return Utils.isBitSet(underlying.getModifiers(), Opcodes.ACC_STATIC);
 	}
+	
+	public Object defaultValueForAnnotation(){
+		return underlying.getDefaultValue();
+	}
 }

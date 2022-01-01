@@ -4,6 +4,7 @@ import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.ElementType;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ import java.util.List;
  * @see CyclicTypeBuilder
  * @see TypeResolver
  */
-public interface TypeReference{
+public interface TypeReference extends AnnotatableElement{
 	
 	/**
 	 * Returns the short name of this type. For example, the short name of <code>cyclic.lang.compiler.model.TypeReference</code>
@@ -184,6 +185,10 @@ public interface TypeReference{
 			return true;
 		
 		return superInterfaces().stream().anyMatch(x -> x.isAssignableTo(target));
+	}
+	
+	default String elementType(){
+		return ElementType.TYPE.name();
 	}
 	
 	/**

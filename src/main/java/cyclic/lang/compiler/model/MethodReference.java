@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.annotation.ElementType;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +42,19 @@ public interface MethodReference extends CallableReference{
 	boolean isSynchronized();
 	
 	/**
+	 * If this method is an annotation component, returns the default value of this component if it exists; otherwise returns null.
+	 * <p>{@linkplain Enum}, {@linkplain Class}, and {@linkplain java.lang.annotation.Annotation} values are represented as
+	 * {@linkplain EnumConstant}, {@linkplain TypeReference}, and {@linkplain AnnotationTag} values, mirroring {@linkplain AnnotationTag}.
+	 * Primitive types are represented by their wrappers.
+	 *
+	 * @return The default value of annotation components.
+	 * @see AnnotationTag
+	 */
+	default Object defaultValueForAnnotation(){
+		return null;
+	}
+	
+	/**
 	 * Returns the descriptor of this method, not including the name of this method.
 	 *
 	 * @return The descriptor of this method.
@@ -54,6 +68,10 @@ public interface MethodReference extends CallableReference{
 	 */
 	default String nameAndDescriptor(){
 		return name() + descriptor();
+	}
+	
+	default String elementType(){
+		return ElementType.METHOD.name();
 	}
 	
 	/**

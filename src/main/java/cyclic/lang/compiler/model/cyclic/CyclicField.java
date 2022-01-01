@@ -71,6 +71,10 @@ public class CyclicField implements FieldReference, CyclicMember{
 		return isV;
 	}
 	
+	public boolean isEnumDefinition(){
+		return false;
+	}
+	
 	public CyclicConstructor assign(){
 		if(defaultVal != null){
 			CyclicConstructor ret = new CyclicConstructor(isStatic(), in);

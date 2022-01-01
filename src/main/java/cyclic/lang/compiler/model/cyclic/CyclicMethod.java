@@ -124,4 +124,8 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	public boolean isStatic(){
 		return isSt;
 	}
+	
+	public Object defaultValueForAnnotation(){
+		return null;
+	}
 }

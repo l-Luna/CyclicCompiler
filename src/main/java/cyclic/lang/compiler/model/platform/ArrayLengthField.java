@@ -35,6 +35,10 @@ public class ArrayLengthField implements FieldReference{
 		return false;
 	}
 	
+	public boolean isEnumDefinition(){
+		return false;
+	}
+	
 	public void writeFetch(MethodVisitor mv){
 		mv.visitInsn(Opcodes.ARRAYLENGTH);
 	}

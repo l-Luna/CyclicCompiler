@@ -5,6 +5,7 @@ import cyclic.lang.compiler.model.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SystemTypeRef implements TypeReference{
@@ -68,5 +69,13 @@ public class SystemTypeRef implements TypeReference{
 	
 	public List<? extends CallableReference> constructors(){
 		return ctors;
+	}
+	
+	public Set<AnnotationTag> annotations(){
+		return Arrays.stream(underlying.getAnnotations()).map(k -> AnnotationTag.fromAnnotation(k, this)).collect(Collectors.toSet());
+	}
+	
+	public String toString(){
+		return "System:" + fullyQualifiedName();
 	}
 }

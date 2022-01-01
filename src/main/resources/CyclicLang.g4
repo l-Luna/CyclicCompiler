@@ -69,7 +69,8 @@ statement
     | SEMICOLON
     ;
 
-annotation: AT id;
+annotation: AT id (LPAREN (annotationArg (COMMA annotationArg)* | value)? RPAREN)?;
+annotationArg: idPart ASSIGN value;
 
 type
     : annotation* rawType (genericTypeUses)?
