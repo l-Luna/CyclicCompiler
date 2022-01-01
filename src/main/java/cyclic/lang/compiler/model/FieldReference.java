@@ -1,5 +1,8 @@
 package cyclic.lang.compiler.model;
 
+import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.gen.CyclicClassWriter;
+import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -70,8 +73,18 @@ public interface FieldReference{
 	 * 		The method visitor to write a store to.
 	 */
 	default void writePut(MethodVisitor mv){
-		if(flags().isFinal())
-			throw new IllegalStateException("Trying to write a put instruction for a final field!");
+		if(flags().isFinal()){
+			// assignment to a final field is allowed if the assignment is in a constructor and
+			// - the field and constructor are non-static and the constructor is in a type assignable to the declaring type
+			// - the field and constructor are static (i.e. init block or default value) and in the same type
+			if(CyclicClassWriter.currentMethod instanceof CyclicConstructor c){
+				boolean isSuitableStatic = isStatic() && c.isStatic() && in().fullyQualifiedName().equals(c.in().fullyQualifiedName());
+				boolean isSuitableInst = !isStatic() && !c.isStatic() && c.in().isAssignableTo(in());
+				if(!isSuitableStatic && !isSuitableInst)
+					throw new CompileTimeException(null, "Trying to write to a final field in an unsuitable constructor");
+			}else
+				throw new CompileTimeException(null, "Trying to write to a final field outside of a constructor or init block");
+		}
 		mv.visitFieldInsn(isStatic() ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD, in().internalName(), name(), type().descriptor());
 	}
 }

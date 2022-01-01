@@ -73,15 +73,16 @@ public class CyclicType implements TypeReference{
 		if(flags.isAbstract() && flags.isFinal())
 			throw new CompileTimeException(null, "Type cannot be abstract and final");
 		
+		boolean isInterface = kind() == TypeKind.INTERFACE;
 		for(var member : ast.member()){
 			if(member.function() != null)
-				methods.add(new CyclicMethod(member.function(), this, kind() == TypeKind.INTERFACE));
+				methods.add(new CyclicMethod(member.function(), this, isInterface));
 			else if(member.constructor() != null)
 				constructors.add(new CyclicConstructor(member.constructor(), this));
 			else if(member.init() != null)
 				initBlocks.add(new CyclicConstructor(member.init(), this));
 			else if(member.varDecl() != null)
-				fields.add(new CyclicField(member.varDecl(), this));
+				fields.add(new CyclicField(member.varDecl(), this, isInterface));
 		}
 		
 		members.addAll(fields);

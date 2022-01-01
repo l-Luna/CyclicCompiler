@@ -26,13 +26,18 @@ public class CyclicField implements FieldReference, CyclicMember{
 		this.typeName = typeName;
 	}
 	
-	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in){
+	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in, boolean isPublicStaticFinalRequired){
 		name = ctx.idPart().getText();
 		this.in = in;
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
 			isS |= modifier.equals("static");
 			isV |= modifier.equals("volatile");
 		});
+		
+		if(isPublicStaticFinalRequired){
+			isS = true;
+			flags = new AccessFlags(Visibility.PUBLIC, false, true);
+		}
 		
 		typeName = ctx.type().getText();
 		defaultVal = ctx.value();

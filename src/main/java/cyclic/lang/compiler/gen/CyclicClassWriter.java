@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.gen;
 
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
@@ -12,15 +13,19 @@ import org.objectweb.asm.Opcodes;
 public final class CyclicClassWriter{
 	
 	public static int outputClassfileVersion = Opcodes.V16;
+	public static CallableReference currentMethod = null;
 	
 	public static void writeClass(ClassWriter writer, CyclicType type){
+		CompileTimeException.setFile(type.fullyQualifiedName());
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, type.superClass().internalName(), type.superInterfaces().stream().map(TypeReference::internalName).toArray(String[]::new));
 		
 		// class init
 		MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
 		for(var init : type.initBlocks)
-			if(init.isStatic())
+			if(init.isStatic()){
+				currentMethod = init;
 				CyclicMethodWriter.writeCtor(smv, init);
+			}
 		smv.visitInsn(Opcodes.RETURN);
 		smv.visitMaxs(0, 0);
 		smv.visitEnd();
@@ -32,6 +37,7 @@ public final class CyclicClassWriter{
 		}
 		
 		for(var ctor : type.constructors()){
+			currentMethod = ctor;
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
 			
 			// implicit super(); TODO: constructor overloading and args super-constructors
@@ -50,13 +56,17 @@ public final class CyclicClassWriter{
 		}
 		
 		for(var method : type.methods()){
-			if(method instanceof CyclicMethod cyc){ // inherited methods are not CyclicMethods
+			if(method instanceof CyclicMethod cyc
+					&& cyc.in().fullyQualifiedName().equals(type.fullyQualifiedName())){
+				currentMethod = cyc;
 				MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);
 				CyclicMethodWriter.writeMethod(mv, cyc);
 				mv.visitMaxs(0, 0);
 				mv.visitEnd();
 			}
 		}
+		
+		currentMethod = null;
 		
 		/*if(type.outerClass() != null)
 			writer.visitOuterClass(type.outerClass().internalName(), null, null);
