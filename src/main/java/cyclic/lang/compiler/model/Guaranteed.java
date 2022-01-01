@@ -27,6 +27,7 @@ public final class Guaranteed{
 	 */
 	public static Optional<?> constant(Value v){
 		return switch(v){
+			case null, default -> Optional.empty();
 			case Value.NullLiteralValue ignored -> Optional.of(NULL_MARKER);
 			case Value.FloatLiteralValue f -> Optional.of(f.value);
 			case Value.DoubleLiteralValue d -> Optional.of(d.value);
@@ -35,7 +36,13 @@ public final class Guaranteed{
 			case Value.StringLiteralValue str -> Optional.of(str.value);
 			case Value.ClassValue l -> Optional.of(l.of);
 			case Value.FieldValue f -> f.ref.isEnumDefinition() ? Optional.of(new EnumConstant(f.ref)) : Optional.empty();
-			case null, default -> Optional.empty();
+			case Value.NewListedArrayValue n -> {
+				var opts = n.entries.stream().map(Guaranteed::constant).toList();
+				if(opts.stream().anyMatch(Optional::isEmpty))
+					yield Optional.empty();
+				//noinspection OptionalGetWithoutIsPresent
+				yield Optional.of(opts.stream().map(Optional::get).toArray());
+			}
 		};
 	}
 }

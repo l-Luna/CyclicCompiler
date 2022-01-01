@@ -90,6 +90,8 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 	 * @return A representation of the value that can be handled by {@linkplain AnnotationTag}.
 	 */
 	public static Object clean(Object value, @Nullable AnnotatableElement on){
+		if(value == null)
+			return null;
 		if(value instanceof Enum<?> v){
 			var type = Utils.forAnyClass(v.getDeclaringClass());
 			return new EnumConstant(type, v.name());
@@ -98,6 +100,11 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 			return Utils.forAnyClass(c);
 		if(value instanceof Annotation a)
 			return fromAnnotation(a, on);
+		if(value.getClass().isArray()){
+			// could this be a primitive array?
+			Object[] val = (Object[])value;
+			return Arrays.stream(val).map(k -> clean(k, on)).toArray();
+		}
 		return value; // primitive values are boxed when passed in
 	}
 	
@@ -113,12 +120,17 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		return Optional.of(targets);
 	}
 	
-	public boolean isApplicable(AnnotatableElement e){
+	public boolean isApplicable(String elementType){
 		Optional<AnnotationTag> first = annotationType().annotations().stream().filter(k -> k.annotationType().fullyQualifiedName().equals(Constants.TARGET)).findFirst();
 		if(first.isEmpty())
 			return true;
-		EnumConstant[] targets = (EnumConstant[])first.get().arguments.get("value");
-		return Arrays.stream(targets).anyMatch(k -> k.name().equals(e.elementType()));
+		// can't cast directly to a specific array because clean() cannot determine the correct type in all circumstances
+		Object[] targets = (Object[])first.get().arguments.get("value");
+		return Arrays.stream(targets).anyMatch(k -> ((EnumConstant)k).name().equals(elementType));
+	}
+	
+	public boolean isApplicable(AnnotatableElement e){
+		return isApplicable(e.elementType());
 	}
 	
 	public RetentionPolicy retention(){

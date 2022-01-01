@@ -8,7 +8,10 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypeReference;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
+import java.util.HashSet;
+import java.util.Set;
 
 import static cyclic.lang.compiler.gen.CyclicClassWriter.writeAnnotation;
 
@@ -25,20 +28,27 @@ public final class CyclicMethodWriter{
 			mv.visitInsn(Opcodes.RETURN);
 		}
 		
-		for(AnnotationTag annotation : method.annotations()){
+		// note that these are ASM TypeReferences, not Cyclic TypeReferences
+		// all annotations are applied to both the return type and method as a whole if applicable
+		Set<AnnotationTag> annotations = new HashSet<>(method.annotations());
+		annotations.addAll(method.returnTypeAnnotations());
+		for(AnnotationTag annotation : annotations){
 			var retention = annotation.retention();
 			if(retention != RetentionPolicy.SOURCE){
-				var av = mv.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
-				writeAnnotation(av, annotation);
-			}
-		}
-		
-		for(AnnotationTag annotation : method.returnTypeAnnotations()){
-			var retention = annotation.retention();
-			if(retention != RetentionPolicy.SOURCE){
-				// note that this is an ASM TypeReference, not Cyclic TypeReference
-				var av = mv.visitTypeAnnotation(TypeReference.newTypeReference(TypeReference.METHOD_RETURN).getValue(), null, annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
-				writeAnnotation(av, annotation);
+				boolean methodApplicable = annotation.isApplicable(method);
+				boolean typeApplicable = annotation.isApplicable(ElementType.TYPE_USE.name());
+				if(methodApplicable){
+					var av = mv.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
+					writeAnnotation(av, annotation);
+				}
+				if(typeApplicable){
+					var av = mv.visitTypeAnnotation(TypeReference.newTypeReference(TypeReference.METHOD_RETURN).getValue(), null, annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
+					writeAnnotation(av, annotation);
+				}
+				if(!methodApplicable && !typeApplicable){
+					System.err.printf("Annotation %s on method %s in type %s is not applicable to it or its return type, and will be ignored.%n",
+							annotation.annotationType().fullyQualifiedName(), method.nameAndDescriptor(), method.in().fullyQualifiedName());
+				}
 			}
 		}
 	}

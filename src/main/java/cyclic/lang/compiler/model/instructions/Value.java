@@ -704,8 +704,8 @@ public abstract class Value{
 	}
 	
 	public static class NewListedArrayValue extends Value{
+		public List<Value> entries;
 		Value array;
-		List<Value> entries;
 		ArrayTypeRef arrayType;
 		
 		public NewListedArrayValue(Value array, List<Value> entries, ArrayTypeRef arrayType){

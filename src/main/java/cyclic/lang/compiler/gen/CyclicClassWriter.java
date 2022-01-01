@@ -8,6 +8,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import org.objectweb.asm.*;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 
 public final class CyclicClassWriter{
@@ -71,8 +72,11 @@ public final class CyclicClassWriter{
 		for(AnnotationTag annotation : type.annotations()){
 			var retention = annotation.retention();
 			if(retention != RetentionPolicy.SOURCE){
-				var av = writer.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
-				writeAnnotation(av, annotation);
+				if(annotation.isApplicable(type) || (type.kind() == TypeKind.ANNOTATION && annotation.isApplicable(ElementType.ANNOTATION_TYPE.name()))){
+					var av = writer.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
+					writeAnnotation(av, annotation);
+				}else
+					System.err.println("Annotation " + annotation.annotationType().fullyQualifiedName() + " on " + type.fullyQualifiedName() + " is not applicable to types and will be ignored.");
 			}
 		}
 		
@@ -85,19 +89,29 @@ public final class CyclicClassWriter{
 	}
 	
 	static void writeAnnotation(AnnotationVisitor av, AnnotationTag annotation){
-		annotation.arguments().forEach((name, value) -> {
-			if(value instanceof EnumConstant e)
-				av.visitEnum(name, e.enumType().descriptor(), e.name());
-			else if(value instanceof TypeReference ref)
-				av.visit(name, Type.getType(ref.descriptor()));
-			else if(value.getClass().isArray())
-				av.visit(name, value);
-			else if(value instanceof AnnotationTag ann)
-				writeAnnotation(av.visitAnnotation(name, ann.annotationType().descriptor()), ann);
-			else // assume it's a primitive or string
-				av.visit(name, value);
-		});
+		annotation.arguments().forEach((name, value) -> writeElement(name, value, av));
 		av.visitEnd();
+	}
+	
+	static void writeElement(String name, Object value, AnnotationVisitor av){
+		if(value instanceof EnumConstant e)
+			av.visitEnum(name, e.enumType().descriptor(), e.name());
+		else if(value instanceof TypeReference ref)
+			av.visit(name, Type.getType(ref.descriptor()));
+		else if(value.getClass().isArray()){
+			if(value.getClass().getComponentType().isPrimitive())
+				av.visit(name, value);
+			else{
+				var aav = av.visitArray(name);
+				Object[] array = (Object[])value;
+				for(Object o : array)
+					writeElement("", o, aav);
+				aav.visitEnd();
+			}
+		}else if(value instanceof AnnotationTag ann)
+			writeAnnotation(av.visitAnnotation(name, ann.annotationType().descriptor()), ann);
+		else
+			av.visit(name, value);
 	}
 	
 	public static int getAccessFlagsForKind(TypeKind kind){
