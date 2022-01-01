@@ -97,7 +97,7 @@ public class CyclicType implements TypeReference{
 		fieldsAndInherited.addAll(fields);
 		
 		// implicit constructor if none is present - ensures that init blocks and static field inits are written
-		if(constructors.size() == 0 && kind() != TypeKind.INTERFACE)
+		if(constructors.size() == 0 && kind() != TypeKind.INTERFACE && kind() != TypeKind.ANNOTATION)
 			constructors.add(new CyclicConstructor(false, this));
 		
 		if(initBlocks.stream().noneMatch(k -> k.isS))
@@ -193,7 +193,7 @@ public class CyclicType implements TypeReference{
 					throw new CompileTimeException(null, "Annotations can only declare java.lang.annotation.Annotation as implemented interface");
 				else markedAnnotation = true;
 			
-			flags = new AccessFlags(flags.visibility(), false, true);
+			flags = new AccessFlags(flags.visibility(), true, false);
 			superType = TypeResolver.resolve(OBJECT);
 			if(!markedAnnotation)
 				interfaces.add(TypeResolver.resolve(ANNOTATION));
