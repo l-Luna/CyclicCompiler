@@ -181,7 +181,7 @@ public abstract class Statement{
 	}
 	
 	public static class ReturnStatement extends Statement{
-		Value returnValue;
+		public Value returnValue;
 		private TypeReference toReturn;
 		
 		public ReturnStatement(Value returnValue, Scope in, TypeReference toReturn){

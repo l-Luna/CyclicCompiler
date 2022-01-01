@@ -4,6 +4,7 @@ import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.model.AnnotationTag;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypeReference;
@@ -26,6 +27,12 @@ public final class CyclicMethodWriter{
 			mv.visitCode();
 			method.body.write(mv);
 			mv.visitInsn(Opcodes.RETURN);
+		}
+		
+		if(method.constantAnnotationComponentValue != null){
+			AnnotationVisitor av = mv.visitAnnotationDefault();
+			CyclicClassWriter.writeElement("", method.constantAnnotationComponentValue, av);
+			av.visitEnd();
 		}
 		
 		// note that these are ASM TypeReferences, not Cyclic TypeReferences

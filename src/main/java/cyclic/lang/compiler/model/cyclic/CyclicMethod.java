@@ -36,6 +36,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	private List<CyclicLangParser.AnnotationContext> unresolvedTypeAnnotations;
 	private Set<AnnotationTag> typeAnnotations = new HashSet<>();
 	
+	public Object constantAnnotationComponentValue = null;
 	public Statement body;
 	Scope methodScope = new Scope();
 	
@@ -140,7 +141,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	}
 	
 	public Object defaultValueForAnnotation(){
-		return null;
+		return constantAnnotationComponentValue;
 	}
 	
 	public Set<AnnotationTag> annotations(){

@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.cyclic;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.model.instructions.Statement;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -272,6 +273,18 @@ public class CyclicType implements TypeReference{
 			if(assign != null)
 				initBlocks.add(assign);
 		}
+		
+		// validate annotation component methods
+		// if a method is not inherited, it must either not have a body, or have a body consisting of one return statement
+		if(kind() == TypeKind.ANNOTATION)
+			for(CyclicMethod method : methods)
+				if(method.body != null)
+					if(method.body instanceof Statement.ReturnStatement ret){
+						if(ret.returnValue != null)
+							method.constantAnnotationComponentValue = Guaranteed.constant(ret.returnValue).orElseThrow(() -> new CompileTimeException(null, "Annotation component methods must have a constant return value"));
+						method.flags = new AccessFlags(Visibility.PUBLIC, true, false);
+					}else if(superInterfaces().stream().flatMap(k -> k.methods().stream()).noneMatch(k -> k.nameAndDescriptor().equals(method.nameAndDescriptor())))
+						throw new CompileTimeException(null, "An annotation method may only have a non-return-statement body if that method implements an interface method");
 	}
 	
 	private static <T> void checkDuplicates(List<T> in, String label){
