@@ -5,6 +5,7 @@ import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -35,64 +36,64 @@ public abstract class Statement{
 		}
 	}
 	
-	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CallableReference method){
+	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CallableReference callable){
 		Statement result;
 		CompileTimeException.pushContext(ctx);
 		
 		var imports = type.imports;
 		if(ctx.block() != null){
 			BlockStatement statement = new BlockStatement(in);
-			statement.contains = ctx.block().statement().stream().map(k -> fromAst(k, statement.blockScope, type, method)).collect(Collectors.toList());
+			statement.contains = ctx.block().statement().stream().map(k -> fromAst(k, statement.blockScope, type, callable)).collect(Collectors.toList());
 			result = statement;
 		}else if(ctx.varDecl() != null){
 			boolean isFinal = ctx.varDecl().modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || ctx.varDecl().type().getText().equals("val");
 			boolean infer = ctx.varDecl().type().getText().equals("var") || ctx.varDecl().type().getText().equals("val");
-			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, method) : null;
+			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, callable) : null;
 			if(infer && initial == null)
 				throw new CompileTimeException("Can't infer the type of a variable without an initial value.");
 			result = new VarStatement(in, ctx.varDecl().idPart().getText(), infer ? initial.type() : TypeResolver.resolve(ctx.varDecl().type(), imports, type.packageName()), initial, true, isFinal);
 		}else if(ctx.varAssignment() != null){
-			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, method);
-			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, method);
+			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, callable);
+			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, callable);
 			if(ctx.varAssignment().binaryop() != null)
 				right = Operations.resolveBinary(ctx.varAssignment().binaryop().getText(), left, right);
 			result = createAssignStatement(ctx.varAssignment().value(0), in, left, right);
 		}else if(ctx.call() != null){
-			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, method) : null;
-			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, method)).toList();
-			result = new CallStatement(in, on, Utils.resolveMethod(ctx.call().idPart().getText(), on, args, method), args);
+			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, callable) : null;
+			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
+			result = new CallStatement(in, on, Utils.resolveMethod(ctx.call().idPart().getText(), on, args, callable), args);
 		}else if(ctx.ifStatement() != null){
-			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, method);
+			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, callable);
 			Value cond = c.fit(TypeResolver.resolve("boolean"));
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.ifStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(ctx.ifStatement().statement(), in, type, method);
-			Statement fail = ctx.ifStatement().elseStatement() == null ? null : fromAst(ctx.ifStatement().elseStatement().statement(), in, type, method);
+			Statement success = fromAst(ctx.ifStatement().statement(), in, type, callable);
+			Statement fail = ctx.ifStatement().elseStatement() == null ? null : fromAst(ctx.ifStatement().elseStatement().statement(), in, type, callable);
 			result = new IfStatement(in, success, fail, cond);
 		}else if(ctx.whileStatement() != null){
-			Value c = Value.fromAst(ctx.whileStatement().value(), in, type, method);
+			Value c = Value.fromAst(ctx.whileStatement().value(), in, type, callable);
 			Value cond = c.fit(TypeResolver.resolve("boolean"));
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(ctx.whileStatement().statement(), in, type, method);
+			Statement success = fromAst(ctx.whileStatement().statement(), in, type, callable);
 			result = new WhileStatement(in, success, cond);
 		}else if(ctx.forStatement() != null){
 			var f = ctx.forStatement();
-			Statement setup = f.start != null ? fromAst(f.start, in, type, method) : new NoopStatement(in);
-			Statement increment = f.end != null ? fromAst(f.end, in, type, method) : new NoopStatement(in);
-			Value c = Value.fromAst(f.cond, in, type, method);
+			Statement setup = f.start != null ? fromAst(f.start, in, type, callable) : new NoopStatement(in);
+			Statement increment = f.end != null ? fromAst(f.end, in, type, callable) : new NoopStatement(in);
+			Value c = Value.fromAst(f.cond, in, type, callable);
 			Value cond = c.fit(TypeResolver.resolve("boolean"));
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(f.action, in, type, method);
+			Statement success = fromAst(f.action, in, type, callable);
 			// could just implement it as synthetic block statements
 			result = new ForStatement(in, success, setup, increment, cond);
 		}else if(ctx.doWhile() != null){
-			Value c = Value.fromAst(ctx.doWhile().value(), in, type, method);
+			Value c = Value.fromAst(ctx.doWhile().value(), in, type, callable);
 			Value cond = c.fit(TypeResolver.resolve("boolean"));
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(ctx.doWhile().statement(), in, type, method);
+			Statement success = fromAst(ctx.doWhile().statement(), in, type, callable);
 			result = new DoWhileStatement(in, success, cond);
 		}else if(ctx.foreachStatement() != null){
 			var fe = ctx.foreachStatement();
@@ -106,12 +107,12 @@ public abstract class Statement{
 			 *         T t = iter.next();
 			 *         act;
 			 */
-			Value iterating = Value.fromAst(fe.value(), in, type, method);
+			Value iterating = Value.fromAst(fe.value(), in, type, callable);
 			TypeReference iteratorType = TypeResolver.resolve(ITERATOR);
 			BlockStatement container = new BlockStatement(in);
 			Variable iterator = new Variable("~", iteratorType, container.blockScope, null);
 			Variable iterationVar = new Variable(fe.idPart().getText(), TypeResolver.resolve(fe.type(), type.imports, type.packageName()), container.blockScope, container);
-			Statement action = fromAst(fe.statement(), container.blockScope, type, method);
+			Statement action = fromAst(fe.statement(), container.blockScope, type, callable);
 			// TODO: generics
 			container.contains = List.of(
 					new CallStatement(container.blockScope, null, Utils.resolveSingleMethod(OBJECTS, OBJECTS_REQUIRE_NONNULL, true, OBJECT, STRING), List.of(iterating, new Value.StringLiteralValue("Iteration variable was null."))),
@@ -122,9 +123,21 @@ public abstract class Statement{
 							new Value.CallValue(new Value.LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_HAS_NEXT, false)))
 			);
 			result = container;
-		}else{
+		}else if(ctx.throwStatement() != null){
+			Value toThrow = Value.fromAst(ctx.throwStatement().value(), in, type, callable);
+			result = new ThrowStatement(toThrow, in);
+		}else if(ctx.returnStatement() != null){
+			var value = ctx.returnStatement().value();
+			Value toReturn = value == null ? null : Value.fromAst(value, in, type, callable);
+			TypeReference returnType = callable instanceof CyclicMethod method ? method.returns() : TypeResolver.resolve("void");
+			if(returnType.fullyQualifiedName().equals("void")){
+				if(value != null)
+					throw new CompileTimeException("Return statement in void method cannot return a value");
+			}else if(value == null)
+				throw new CompileTimeException("Return statement in non-void method must return a value");
+			result = new ReturnStatement(toReturn, in, returnType);
+		}else
 			result = new NoopStatement(in);
-		}
 		
 		CompileTimeException.popContext();
 		result.text = ctx;
@@ -135,14 +148,12 @@ public abstract class Statement{
 		// if the LHS is a local variable value, reuse the variable
 		// if the LHS is a field value, assign to the field
 		// if the LHS is an array index value, assign to the array
-		if(left instanceof Value.LocalVarValue local)
-			return new VarStatement(in, local.local.name, null, right, false, false);
-		else if(left instanceof Value.FieldValue field)
-			return new AssignFieldStatement(in, field.ref, field.from, right);
-		else if(left instanceof Value.ArrayIndexValue idx)
-			return new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType);
-		else
-			throw new CompileTimeException("Can't assign value to " + ctx.getText());
+		return switch(left){
+			case Value.LocalVarValue local -> new VarStatement(in, local.local.name, null, right, false, false);
+			case Value.FieldValue field -> new AssignFieldStatement(in, field.ref, field.from, right);
+			case Value.ArrayIndexValue idx -> new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType);
+			case null, default -> throw new CompileTimeException("Can't assign value to " + ctx.getText());
+		};
 	}
 	
 	public static class NoopStatement extends Statement{
@@ -199,10 +210,30 @@ public abstract class Statement{
 			
 			var adjusted = returnValue.fit(toReturn);
 			if(adjusted == null)
-				throw new CompileTimeException(text, "Value of type " + returnValue.type().fullyQualifiedName() + " cannot be returned from method of type " + toReturn.fullyQualifiedName() + "!");
+				throw new CompileTimeException(text, "Value of type " + returnValue.type().fullyQualifiedName() + " cannot be returned from method of type " + toReturn.fullyQualifiedName());
 			
 			adjusted.write(mv);
 			mv.visitInsn(adjusted.type().returnOpcode());
+		}
+	}
+	
+	public static class ThrowStatement extends Statement{
+		public Value exceptionValue;
+		
+		public ThrowStatement(Value exceptionValue, Scope in){
+			super(in);
+			this.exceptionValue = exceptionValue;
+		}
+		
+		public void write(MethodVisitor mv){
+			super.write(mv);
+			
+			var adjusted = exceptionValue.fit(TypeResolver.resolve(THROWABLE));
+			if(adjusted == null)
+				throw new CompileTimeException(text, "Value of type " + exceptionValue.type().fullyQualifiedName() + " cannot be thrown");
+			
+			adjusted.write(mv);
+			mv.visitInsn(Opcodes.ATHROW);
 		}
 	}
 	

@@ -21,6 +21,9 @@ public final class Constants{
 	public static final String OBJECTS = "java.util.Objects";
 	public static final String OBJECTS_REQUIRE_NONNULL = "requireNonNull";
 	
+	// Throwables
+	public static final String THROWABLE = "java.lang.Throwable";
+	
 	// Compiler checked annotations
 	public static final String OVERRIDE = "java.lang.Override";
 	public static final String DEPRECATED = "java.lang.Deprecated";

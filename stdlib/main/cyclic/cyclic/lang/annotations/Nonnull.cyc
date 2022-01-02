@@ -6,7 +6,6 @@ public annotation Nonnull implements CheckerAnnotation{
 
     public void check(Object param){
         if(param == null)
-            // here i forgot to add throws oh no
-            return;
+            throw new NullPointerException("Value must not be null.");
     }
 }

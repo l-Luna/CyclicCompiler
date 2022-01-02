@@ -391,6 +391,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAssertStatement(CyclicLangParser.AssertStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#throwStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitThrowStatement(CyclicLangParser.ThrowStatementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#ifStatement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

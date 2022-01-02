@@ -55,6 +55,7 @@ statement
     : block
     | returnStatement SEMICOLON
     | assertStatement SEMICOLON
+    | throwStatement SEMICOLON
     | varDecl SEMICOLON
     | varAssignment SEMICOLON
     | initialisation SEMICOLON
@@ -132,6 +133,7 @@ arguments: (value (COMMA value)*)?;
 
 returnStatement: RETURN value?;
 assertStatement: ASSERT value (COLON STRLIT)?;
+throwStatement: THROW value;
 
 ifStatement: IF LPAREN value RPAREN statement elseStatement?;
 elseStatement: ELSE statement;
@@ -220,6 +222,7 @@ INSTANCEOF: 'instanceof';
 RETURN: 'return';
 ASSERT: 'assert';
 NEW: 'new';
+THROW: 'throw';
 
 CLASS: 'class';
 INTERFACE: 'interface';
