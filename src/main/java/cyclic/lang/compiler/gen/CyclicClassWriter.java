@@ -119,7 +119,7 @@ public final class CyclicClassWriter{
 			case CLASS, SINGLE, CONSTRUCTED -> 0; // Singles are classes with sugar, constructed types should never be generated
 			case INTERFACE -> Opcodes.ACC_INTERFACE;
 			case ENUM -> Opcodes.ACC_ENUM;
-			case ANNOTATION -> Opcodes.ACC_ANNOTATION;
+			case ANNOTATION -> Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION;
 			case RECORD -> Opcodes.ACC_RECORD;
 		};
 	}

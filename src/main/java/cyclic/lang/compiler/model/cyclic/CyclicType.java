@@ -179,25 +179,6 @@ public class CyclicType implements TypeReference{
 			flags = new AccessFlags(flags.visibility(), false, true);
 			superType = TypeResolver.resolve(RECORD);
 			
-		}else if(kind == TypeKind.ANNOTATION){
-			if(flags.isFinal())
-				throw new CompileTimeException(null, "Annotations must not be marked as final");
-			if(!superType.fullyQualifiedName().equals(OBJECT))
-				throw new CompileTimeException(null, "Annotations can only declare java.lang.Object as super type");
-			
-			boolean markedAnnotation = false;
-			for(TypeReference i : interfaces)
-				// TODO: annotation interfaces for e.g. checkers
-				// requires a Cyclic stdlib
-				if(!i.fullyQualifiedName().equals(ANNOTATION))
-					throw new CompileTimeException(null, "Annotations can only declare java.lang.annotation.Annotation as implemented interface");
-				else markedAnnotation = true;
-			
-			flags = new AccessFlags(flags.visibility(), true, false);
-			superType = TypeResolver.resolve(OBJECT);
-			if(!markedAnnotation)
-				interfaces.add(TypeResolver.resolve(ANNOTATION));
-			
 		}else if(kind == TypeKind.SINGLE)
 			if(flags.isAbstract())
 				throw new CompileTimeException(null, "Single types must not be abstract");
@@ -208,6 +189,7 @@ public class CyclicType implements TypeReference{
 		
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
 			annotations.add(AnnotationTag.fromAst(annotation, this, this));
+		annotations.add(new AnnotationTag(TypeResolver.resolve(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
 		
 		validate();
 	}
@@ -245,6 +227,27 @@ public class CyclicType implements TypeReference{
 	
 	public void resolveInheritance(){
 		CompileTimeException.setFile(fullyQualifiedName());
+		
+		// we do annotation inheritance checking here to make sure that the annotations of interfaces we implement have been resolved
+		if(kind == TypeKind.ANNOTATION){
+			if(flags.isFinal())
+				throw new CompileTimeException(null, "Annotations must not be marked as final");
+			if(!superType.fullyQualifiedName().equals(OBJECT))
+				throw new CompileTimeException(null, "Annotations can only declare java.lang.Object as super type");
+			
+			boolean markedAnnotation = false;
+			for(TypeReference i : interfaces)
+				if(!i.fullyQualifiedName().equals(ANNOTATION) && i.annotations().stream().noneMatch(k -> k.annotationType().fullyQualifiedName().equals(CYCLIC_ANNOTATION_CAN_IMPLEMENT)))
+					throw new CompileTimeException(null, "Annotations can only declare Annotation or an annotation-implementable interface as implemented interface");
+				else
+					markedAnnotation = true;
+			
+			flags = new AccessFlags(flags.visibility(), true, false);
+			superType = TypeResolver.resolve(OBJECT);
+			if(!markedAnnotation)
+				interfaces.add(TypeResolver.resolve(ANNOTATION));
+		}
+		
 		// don't inherit overridden methods
 		for(MethodReference method : Stream.concat(superType.methods().stream(), interfaces.stream().flatMap(x -> x.methods().stream())).toList()){
 			if(methods.stream().noneMatch(x -> x.nameAndDescriptor().equals(method.nameAndDescriptor()))){

@@ -1,0 +1,12 @@
+package cyclic.lang.annotations;
+
+import cyclic.lang.*;
+
+public annotation Nonnull implements CheckerAnnotation{
+
+    public void check(Object param){
+        if(param == null)
+            // here i forgot to add throws oh no
+            return;
+    }
+}

@@ -1,0 +1,8 @@
+package cyclic.lang;
+
+import java.lang.annotation.*;
+
+// Specifies that the annotated class was compiled from a Cyclic file.
+@Retention(RetentionPolicy.RUNTIME)
+@Target(new ElementType[]{ ElementType.TYPE })
+public annotation CyclicFile;

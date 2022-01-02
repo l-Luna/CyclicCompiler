@@ -1,0 +1,10 @@
+package cyclic.lang;
+
+// Specifies that parameters annotated with the implementing annotation should be checked against the annotation's
+// check method at the start of the method body.
+@AnnotationCanImplement
+public interface CheckerAnnotation{
+
+    // Checks a parameter to a method.
+    public void check(Object parameter);
+}

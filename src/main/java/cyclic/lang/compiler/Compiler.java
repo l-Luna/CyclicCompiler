@@ -6,18 +6,17 @@ import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.spi.ToolProvider;
 
 /**
  * Entry point of the Cyclic Compiler. Contains the <code>main</code> method, alongside several other methods for compiling
@@ -34,34 +33,59 @@ public final class Compiler{
 	/** Whether line mappings and parameter names will be emitted in output class files in the next run. */
 	public static boolean includeDebugInfo = true;
 	
+	/** The project currently being compiled. */
+	public static CyclicProject project;
+	
 	public static void main(String[] args){
 		if(args.length < 2){
 			System.out.println("""
 					The Cyclic Compiler compiles files in the Cyclic language with the extension .cyc into JVM class files.
-					Please specify the input and output root folders as arguments, and optionally whether debug info (line mappings and parameter names) should be included (true/false, defaults to true).""");
+					Specify the input and output root folders as arguments, and optionally whether debug info (line mappings and parameter names) should be included (true/false, defaults to true).
+					Alternatively, use the flag "-p" followed by a path to a Cyclic project file ("project.cyc.yaml") that contains the settings for building that project.
+					""");
 			return;
 		}
 		
+		// setup cyclic project
+		if(args[0].equals("-p")){
+			var yaml = new Yaml();
+			try{
+				Path projectPath = Path.of(args[1]);
+				var text = Files.readString(projectPath);
+				project = yaml.loadAs(text, CyclicProject.class);
+				project.updatePaths(projectPath.getParent());
+			}catch(Exception e){
+				System.err.println("Invalid project file: " + e);
+				System.exit(1);
+			}
+		}else{
+			project = new CyclicProject();
+			project.sourcePath = Path.of(args[0]);
+			project.outputPath = Path.of(args[1]);
+			if(args.length >= 3)
+				includeDebugInfo = Boolean.parseBoolean(args[2]);
+		}
+		
+		project.validate();
+		includeDebugInfo = project.include_debug;
+		
 		// go through all specified files and compile each
-		var inputFolder = args[0];
-		var outputFolder = args[1];
+		var inputFolder = project.sourcePath;
+		var outputFolder = project.outputPath;
 		
-		if(args.length >= 3)
-			includeDebugInfo = Boolean.parseBoolean(args[2]);
-		
-		File inputFile = new File(inputFolder);
+		File inputFile = inputFolder.toFile();
 		Set<File> todo = new HashSet<>();
 		visitFiles(inputFile, file -> {
 			if(file.getName().endsWith(".cyc"))
 				todo.add(file);
 		});
 		
-		var out = compileFileSet(todo, Path.of(inputFolder));
+		var out = compileFileSet(todo, inputFolder);
 		AtomicInteger output = new AtomicInteger();
 		out.forEach((name, bytes) -> {
 			CompileTimeException.setFile(name);
 			try{
-				Path fileOut = Path.of(outputFolder, name.replace('.', File.separatorChar) + ".class");
+				Path fileOut = Path.of(outputFolder.toString(), name.replace('.', File.separatorChar) + ".class");
 				// can fail if the folders already exist
 				//noinspection ResultOfMethodCallIgnored
 				fileOut.getParent().toFile().mkdirs();
@@ -73,6 +97,33 @@ public final class Compiler{
 		});
 		
 		System.out.println("Written " + output + " class files.");
+		
+		for(CyclicPackage cycPackage : project.packages){
+			// TODO: handle resources for jars, and handle other formats (JMODs?)
+			// probably want to move this all out elsewhere
+			if(cycPackage.name == null || cycPackage.version == null)
+				System.err.println("Unnamed package found, will be skipped");
+			if(cycPackage.type == null)
+				System.err.printf("Unspecified package type for package \"%s\" version %s, will be skipped%n", cycPackage.name, cycPackage.version);
+			
+			if(cycPackage.type.equalsIgnoreCase("jar")){
+				Optional<ToolProvider> optionalJarTool = ToolProvider.findFirst("jar");
+				if(optionalJarTool.isEmpty()){
+					System.err.printf("Could not get jar tool for packaging jar project \"%s\", skipping packaging%n", cycPackage.name);
+					continue;
+				}
+				ToolProvider jartool = optionalJarTool.get();
+				Path filePath = project.outputPath.resolve(cycPackage.location).normalize();
+				String targetPath = filePath.toAbsolutePath() + "/" + cycPackage.name + "-" + cycPackage.version + ".jar";
+				//noinspection ResultOfMethodCallIgnored
+				Path.of(targetPath).getParent().toFile().mkdirs();
+				// jar -c --file <filePath name "-" version> -C <outputPath>
+				int result = jartool.run(System.out, System.err, "-c", "--file", targetPath, "-C", project.outputPath.toAbsolutePath().toString(), ".");
+				if(result == 1)
+					System.err.printf("Failed to make jar file for package \"%s\" version %s%n", cycPackage.name, cycPackage.version);
+			}else
+				System.err.printf("Unknown package type \"%s\" for package \"%s\" version %s, will be skipped%n", cycPackage.type, cycPackage.name, cycPackage.version);
+		}
 	}
 	
 	/**

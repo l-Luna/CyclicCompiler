@@ -31,4 +31,8 @@ public final class Constants{
 	public static final String REPEATABLE = "java.lang.annotation.Repeatable";
 	public static final String RETENTION = "java.lang.annotation.Retention";
 	public static final String TARGET = "java.lang.annotation.Target";
+	
+	// Cyclic lib types
+	public static final String CYCLIC_FILE_MARKER = "cyclic.lang.CyclicFile";
+	public static final String CYCLIC_ANNOTATION_CAN_IMPLEMENT = "cyclic.lang.AnnotationCanImplement";
 }
