@@ -7,6 +7,7 @@ import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.instructions.Variable;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.ArrayList;
 import java.util.HashSet;

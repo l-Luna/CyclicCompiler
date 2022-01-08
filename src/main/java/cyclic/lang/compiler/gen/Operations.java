@@ -1,9 +1,11 @@
 package cyclic.lang.compiler.gen;
 
+import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.TypeReference;
-import cyclic.lang.compiler.model.TypeResolver;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.resolve.PlatformDependency;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -21,12 +23,12 @@ public final class Operations{
 	private static List<OperationHandler> handlers = new ArrayList<>();
 	
 	static{
-		var INT = TypeResolver.resolve("int");
-		var LONG = TypeResolver.resolve("long");
-		var FLOAT = TypeResolver.resolve("float");
-		var DOUBLE = TypeResolver.resolve("double");
-		var BOOLEAN = TypeResolver.resolve("boolean");
-		var OBJECT = TypeResolver.resolve("java.lang.Object");
+		var INT = PlatformDependency.INT;
+		var LONG = PlatformDependency.LONG;
+		var FLOAT = PlatformDependency.FLOAT;
+		var DOUBLE = PlatformDependency.DOUBLE;
+		var BOOLEAN = PlatformDependency.BOOLEAN;
+		var OBJECT = TypeResolver.resolveFq(Constants.OBJECT);
 		
 		// add, subtract, multiply, divide
 		handlers.add(new TypeSetOpHandler(
@@ -278,7 +280,7 @@ public final class Operations{
 		if(symbol.equals("+") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return value; // no effect from +
 		else if(symbol.equals("!") && value.type() instanceof PrimitiveTypeRef prim && prim.type == BOOLEAN)
-			return new BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, value, null);
+			return new BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IFEQ, value, null);
 		else if(symbol.equals("-") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return new UnaryOpValue(prim, value, switch(prim.type){
 				case BYTE, SHORT, INT -> Opcodes.INEG;

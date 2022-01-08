@@ -17,7 +17,7 @@ import java.util.List;
  * so that callable member bodies and default field values can also be filled in.
  *
  * @see CyclicTypeBuilder
- * @see TypeResolver
+ * @see TypeResolverOld
  */
 public interface TypeReference extends AnnotatableElement{
 	

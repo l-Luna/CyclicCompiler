@@ -8,6 +8,8 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import cyclic.lang.compiler.resolve.PlatformDependency;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
@@ -64,7 +66,7 @@ public abstract class Statement{
 			result = new CallStatement(in, on, Utils.resolveMethod(ctx.call().idPart().getText(), on, args, callable), args);
 		}else if(ctx.ifStatement() != null){
 			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, callable);
-			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.ifStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(ctx.ifStatement().statement(), in, type, callable);
@@ -72,7 +74,7 @@ public abstract class Statement{
 			result = new IfStatement(in, success, fail, cond);
 		}else if(ctx.whileStatement() != null){
 			Value c = Value.fromAst(ctx.whileStatement().value(), in, type, callable);
-			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(ctx.whileStatement().statement(), in, type, callable);
@@ -82,7 +84,7 @@ public abstract class Statement{
 			Statement setup = f.start != null ? fromAst(f.start, in, type, callable) : new NoopStatement(in);
 			Statement increment = f.end != null ? fromAst(f.end, in, type, callable) : new NoopStatement(in);
 			Value c = Value.fromAst(f.cond, in, type, callable);
-			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(f.action, in, type, callable);
@@ -90,7 +92,7 @@ public abstract class Statement{
 			result = new ForStatement(in, success, setup, increment, cond);
 		}else if(ctx.doWhile() != null){
 			Value c = Value.fromAst(ctx.doWhile().value(), in, type, callable);
-			Value cond = c.fit(TypeResolver.resolve("boolean"));
+			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(ctx.doWhile().statement(), in, type, callable);
@@ -108,7 +110,7 @@ public abstract class Statement{
 			 *         act;
 			 */
 			Value iterating = Value.fromAst(fe.value(), in, type, callable);
-			TypeReference iteratorType = TypeResolver.resolve(ITERATOR);
+			TypeReference iteratorType = TypeResolver.resolveFq(ITERATOR);
 			BlockStatement container = new BlockStatement(in);
 			Variable iterator = new Variable("~", iteratorType, container.blockScope, null);
 			Variable iterationVar = new Variable(fe.idPart().getText(), TypeResolver.resolve(fe.type(), type.imports, type.packageName()), container.blockScope, container);
@@ -129,7 +131,7 @@ public abstract class Statement{
 		}else if(ctx.returnStatement() != null){
 			var value = ctx.returnStatement().value();
 			Value toReturn = value == null ? null : Value.fromAst(value, in, type, callable);
-			TypeReference returnType = callable instanceof CyclicMethod method ? method.returns() : TypeResolver.resolve("void");
+			TypeReference returnType = callable instanceof CyclicMethod method ? method.returns() : TypeResolver.resolveFq("void");
 			if(returnType.fullyQualifiedName().equals("void")){
 				if(value != null)
 					throw new CompileTimeException("Return statement in void method cannot return a value");
@@ -228,7 +230,7 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			super.write(mv);
 			
-			var adjusted = exceptionValue.fit(TypeResolver.resolve(THROWABLE));
+			var adjusted = exceptionValue.fit(TypeResolver.resolveFq(THROWABLE));
 			if(adjusted == null)
 				throw new CompileTimeException(text, "Value of type " + exceptionValue.type().fullyQualifiedName() + " cannot be thrown");
 			

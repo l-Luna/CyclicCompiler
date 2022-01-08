@@ -6,6 +6,7 @@ import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
@@ -47,13 +48,13 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		var params = Arrays
 				.stream(annoType.getDeclaredMethods())
 				.collect(Collectors.toMap(Method::getName,
-						method -> new AnnotationParam(method.getName(), TypeResolver.resolve(method.getReturnType().getCanonicalName()), clean(method.getDefaultValue(), on)), (a, b) -> b));
+						method -> new AnnotationParam(method.getName(), TypeResolver.resolveFq(method.getReturnType().getCanonicalName()), clean(method.getDefaultValue(), on)), (a, b) -> b));
 		return new AnnotationTag(Utils.forAnyClass(annoType), params, args(annotation, on, params), on);
 	}
 	
 	public static AnnotationTag fromAst(CyclicLangParser.AnnotationContext ctx, AnnotatableElement on, CyclicType type){
 		String name = ctx.id().getText();
-		TypeReference ref = type != null ? TypeResolver.resolve(name, type.imports, type.packageName()) : TypeResolver.resolve(name);
+		TypeReference ref = type != null ? TypeResolver.resolve(name, type.imports, type.packageName()) : TypeResolver.resolveFq(name);
 		var params = ref
 				.methods()
 				.stream()

@@ -4,6 +4,7 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -169,7 +170,7 @@ public class CyclicType implements TypeReference{
 			if(!superType.fullyQualifiedName().equals(OBJECT) && !superType.fullyQualifiedName().equals(ENUM))
 				throw new CompileTimeException(null, "Enums can only declare java.lang.Object or java.lang.Enum as super type");
 			flags = new AccessFlags(flags.visibility(), false, true);
-			superType = TypeResolver.resolve(ENUM);
+			superType = TypeResolver.resolveFq(ENUM);
 			
 		}else if(kind == TypeKind.RECORD){
 			if(flags.isAbstract())
@@ -177,7 +178,7 @@ public class CyclicType implements TypeReference{
 			if(!superType.fullyQualifiedName().equals(OBJECT) && !superType.fullyQualifiedName().equals(RECORD))
 				throw new CompileTimeException(null, "Records can only declare java.lang.Object or java.lang.Record as super type");
 			flags = new AccessFlags(flags.visibility(), false, true);
-			superType = TypeResolver.resolve(RECORD);
+			superType = TypeResolver.resolveFq(RECORD);
 			
 		}else if(kind == TypeKind.SINGLE)
 			if(flags.isAbstract())
@@ -189,7 +190,7 @@ public class CyclicType implements TypeReference{
 		
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
 			annotations.add(AnnotationTag.fromAst(annotation, this, this));
-		annotations.add(new AnnotationTag(TypeResolver.resolve(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
+		annotations.add(new AnnotationTag(TypeResolver.resolveFq(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
 		
 		validate();
 	}
@@ -243,9 +244,9 @@ public class CyclicType implements TypeReference{
 					markedAnnotation = true;
 			
 			flags = new AccessFlags(flags.visibility(), true, false);
-			superType = TypeResolver.resolve(OBJECT);
+			superType = TypeResolver.resolveFq(OBJECT);
 			if(!markedAnnotation)
-				interfaces.add(TypeResolver.resolve(ANNOTATION));
+				interfaces.add(TypeResolver.resolveFq(ANNOTATION));
 		}
 		
 		// don't inherit overridden methods

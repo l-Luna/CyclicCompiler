@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.platform;
 
 import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
@@ -170,7 +171,7 @@ public class PrimitiveTypeRef implements TypeReference{
 	}
 	
 	public TypeReference boxedType(){
-		return TypeResolver.resolveOptional(boxedTypeName()).orElseThrow(() -> new IllegalStateException("Could not resolve box type " + boxedTypeName() + " for boxing conversions!"));
+		return TypeResolver.resolveFqOptional(boxedTypeName()).orElseThrow(() -> new IllegalStateException("Could not resolve box type " + boxedTypeName() + " for boxing conversions!"));
 	}
 	
 	// -1 for incompatible primitives, 0 for no-op conversions, or the conversion opcode for compatible types

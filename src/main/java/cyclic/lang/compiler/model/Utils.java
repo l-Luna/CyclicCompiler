@@ -4,7 +4,8 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.external.SystemTypeRef;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
-import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.resolve.PlatformDependency;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
@@ -74,26 +75,26 @@ public final class Utils{
 	 */
 	@Contract("_ -> new")
 	public static @NotNull TypeReference forAnyClass(@NotNull Class<?> type){
-		// generates an invalid switch statement
+		// generates an invalid switch statement because of generic something-or-other
 		//noinspection IfCanBeSwitch
 		if(boolean.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN);
+			return PlatformDependency.BOOLEAN;
 		else if(byte.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BYTE);
+			return PlatformDependency.BYTE;
 		else if(short.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.SHORT);
+			return PlatformDependency.SHORT;
 		else if(int.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.INT);
+			return PlatformDependency.INT;
 		else if(char.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.CHAR);
+			return PlatformDependency.CHAR;
 		else if(long.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.LONG);
+			return PlatformDependency.LONG;
 		else if(float.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.FLOAT);
+			return PlatformDependency.FLOAT;
 		else if(double.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.DOUBLE);
+			return PlatformDependency.DOUBLE;
 		else if(void.class.equals(type))
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.VOID);
+			return PlatformDependency.VOID;
 		else{
 			if(type.isArray())
 				return new ArrayTypeRef(forAnyClass(type.componentType()));
@@ -148,7 +149,7 @@ public final class Utils{
 	}
 	
 	public static MethodReference resolveSingleMethod(String from, String name, boolean isStatic, String... args){
-		return resolveSingleMethod(TypeResolver.resolve(from), name, isStatic, Arrays.stream(args).map(TypeResolver::resolve).toArray(TypeReference[]::new));
+		return resolveSingleMethod(TypeResolver.resolveFq(from), name, isStatic, Arrays.stream(args).map(TypeResolver::resolveFq).toArray(TypeReference[]::new));
 	}
 	
 	public static MethodReference resolveSingleMethod(TypeReference from, String name, boolean isStatic, TypeReference... args){

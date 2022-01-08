@@ -1,6 +1,10 @@
 package cyclic.lang.compiler.model.platform;
 
-import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.model.AccessFlags;
+import cyclic.lang.compiler.model.FieldReference;
+import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.Visibility;
+import cyclic.lang.compiler.resolve.PlatformDependency;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -20,7 +24,7 @@ public class ArrayLengthField implements FieldReference{
 	}
 	
 	public TypeReference type(){
-		return TypeResolver.resolve("int");
+		return PlatformDependency.INT;
 	}
 	
 	public AccessFlags flags(){

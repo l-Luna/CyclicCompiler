@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.platform;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.Collections;
 import java.util.List;
@@ -41,7 +42,7 @@ public class ArrayTypeRef implements TypeReference{
 	}
 	
 	public TypeReference superClass(){
-		return getComponent().superClass() != null ? new ArrayTypeRef(getComponent().superClass()) : TypeResolver.resolve("java.lang.Object");
+		return getComponent().superClass() != null ? new ArrayTypeRef(getComponent().superClass()) : TypeResolver.resolveFq(Constants.OBJECT);
 	}
 	
 	public List<? extends TypeReference> superInterfaces(){

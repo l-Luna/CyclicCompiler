@@ -8,6 +8,8 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.resolve.PlatformDependency;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.MethodVisitor;
@@ -99,7 +101,7 @@ public abstract class Value{
 					new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
 			case CyclicLangParser.InstanceCheckValueContext inst -> {
 				var check = new InstanceofValue(TypeResolver.resolve(inst.type(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
-				yield inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(TypeResolver.resolve("boolean"), Opcodes.IFEQ, check, null) : check;
+				yield inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IFEQ, check, null) : check;
 			}
 			case CyclicLangParser.CastValueContext castCtx -> {
 				TypeReference target = TypeResolver.resolve(castCtx.cast().type(), type.imports, type.packageName());
@@ -325,7 +327,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return TypeResolver.resolve(Constants.STRING);
+			return TypeResolver.resolveFq(Constants.STRING);
 		}
 	}
 	
@@ -571,7 +573,7 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			// TODO: generics
-			return TypeResolver.resolve("java.lang.Class");
+			return TypeResolver.resolveFq(Constants.CLASS);
 		}
 	}
 	
@@ -590,7 +592,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return TypeResolver.resolve("boolean");
+			return PlatformDependency.BOOLEAN;
 		}
 	}
 	
@@ -644,7 +646,7 @@ public abstract class Value{
 		
 		public ArrayIndexValue(Value array, Value index){
 			this.array = array;
-			this.index = index.fit(TypeResolver.resolve("int"));
+			this.index = index.fit(PlatformDependency.INT);
 			if(this.index == null){
 				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer!");
 			}

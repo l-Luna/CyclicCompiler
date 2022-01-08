@@ -4,6 +4,7 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 public class CyclicField implements FieldReference, CyclicMember{
 	

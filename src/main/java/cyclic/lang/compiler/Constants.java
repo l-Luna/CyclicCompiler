@@ -4,6 +4,7 @@ public final class Constants{
 	
 	public static final String OBJECT = "java.lang.Object";
 	public static final String STRING = "java.lang.String";
+	public static final String CLASS = "java.lang.Class";
 	
 	// Super types
 	public static final String ENUM = "java.lang.Enum";

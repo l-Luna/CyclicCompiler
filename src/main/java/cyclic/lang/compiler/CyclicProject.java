@@ -1,6 +1,7 @@
 package cyclic.lang.compiler;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,9 @@ public class CyclicProject{
 	
 	public boolean include_debug = true;
 	
-	public List<CyclicPackage> packages;
+	public List<String> defaultImports = new ArrayList<>();
+	
+	public List<CyclicPackage> packages = new ArrayList<>();
 	
 	/*package-private*/ void updatePaths(Path root){
 		sourcePath = root.resolve(source).normalize();
