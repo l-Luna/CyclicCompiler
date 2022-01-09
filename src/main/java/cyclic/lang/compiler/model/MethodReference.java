@@ -87,11 +87,31 @@ public interface MethodReference extends CallableReference{
 	 * {@inheritDoc}
 	 */
 	default void writeInvoke(MethodVisitor mv){
-		if(isStatic()){
+		if(isStatic())
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), in().kind() == TypeKind.INTERFACE);
-		}else{
-			boolean isIface = in().kind() == TypeKind.INTERFACE;
-			mv.visitMethodInsn(isIface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isIface);
+		else{
+			boolean isInterface = in().kind() == TypeKind.INTERFACE;
+			mv.visitMethodInsn(isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isInterface);
+		}
+	}
+	
+	// don't like this
+	/**
+	 * Writes an invocation of this method using the given {@linkplain MethodVisitor} that does not participate
+	 * in dynamic type checking, e.g. for <code>super.X()</code> expressions.
+	 * <p>Instructions for pushing parameter values to the stack should have already been written, though this
+	 * is not checked.
+	 * <p>If this method reference is static, this acts identically to {@linkplain MethodReference#writeInvoke(MethodVisitor)}.
+	 *
+	 * @param mv
+	 * 		The method visitor to write an invocation to.
+	 */
+	default void writeInvokeSpecial(MethodVisitor mv){
+		if(isStatic())
+			writeInvoke(mv);
+		else{
+			boolean isInterface = in().kind() == TypeKind.INTERFACE;
+			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, in().internalName(), name(), descriptor(), isInterface);
 		}
 	}
 }

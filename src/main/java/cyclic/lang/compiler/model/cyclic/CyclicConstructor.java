@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
@@ -68,17 +69,6 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 				.collect(Collectors.toList());
 	}
 	
-	public void resolveBody(){
-		if(!isStatic())
-			new Variable("this", in(), methodScope, null);
-		for(int i = 0; i < parameters.size(); i++)
-			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
-		
-		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
-				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
-						null; // a semicolon just returns - no implicit return in case of init blocks
-	}
-	
 	public TypeReference in(){
 		return in;
 	}
@@ -97,5 +87,37 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	
 	public boolean isStatic(){
 		return isS; // only ever true for init blocks
+	}
+	
+	public void resolveBody(){
+		if(!isStatic())
+			new Variable("this", in(), methodScope, null);
+		for(int i = 0; i < parameters.size(); i++)
+			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
+		
+		body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
+				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
+						null; // a semicolon just returns - no implicit return in case of init blocks
+		
+		if(hasExplicitCtorCall()){
+			// check that the body is either of those statements, or starts with either, and contains no other references to either
+			// TODO: relax restrictions on pre-super-constructor instructions?
+			final boolean[] checkedCtor = {false};
+			Flow.visitTerminals(body, x -> {
+				if(checkedCtor[0]){
+					if(x instanceof Statement.CtorCallStatement)
+						throw new CompileTimeException(x.text, "Cannot have multiple explicit constructor calls in one constructor");
+				}else if(x instanceof Statement.CtorCallStatement)
+					checkedCtor[0] = true;
+				else
+					throw new CompileTimeException(x.text, "Must have an explicit constructor call first");
+			});
+		}else if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
+			throw new CompileTimeException(null, "Must have an explicit constructor call as superclass has no 0-arg constructors");
+		}
+	}
+	
+	public boolean hasExplicitCtorCall(){
+		return Flow.firstMatching(body, Statement.CtorCallStatement.class::isInstance).isPresent();
 	}
 }

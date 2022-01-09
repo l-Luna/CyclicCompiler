@@ -76,13 +76,15 @@ public abstract class Value{
 			}
 			case CyclicLangParser.FunctionValueContext func -> {
 				Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
+				boolean isSuperCall = func.SUPER() != null;
 				List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
-				yield new CallValue(on, args, Utils.resolveMethod(func.call().idPart().getText(), on, args, method));
+				// TODO: "X.super.Y()" for interface methods? maybe "super(X).Y()"?
+				yield new CallValue(on, args, Utils.resolveMethod(func.call().idPart().getText(), on, args, method, isSuperCall), isSuperCall);
 			}
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
-				yield new InitializationValue(args, Utils.resolveConstructor(of, args, method));
+				yield new InitializationValue(args, Utils.resolveConstructor(of, args));
 			}
 			case CyclicLangParser.BinaryOpValueContext bin -> {
 				Value left = Value.fromAst(bin.left, scope, type, method);
@@ -413,11 +415,20 @@ public abstract class Value{
 		Value on;
 		List<Value> args;
 		MethodReference target;
+		// must be tracked here for using invokespecial
+		boolean isSuperCall = false;
 		
 		public CallValue(Value on, List<Value> args, MethodReference target){
 			this.on = on;
 			this.args = args;
 			this.target = target;
+		}
+		
+		public CallValue(Value on, List<Value> args, MethodReference target, boolean isSuperCall){
+			this.on = on;
+			this.args = args;
+			this.target = target;
+			this.isSuperCall = isSuperCall;
 		}
 		
 		// make sure that changes here are mirrored in InitializationValue
@@ -432,7 +443,10 @@ public abstract class Value{
 				Value v = args.get(i);
 				v.fit(target.parameters().get(i)).write(mv);
 			}
-			target.writeInvoke(mv);
+			if(isSuperCall)
+				target.writeInvokeSpecial(mv);
+			else
+				target.writeInvoke(mv);
 		}
 		
 		public TypeReference type(){

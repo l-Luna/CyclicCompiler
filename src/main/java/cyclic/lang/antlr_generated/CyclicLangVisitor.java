@@ -361,6 +361,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCall(CyclicLangParser.CallContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#ctorCall}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCtorCall(CyclicLangParser.CtorCallContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#newArray}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

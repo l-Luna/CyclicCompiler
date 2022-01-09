@@ -38,18 +38,21 @@ public final class CyclicClassWriter{
 		}
 		
 		for(var ctor : type.constructors()){
+			CyclicConstructor cyc = (CyclicConstructor)ctor;
+			
 			currentMethod = ctor;
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
 			
-			// implicit super(); TODO: constructor overloading and args super-constructors
-			mv.visitVarInsn(Opcodes.ALOAD, 0);
-			mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", "()V", false);
+			// implicit "super();" if not present in text
+			if(!cyc.hasExplicitCtorCall()){
+				mv.visitVarInsn(Opcodes.ALOAD, 0);
+				mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", "()V", false);
+			}
 			
 			for(var init : type.initBlocks) // init blocks go first so that field values can be setup for use
 				if(!init.isStatic() && init.body != null)
 					init.body.write(mv);
-			// TODO: calling super-constructors
-			CyclicMethodWriter.writeCtor(mv, (CyclicConstructor)ctor);
+			CyclicMethodWriter.writeCtor(mv, cyc);
 			
 			mv.visitInsn(Opcodes.RETURN);
 			mv.visitMaxs(0, 0);

@@ -66,7 +66,8 @@ statement
     | switchStatement
     | doWhile
     | yieldStatement
-    | (value DOT)? call SEMICOLON
+    | ((value | SUPER) DOT)? call SEMICOLON
+    | ctorCall SEMICOLON
     | SEMICOLON
     ;
 
@@ -100,6 +101,7 @@ value
     : left=value binaryop right=value           #binaryOpValue
     | value DOT call                            #functionValue
     | call                                      #functionValue
+    | SUPER DOT call                            #functionValue
     | value EXCLAMATION? INSTANCEOF type        #instanceCheckValue
     | array=value LSQUAR index=value RSQUAR     #arrayIndexValue
     | value DOT idPart                          #varValue
@@ -126,6 +128,7 @@ initialisation: NEW type LPAREN arguments RPAREN;
 cast: LPAREN type RPAREN value;
 varAssignment: value binaryop? ASSIGN value;
 call: idPart LPAREN arguments RPAREN;
+ctorCall: (THIS | SUPER) LPAREN arguments RPAREN;
 newArray: NEW type LSQUAR value RSQUAR;
 newListedArray: NEW type LSQUAR RSQUAR LBRACE (value (COMMA value)*)? RBRACE;
 

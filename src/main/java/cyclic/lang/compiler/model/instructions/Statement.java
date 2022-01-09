@@ -23,7 +23,7 @@ import static cyclic.lang.compiler.Constants.*;
 public abstract class Statement{
 	
 	Scope in;
-	protected ParserRuleContext text;
+	public ParserRuleContext text;
 	
 	public Statement(Scope in){
 		this.in = in;
@@ -31,7 +31,7 @@ public abstract class Statement{
 	
 	public void write(MethodVisitor mv){
 		// may be null for e.g. the generated while loop from a foreach
-		if(Compiler.includeDebugInfo && text != null){
+		if(Compiler.project.include_debug && text != null){
 			Label currentLine = new Label();
 			mv.visitLabel(currentLine);
 			mv.visitLineNumber(text.start.getLine(), currentLine);
@@ -62,8 +62,9 @@ public abstract class Statement{
 			result = createAssignStatement(ctx.varAssignment().value(0), in, left, right);
 		}else if(ctx.call() != null){
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, callable) : null;
+			boolean isSuperCall = ctx.SUPER() != null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
-			result = new CallStatement(in, on, Utils.resolveMethod(ctx.call().idPart().getText(), on, args, callable), args);
+			result = new CallStatement(in, on, Utils.resolveMethod(ctx.call().idPart().getText(), on, args, callable, isSuperCall), args, isSuperCall);
 		}else if(ctx.ifStatement() != null){
 			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
@@ -138,6 +139,13 @@ public abstract class Statement{
 			}else if(value == null)
 				throw new CompileTimeException("Return statement in non-void method must return a value");
 			result = new ReturnStatement(toReturn, in, returnType);
+		}else if(ctx.ctorCall() != null){
+			if(callable instanceof MethodReference || callable == null)
+				throw new CompileTimeException("super() and this() statements are only valid in constructors");
+			List<Value> args = ctx.ctorCall().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
+			boolean isSuperCall = ctx.ctorCall().SUPER() != null;
+			var t = callable.in();
+			result = new CtorCallStatement(in, Utils.resolveConstructor(isSuperCall ? t.superClass() : t, args), args);
 		}else
 			result = new NoopStatement(in);
 		
@@ -172,7 +180,7 @@ public abstract class Statement{
 	
 	public static class BlockStatement extends Statement{
 		Scope blockScope;
-		List<Statement> contains;
+		public List<Statement> contains;
 		
 		public BlockStatement(Scope in){
 			super(in);
@@ -277,12 +285,21 @@ public abstract class Statement{
 		Value on;
 		List<Value> args;
 		MethodReference target;
+		boolean isSuperCall; // to use invokespecial instead
 		
 		public CallStatement(Scope in, Value on, MethodReference target, List<Value> args){
 			super(in);
 			this.on = on;
 			this.target = target;
 			this.args = args;
+		}
+		
+		public CallStatement(Scope in, Value on, MethodReference target, List<Value> args, boolean isSuperCall){
+			super(in);
+			this.on = on;
+			this.args = args;
+			this.target = target;
+			this.isSuperCall = isSuperCall;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -292,6 +309,30 @@ public abstract class Statement{
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
+			for(int i = 0; i < args.size(); i++){
+				Value v = args.get(i);
+				v.fit(target.parameters().get(i)).write(mv);
+			}
+			if(isSuperCall)
+				target.writeInvokeSpecial(mv);
+			else
+				target.writeInvoke(mv);
+		}
+	}
+	
+	public static class CtorCallStatement extends Statement{
+		List<Value> args;
+		CallableReference target;
+		
+		public CtorCallStatement(Scope in, CallableReference target, List<Value> args){
+			super(in);
+			this.target = target;
+			this.args = args;
+		}
+		
+		public void write(MethodVisitor mv){
+			super.write(mv);
+			mv.visitVarInsn(Opcodes.ALOAD, 0);
 			for(int i = 0; i < args.size(); i++){
 				Value v = args.get(i);
 				v.fit(target.parameters().get(i)).write(mv);
@@ -345,7 +386,7 @@ public abstract class Statement{
 	}
 	
 	public static class IfStatement extends Statement{
-		Statement success, fail;
+		public Statement success, fail;
 		Value condition;
 		
 		public IfStatement(Scope in, Statement success, Statement fail, Value condition){
@@ -370,7 +411,7 @@ public abstract class Statement{
 	}
 	
 	public static class WhileStatement extends Statement{
-		Statement success;
+		public Statement success;
 		Value condition;
 		
 		public WhileStatement(Scope in, Statement success, Value condition){
@@ -405,9 +446,7 @@ public abstract class Statement{
 	}
 	
 	public static class ForStatement extends Statement{
-		Statement success;
-		Statement start;
-		Statement increment;
+		public Statement success, start, increment;
 		Value condition;
 		
 		public ForStatement(Scope in, Statement success, Statement start, Statement increment, Value condition){
@@ -436,7 +475,7 @@ public abstract class Statement{
 	}
 	
 	public static class DoWhileStatement extends Statement{
-		Statement success;
+		public Statement success;
 		Value condition;
 		
 		public DoWhileStatement(Scope in, Statement success, Value condition){

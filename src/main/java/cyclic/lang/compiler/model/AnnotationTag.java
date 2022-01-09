@@ -39,7 +39,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 	record AnnotationParam(String name, TypeReference type, Object defaultValue){}
 	
 	public AnnotationTag{
-		if(arguments.values().stream().anyMatch(Guaranteed.NULL_MARKER::equals))
+		if(arguments.values().stream().anyMatch(Flow.NULL_MARKER::equals))
 			throw new IllegalStateException("Annotation " + annotationType.fullyQualifiedName() + " on " + on + " cannot accept null value");
 	}
 	
@@ -63,12 +63,12 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		Map<String, Object> args = new HashMap<>();
 		if(ctx.value() != null){
 			Value value = Value.fromAst(ctx.value(), new Scope(), type, null);
-			var constant = Guaranteed.constant(value);
+			var constant = Flow.constantValue(value);
 			args.put("value", constant.orElseThrow(() -> new CompileTimeException(null, "Annotation value must be a compile-time constant")));
 		}else if(ctx.annotationArg().size() > 0)
 			for(CyclicLangParser.AnnotationArgContext context : ctx.annotationArg()){
 				Value value = Value.fromAst(context.value(), new Scope(), type, null);
-				var constant = Guaranteed.constant(value);
+				var constant = Flow.constantValue(value);
 				String argName = context.idPart().getText();
 				args.put(argName, constant.orElseThrow(() -> new CompileTimeException(null, "Annotation value " + argName + " must be a compile-time constant")));
 			}

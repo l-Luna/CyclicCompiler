@@ -68,7 +68,7 @@ public interface CallableReference extends AnnotatableElement{
 	
 	/**
 	 * Writes an invocation of this callable using the given {@linkplain MethodVisitor}.
-	 * Instructions for pushing the parameter values for the stack should have already been written,
+	 * Instructions for pushing the parameter values to the stack should have already been written,
 	 * though this is not checked.
 	 *
 	 * @param mv

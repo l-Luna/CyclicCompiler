@@ -401,6 +401,13 @@ public class CyclicLangBaseVisitor<T> extends AbstractParseTreeVisitor<T> implem
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitCtorCall(CyclicLangParser.CtorCallContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitNewArray(CyclicLangParser.NewArrayContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

@@ -151,16 +151,29 @@ public final class Utils{
 		return out;
 	}
 	
-	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from){
+	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall){
 		// possible method references are:
 		// - from the value being called on, if present, OR
 		// - static members of the current type in a static method, OR
 		// - static or instance methods of the current type in an instance method, with an implicit this added by CallStatement/CallValue
+		// if this is a super.X() call, `on` must be null, we must be in a non-static context, and we look at the supertype of from.in()
+		// then wrap it with a MethodReference that uses invokespecial
 		List<MethodReference> candidates = new ArrayList<>();
+		if(superCall && on != null)
+			throw new IllegalArgumentException("Can't resolve a super method on a non-this object instance");
+		if(superCall && from.isStatic())
+			throw new IllegalArgumentException("Can't resolve a super method in a static context");
+		
 		if(on != null)
 			candidates.addAll(on.type().methods());
-		else
-			candidates.addAll(from.isStatic() ? from.in().methods().stream().filter(MethodReference::isStatic).toList() : from.in().methods());
+		else{
+			var type = from.in();
+			if(superCall)
+				type = type.superClass();
+			candidates.addAll(from.isStatic()
+					? type.methods().stream().filter(MethodReference::isStatic).toList()
+					: type.methods());
+		}
 		MethodReference found = null;
 		candidates:
 		for(MethodReference x : candidates)
@@ -175,12 +188,11 @@ public final class Utils{
 				break;
 			}
 		if(found == null) // TODO: return null and check in CallValue to allow for pass expressions
-			throw new IllegalStateException("Could not find method " + name + " given candidates [" + candidates.stream().map(x -> x.name() + x.descriptor()).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
+			throw new IllegalStateException("Could not find method " + name + " given candidates " + candidates.stream().map(MethodReference::nameAndDescriptor).collect(Collectors.joining(", ", "[", "]")) + " for args of type " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
 		return found;
 	}
 	
-	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, CallableReference from){
-		// TODO: constructor overloading (this(...), super(...))
+	public static CallableReference resolveConstructor(TypeReference of, List<Value> args){
 		CallableReference found = null;
 		candidates:
 		for(var x : of.constructors()){

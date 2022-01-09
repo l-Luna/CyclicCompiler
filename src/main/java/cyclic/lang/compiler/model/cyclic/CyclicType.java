@@ -285,8 +285,8 @@ public class CyclicType implements TypeReference{
 				if(method.body != null)
 					if(method.body instanceof Statement.ReturnStatement ret){
 						if(ret.returnValue != null)
-							method.constantAnnotationComponentValue = Guaranteed.constant(ret.returnValue).orElseThrow(() -> new CompileTimeException(null, "Annotation component methods must have a constant return value"));
-						if(method.constantAnnotationComponentValue == Guaranteed.NULL_MARKER)
+							method.constantAnnotationComponentValue = Flow.constantValue(ret.returnValue).orElseThrow(() -> new CompileTimeException(null, "Annotation component methods must have a constant return value"));
+						if(method.constantAnnotationComponentValue == Flow.NULL_MARKER)
 							throw new CompileTimeException(null, "Method " + method.nameAndDescriptor() + " cannot have null default value");
 						method.flags = new AccessFlags(Visibility.PUBLIC, true, false);
 					}else if(superInterfaces().stream().flatMap(k -> k.methods().stream()).noneMatch(k -> k.nameAndDescriptor().equals(method.nameAndDescriptor())))
