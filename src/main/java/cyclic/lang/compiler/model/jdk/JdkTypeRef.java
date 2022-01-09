@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.external;
+package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.*;
 
@@ -8,18 +8,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SystemTypeRef implements TypeReference{
+public class JdkTypeRef implements TypeReference{
 	
 	Class<?> underlying;
-	List<SystemFieldRef> fields;
-	List<SystemMethodRef> methods;
-	List<SystemCtorRef> ctors;
+	List<JdkFieldRef> fields;
+	List<JdkMethodRef> methods;
+	List<JdkCtorRef> ctors;
 	
-	public SystemTypeRef(Class<?> underlying){
+	public JdkTypeRef(Class<?> underlying){
 		this.underlying = underlying;
-		fields = Arrays.stream(underlying.getFields()).map(k -> new SystemFieldRef(k, this)).collect(Collectors.toList());
-		methods = Arrays.stream(underlying.getMethods()).map(SystemMethodRef::new).collect(Collectors.toList());
-		ctors = Arrays.stream(underlying.getConstructors()).map(SystemCtorRef::new).collect(Collectors.toList());
+		fields = Arrays.stream(underlying.getFields()).map(k -> new JdkFieldRef(k, this)).collect(Collectors.toList());
+		methods = Arrays.stream(underlying.getMethods()).map(JdkMethodRef::new).collect(Collectors.toList());
+		ctors = Arrays.stream(underlying.getConstructors()).map(JdkCtorRef::new).collect(Collectors.toList());
 	}
 	
 	public String shortName(){
@@ -35,7 +35,7 @@ public class SystemTypeRef implements TypeReference{
 				underlying.isAnnotation() ? TypeKind.ANNOTATION :
 				underlying.isRecord() ? TypeKind.RECORD :
 				underlying.isEnum() ? TypeKind.ENUM :
-				TypeKind.CLASS; // A system type is never a single (yet)
+				TypeKind.CLASS; // A system type is never a single
 	}
 	
 	public AccessFlags flags(){

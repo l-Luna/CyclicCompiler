@@ -8,7 +8,7 @@ import java.util.Optional;
 /**
  * Implements {@linkplain Dependency} for Cyclic types currently being compiled.
  */
-public class CyclicDependency implements Dependency{
+public final class CyclicDependency implements Dependency{
 	
 	public Optional<TypeReference> find(String fqName){
 		return Optional.ofNullable(Compiler.toCompile.get(fqName));

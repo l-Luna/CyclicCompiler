@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.external;
+package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.*;
 import org.objectweb.asm.Opcodes;
@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class SystemMethodRef implements MethodReference{
+public class JdkMethodRef implements MethodReference{
 	Method underlying;
 	
-	public SystemMethodRef(Method underlying){
+	public JdkMethodRef(Method underlying){
 		this.underlying = underlying;
 	}
 	

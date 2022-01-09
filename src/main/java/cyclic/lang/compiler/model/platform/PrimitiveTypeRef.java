@@ -82,11 +82,11 @@ public class PrimitiveTypeRef implements TypeReference{
 	
 	public static String getPrimitiveDesc(Primitive type){
 		return switch(type){
+			case BOOLEAN -> "Z";
 			case BYTE -> "B";
 			case SHORT -> "S";
 			case INT -> "I";
 			case CHAR -> "C";
-			case BOOLEAN -> "Z";
 			case LONG -> "J";
 			case FLOAT -> "F";
 			case DOUBLE -> "D";

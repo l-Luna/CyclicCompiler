@@ -1,8 +1,8 @@
 package cyclic.lang.compiler.model;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
-import cyclic.lang.compiler.model.external.SystemTypeRef;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.model.jdk.JdkTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
@@ -17,6 +17,16 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class Utils{
+	
+	public record PackageAndName(String pkg, String name){
+		public static PackageAndName fromInternal(String internalName){
+			String[] parts = internalName.split("/");
+			if(parts.length == 1)
+				return new PackageAndName("", parts[0]);
+			return new PackageAndName(String.join(".", Arrays.stream(parts).limit(parts.length - 1).toArray(String[]::new)),
+			                          parts[parts.length - 1]);
+		}
+	}
 	
 	@Contract("_ -> new")
 	public static @NotNull AccessFlags fromModifiers(CyclicLangParser.ModifiersContext ctx){
@@ -98,8 +108,47 @@ public final class Utils{
 		else{
 			if(type.isArray())
 				return new ArrayTypeRef(forAnyClass(type.componentType()));
-			return new SystemTypeRef(type);
+			return new JdkTypeRef(type);
 		}
+	}
+	
+	public static String nameFromDescriptor(@NotNull String desc){
+		if(desc.startsWith("L"))
+			return desc.substring(1, desc.indexOf(";"));
+		if(desc.startsWith("["))
+			return nameFromDescriptor(desc.substring(1)) + "[]";
+		return switch(desc.charAt(0)){
+			case 'Z' -> "boolean";
+			case 'B' -> "byte";
+			case 'S' -> "short";
+			case 'I' -> "int";
+			case 'C' -> "char";
+			case 'J' -> "long";
+			case 'F' -> "float";
+			case 'D' -> "double";
+			case 'V' -> "void";
+			default -> throw new IllegalArgumentException("Descriptor " + desc + " is not a valid type descriptor");
+		};
+	}
+	
+	// e.g. (II[J[[Ljava/lang/String;)Ljava/lang/String;  -->  int, int, long[], java/lang/String[][], java/lang/String
+	public static List<String> methodDescriptorParts(@NotNull String desc){
+		// ignore brackets; the last element is always considered the end, every method has a return type
+		desc = desc.replace("(", "");
+		desc = desc.replace(")", "");
+		List<String> out = new ArrayList<>();
+		while(desc.length() > 0){
+			String p;
+			if(desc.startsWith("[") || desc.startsWith("L")){
+				p = nameFromDescriptor(desc);
+				out.add(p);
+			}else{
+				p = String.valueOf(desc.charAt(0));
+				out.add(nameFromDescriptor(p));
+			}
+			desc = desc.substring(p.length() > 1 ? p.length() + 2 : 1);
+		}
+		return out;
 	}
 	
 	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from){

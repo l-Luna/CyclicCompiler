@@ -3,6 +3,9 @@ package cyclic.lang.compiler;
 import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.resolve.Dependency;
+import cyclic.lang.compiler.resolve.JarDependency;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
@@ -69,6 +72,22 @@ public final class Compiler{
 		project.validate();
 		includeDebugInfo = project.include_debug;
 		
+		// load any dependencies
+		// TODO: better dependency management: non-jar deps, check versions/names, download deps?
+		for(CyclicPackage dependency : project.dependencies){
+			if(dependency.type.equalsIgnoreCase("jar")){
+				try{
+					Path filePath = project.root.resolve(dependency.location).normalize();
+					JarDependency e = new JarDependency(filePath.toFile());
+					TypeResolver.dependencies.add(e);
+					e.resolve();
+				}catch(IOException e){
+					e.printStackTrace();
+				}
+			}else
+				System.err.println("Unknown dependency type \"" + dependency.type + "\", only \"jar\" is supported");
+		}
+		
 		// go through all specified files and compile each
 		var inputFolder = project.sourcePath;
 		var outputFolder = project.outputPath;
@@ -97,6 +116,13 @@ public final class Compiler{
 		});
 		
 		System.out.println("Written " + output + " class files.");
+		
+		for(Dependency dependency : TypeResolver.dependencies)
+			try{
+				dependency.close();
+			}catch(IOException e){
+				e.printStackTrace();
+			}
 		
 		for(CyclicPackage cycPackage : project.packages){
 			// TODO: handle resources for jars, and handle other formats (JMODs?)

@@ -16,14 +16,14 @@ import java.util.Optional;
  * @see TypeResolver#resolve(String, List, String)
  * @see TypeResolver#resolveFq(String)
  */
-public class TypeResolver{
+public final class TypeResolver{
 	
 	/**
 	 * The list of dependencies from which types can be obtained, including primitives and platform types.
 	 */
-	public static List<Dependency> dependencies = List.of(
+	public static List<Dependency> dependencies = new ArrayList<>(List.of(
 			new PlatformDependency(), new JdkDependency(), new CyclicDependency()
-	);
+	));
 	
 	/**
 	 * Returns a reference to a type with the given fully qualified name, throwing

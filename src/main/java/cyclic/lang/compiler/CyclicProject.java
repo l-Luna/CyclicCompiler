@@ -14,7 +14,7 @@ public class CyclicProject{
 	// raw path strings, must be public for snakeyaml
 	public String source, output;
 	
-	public Path sourcePath, outputPath;
+	public Path sourcePath, outputPath, root;
 	
 	public int jdk = Runtime.version().feature(),
 	           cyclic_lib = jdk;
@@ -24,8 +24,10 @@ public class CyclicProject{
 	public List<String> defaultImports = new ArrayList<>();
 	
 	public List<CyclicPackage> packages = new ArrayList<>();
+	public List<CyclicPackage> dependencies = new ArrayList<>();
 	
 	/*package-private*/ void updatePaths(Path root){
+		this.root = root;
 		sourcePath = root.resolve(source).normalize();
 		outputPath = root.resolve(output).normalize();
 	}

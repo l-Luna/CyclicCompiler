@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.external;
+package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.AccessFlags;
 import cyclic.lang.compiler.model.FieldReference;
@@ -8,12 +8,12 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 
-public class SystemFieldRef implements FieldReference{
+public class JdkFieldRef implements FieldReference{
 	
 	Field underlying;
 	TypeReference in;
 	
-	public SystemFieldRef(Field underlying, TypeReference in){
+	public JdkFieldRef(Field underlying, TypeReference in){
 		this.underlying = underlying;
 		this.in = in;
 	}

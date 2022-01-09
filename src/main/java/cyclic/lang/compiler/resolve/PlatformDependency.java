@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Implements {@linkplain Dependency} for the primitive types and array types.
  */
-public class PlatformDependency implements Dependency{
+public final class PlatformDependency implements Dependency{
 	
 	public static final TypeReference BOOLEAN = new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN);
 	

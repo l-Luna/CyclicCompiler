@@ -2,16 +2,18 @@ package cyclic.lang.compiler.resolve;
 
 import cyclic.lang.compiler.model.TypeReference;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Optional;
 
 /**
  * A dependency represents a provider of types and symbols that can be looked up via
- * {@linkplain TypeResolverOld}.
+ * {@linkplain TypeResolver}.
  *
- * @see TypeResolverOld
+ * @see TypeResolver
  * @see cyclic.lang.compiler.model.TypeReference
  */
-public interface Dependency{
+public interface Dependency extends Closeable{
 	
 	/**
 	 * Tries to find a type with the given fully qualified name, returning it contained within an optional
@@ -22,4 +24,12 @@ public interface Dependency{
 	 * @return A type with the given fully qualified name if it exists within this dependency.
 	 */
 	Optional<TypeReference> find(String fullyQualifiedName);
+	
+	/**
+	 * Closes this dependency and releases any resources associated with it.
+	 * <p>Some dependencies, like {@linkplain PlatformDependency}, do not have any associated resources.
+	 * Dependencies that open files, like {@linkplain JarDependency}, will need to be closed.
+	 */
+	default void close() throws IOException{
+	}
 }

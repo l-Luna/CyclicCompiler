@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.model.external;
+package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.AccessFlags;
 import cyclic.lang.compiler.model.CallableReference;
@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // An instance constructor for a system type
-public class SystemCtorRef implements CallableReference{
+public class JdkCtorRef implements CallableReference{
 	Constructor<?> underlying;
 	
-	public SystemCtorRef(Constructor<?> underlying){
+	public JdkCtorRef(Constructor<?> underlying){
 		this.underlying = underlying;
 	}
 	
