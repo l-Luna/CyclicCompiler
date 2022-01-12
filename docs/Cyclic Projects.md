@@ -28,7 +28,7 @@ packages:
 `source` and `output` define the input and output root folders, relative to the project file. Input file packages are expected to match the file structure after this folder, and compiled classes are placed in the output folder according to their package names. `./` and `../` can be used in these paths.
 
 `dependencies` is a list of dependencies this project has, where extra types and symbols are loaded from. `packages` is a list of packages that this project should be packaged into. Elements in both of these lists have the same properties:
-- `type`: The type of the package. Only `jar` is currently valid, though support for `jmod` files (for compiling against other JVMs) and (publishing to) online packages is considered.
+- `type`: The type of the package. Only `jar` is currently valid, though support for `jmod` files (for compiling against other JDKs) and (publishing to) online packages is considered.
 - `location`: Where to find or put this package. For an output package, this is relative to the output root; for a dependency, this is relative to the project file.
 - `name`: The name of the package. Ignored for dependencies; used as part of the file name of output packages.
 - `version`: The version of the package. Ignored for dependencies; used as part of the file name of output packages.
