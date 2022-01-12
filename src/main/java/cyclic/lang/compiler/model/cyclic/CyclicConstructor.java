@@ -102,19 +102,10 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		if(hasExplicitCtorCall()){
 			// check that the body is either of those statements, or starts with either, and contains no other references to either
 			// TODO: relax restrictions on pre-super-constructor instructions?
-			final boolean[] checkedCtor = {false};
-			Flow.visitTerminals(body, x -> {
-				if(checkedCtor[0]){
-					if(x instanceof Statement.CtorCallStatement)
-						throw new CompileTimeException(x.text, "Cannot have multiple explicit constructor calls in one constructor");
-				}else if(x instanceof Statement.CtorCallStatement)
-					checkedCtor[0] = true;
-				else
-					throw new CompileTimeException(x.text, "Must have an explicit constructor call first");
-			});
-		}else if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-			throw new CompileTimeException(null, "Must have an explicit constructor call as superclass has no 0-arg constructors");
-		}
+			if(!(body instanceof Statement.CtorCallStatement) && !(body instanceof Statement.BlockStatement block && block.contains.get(0) instanceof Statement.CtorCallStatement))
+				throw new CompileTimeException(null, "Must have an explicit constructor call first");
+		}else if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0))
+			throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
 	}
 	
 	public boolean hasExplicitCtorCall(){
