@@ -222,6 +222,9 @@ public final class Compiler{
 	 * @see Compiler#compileSingleClass(String)
 	 */
 	public static Map<String, byte[]> compileString(@NotNull String text){
+		project = new CyclicProject();
+		project.include_cyclic_lib_refs = false;
+		
 		var types = CyclicTypeBuilder.fromFile(text, null);
 		for(var type : types)
 			toCompile.put(type.fullyQualifiedName(), type);

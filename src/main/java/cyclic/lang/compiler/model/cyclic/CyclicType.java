@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.resolve.TypeResolver;
@@ -190,7 +191,9 @@ public class CyclicType implements TypeReference{
 		
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
 			annotations.add(AnnotationTag.fromAst(annotation, this, this));
-		annotations.add(new AnnotationTag(TypeResolver.resolveFq(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
+		
+		if(Compiler.project.include_cyclic_lib_refs)
+			annotations.add(new AnnotationTag(TypeResolver.resolveFq(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
 		
 		validate();
 	}
@@ -209,10 +212,10 @@ public class CyclicType implements TypeReference{
 			if(i.kind() != TypeKind.INTERFACE)
 				throw new CompileTimeException(null, "Cannot implement non-interface type " + i.fullyQualifiedName());
 		
-		checkDuplicates(constructors.stream().map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
-		checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
-		checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
-		checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");
+		Utils.checkDuplicates(constructors.stream().map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
+		Utils.checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
+		Utils.checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
+		Utils.checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");
 		
 		for(CyclicMethod method : methods)
 			if(method.flags().isAbstract() && !flags().isAbstract())
@@ -291,15 +294,6 @@ public class CyclicType implements TypeReference{
 						method.flags = new AccessFlags(Visibility.PUBLIC, true, false);
 					}else if(superInterfaces().stream().flatMap(k -> k.methods().stream()).noneMatch(k -> k.nameAndDescriptor().equals(method.nameAndDescriptor())))
 						throw new CompileTimeException(null, "An annotation method may only have a non-return-statement body if that method implements an interface method");
-	}
-	
-	private static <T> void checkDuplicates(List<T> in, String label){
-		Set<T> checked = new HashSet<>(in.size());
-		for(T t : in){
-			if(checked.contains(t))
-				throw new CompileTimeException(null, "Duplicate " + label + " \"" + t + "\"");
-			checked.add(t);
-		}
 	}
 	
 	public String toString(){

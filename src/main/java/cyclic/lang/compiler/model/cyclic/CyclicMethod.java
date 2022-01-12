@@ -7,6 +7,7 @@ import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.instructions.Variable;
+import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.ArrayList;
@@ -77,6 +78,8 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			paramNames.add(p.idPart().getText());
 		}
 		
+		Utils.checkDuplicates(parameterNames(), "parameter name in method " + name);
+		
 		if(isA && (arrowStatement != null || arrowVal != null || blockStatement != null))
 			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");
 	}
@@ -103,6 +106,10 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
 				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
 				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns);
+		
+		if(!flags().isAbstract() && !returns().isAssignableTo(PlatformDependency.VOID))
+			if(!Flow.guaranteedToExit(body))
+				throw new CompileTimeException(null, "Missing return or throw statement - non-void method \"" + summary() + "\" must return a value in all code paths");
 	}
 	
 	public TypeReference in(){

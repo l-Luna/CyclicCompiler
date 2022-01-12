@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.jdk.JdkTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
@@ -10,9 +11,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -24,7 +23,16 @@ public final class Utils{
 			if(parts.length == 1)
 				return new PackageAndName("", parts[0]);
 			return new PackageAndName(String.join(".", Arrays.stream(parts).limit(parts.length - 1).toArray(String[]::new)),
-			                          parts[parts.length - 1]);
+					parts[parts.length - 1]);
+		}
+	}
+	
+	public static <T> void checkDuplicates(List<T> in, String label){
+		Set<T> checked = new HashSet<>(in.size());
+		for(T t : in){
+			if(checked.contains(t))
+				throw new CompileTimeException(null, "Duplicate " + label + " \"" + t + "\"");
+			checked.add(t);
 		}
 	}
 	

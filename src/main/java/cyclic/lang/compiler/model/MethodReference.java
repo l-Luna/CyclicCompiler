@@ -72,6 +72,19 @@ public interface MethodReference extends CallableReference{
 		return name() + descriptor();
 	}
 	
+	/**
+	 * Returns a string summarizing this method's signature in a human-readable form for error messages.
+	 * such as {@code "String concat(String, String)"}.
+	 * <p>The return value of this method should not be parsed and can change at any time.
+	 */
+	default String summary(){
+		// TODO: consider cases where multiple types have the same short name, and use summarized package names (e.g. j.u.List vs j.a.List) when that occurs
+		return "%s %s(%s)".formatted(returns().shortName(), name(), parameters().stream().map(TypeReference::shortName).collect(Collectors.joining(", ")));
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
 	default String elementType(){
 		return ElementType.METHOD.name();
 	}

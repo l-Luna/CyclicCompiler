@@ -19,7 +19,8 @@ public class CyclicProject{
 	public int jdk = Runtime.version().feature(),
 	           cyclic_lib = jdk;
 	
-	public boolean include_debug = true;
+	public boolean include_debug = true,
+	               include_cyclic_lib_refs = true;
 	
 	public List<String> defaultImports = new ArrayList<>();
 	

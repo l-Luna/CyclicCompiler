@@ -136,8 +136,12 @@ public abstract class Statement{
 			if(returnType.fullyQualifiedName().equals("void")){
 				if(value != null)
 					throw new CompileTimeException("Return statement in void method cannot return a value");
-			}else if(value == null)
-				throw new CompileTimeException("Return statement in non-void method must return a value");
+			}else{
+				if(value == null)
+					throw new CompileTimeException("Return statement in non-void method must return a value");
+				if(toReturn.fit(returnType) == null)
+					throw new CompileTimeException("Cannot return value of type \"" + toReturn.type().fullyQualifiedName() + "\" from method with return type \"" + returnType.fullyQualifiedName() + "\"");
+			}
 			result = new ReturnStatement(toReturn, in, returnType);
 		}else if(ctx.ctorCall() != null){
 			if(callable instanceof MethodReference || callable == null)
@@ -220,7 +224,7 @@ public abstract class Statement{
 			
 			var adjusted = returnValue.fit(toReturn);
 			if(adjusted == null)
-				throw new CompileTimeException(text, "Value of type " + returnValue.type().fullyQualifiedName() + " cannot be returned from method of type " + toReturn.fullyQualifiedName());
+				throw new CompileTimeException(text, "Value of type \"" + returnValue.type().fullyQualifiedName() + "\" cannot be returned from method of type \"" + toReturn.fullyQualifiedName() + "\"");
 			
 			adjusted.write(mv);
 			mv.visitInsn(adjusted.type().returnOpcode());

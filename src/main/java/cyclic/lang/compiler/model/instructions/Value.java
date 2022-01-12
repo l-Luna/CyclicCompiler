@@ -78,7 +78,7 @@ public abstract class Value{
 				Value on = func.value() != null ? Value.fromAst(func.value(), scope, type, method) : null;
 				boolean isSuperCall = func.SUPER() != null;
 				List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
-				// TODO: "X.super.Y()" for interface methods? maybe "super(X).Y()"?
+				// TODO: "X.super.Y()" for interface methods? maybe "X:super.Y()"?
 				yield new CallValue(on, args, Utils.resolveMethod(func.call().idPart().getText(), on, args, method, isSuperCall), isSuperCall);
 			}
 			case CyclicLangParser.InitialisationValueContext init -> {
@@ -173,8 +173,6 @@ public abstract class Value{
 		if(target instanceof PrimitiveTypeRef prim)
 			if(type().fullyQualifiedName().equals(prim.boxedTypeName()))
 				ret = new UnboxValue(this, prim.type);
-			else if(!(type() instanceof PrimitiveTypeRef))
-				ret = new TryUnboxValue(this, prim.type);
 		
 		if(type() instanceof PrimitiveTypeRef p){
 			// boxing conversion
@@ -467,28 +465,6 @@ public abstract class Value{
 		public void write(MethodVisitor mv){
 			underlying.write(mv); // is a boxed value
 			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, underlying.type().internalName(), type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
-		}
-		
-		public TypeReference type(){
-			return new PrimitiveTypeRef(type);
-		}
-	}
-	
-	// when casting an unknown value to a primitive
-	public static class TryUnboxValue extends Value{
-		Value underlying;
-		PrimitiveTypeRef.Primitive type;
-		
-		public TryUnboxValue(Value underlying, PrimitiveTypeRef.Primitive type){
-			this.underlying = underlying;
-			this.type = type;
-		}
-		
-		public void write(MethodVisitor mv){
-			underlying.write(mv); // is a boxed value
-			String box = PrimitiveTypeRef.boxedTypeName(type).replace('.', '/');
-			mv.visitTypeInsn(Opcodes.CHECKCAST, box);
-			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, box, type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
 		}
 		
 		public TypeReference type(){

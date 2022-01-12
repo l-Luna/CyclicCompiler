@@ -38,6 +38,8 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 			paramNames.add(p.idPart().getText());
 		}
 		
+		Utils.checkDuplicates(parameterNames(), "parameter name in constructor");
+		
 		if(ctx.statement() != null)
 			arrowStatement = ctx.statement();
 		else if(ctx.block() != null)

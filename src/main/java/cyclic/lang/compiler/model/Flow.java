@@ -83,6 +83,43 @@ public final class Flow{
 	}
 	
 	/**
+	 * Checks if every code path in the given statement is guaranteed to execute at least one terminal statement that matches
+	 * the given condition.
+	 *
+	 * @param body
+	 * 		The statement to look for matching statements in.
+	 * @param condition
+	 * 		The condition that a statement must pass to be returned.
+	 * @return Whether a child of the given statement will always match the given condition.
+	 */
+	@SuppressWarnings("DuplicateBranchesInSwitch") // can't merge type pattern cases
+	public static boolean guaranteedToRun(Statement body, Predicate<Statement> condition){
+		return switch(body){
+			case default -> condition.test(body);
+			case null -> false;
+			case Statement.BlockStatement s -> s.contains.stream()
+					.map(k -> guaranteedToRun(k, condition))
+					.reduce(false, (x, y) -> x || y);
+			case Statement.WhileStatement ignored -> false; // a while/for body is never guaranteed to run
+			case Statement.ForStatement ignored -> false;
+			case Statement.DoWhileStatement s -> guaranteedToRun(s.success, condition); // guaranteed to run at least once
+			// only guaranteed if guaranteed on both branches
+			case Statement.IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
+		};
+	}
+	
+	/**
+	 * Checks if the given statement is guaranteed to explicitly exit, either by returning or throwing an exception.
+	 *
+	 * @param body
+	 * 		The statement to check.
+	 * @return Whether the statement will always explicitly exit.
+	 */
+	public static boolean guaranteedToExit(Statement body){
+		return guaranteedToRun(body, x -> x instanceof Statement.ReturnStatement || x instanceof Statement.ThrowStatement);
+	}
+	
+	/**
 	 * Runs the given visitor on every terminal statement of the given statement in order.
 	 * <p>Terminal statements do not contain other statements, like {@code return} and call statements.
 	 * Non-terminal statements contain other statements, like {@code if} and {@code for} statements, as well as
