@@ -22,7 +22,7 @@ public class CyclicProject{
 	public boolean include_debug = true,
 	               include_cyclic_lib_refs = true;
 	
-	public List<String> defaultImports = new ArrayList<>();
+	public List<String> default_imports = new ArrayList<>();
 	
 	public List<CyclicPackage> packages = new ArrayList<>();
 	public List<CyclicPackage> dependencies = new ArrayList<>();

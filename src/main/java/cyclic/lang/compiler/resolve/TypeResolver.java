@@ -123,7 +123,7 @@ public final class TypeResolver{
 		if(currentPackage != null && !currentPackage.isBlank())
 			imports.add(currentPackage + ".*");
 		
-		imports.addAll(Compiler.project.defaultImports);
+		imports.addAll(Compiler.project.default_imports);
 		
 		for(var im : imports){
 			if(im.endsWith(".*"))

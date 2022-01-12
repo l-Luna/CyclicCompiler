@@ -11,4 +11,4 @@ packages:
 - name: "cyclic_lib"
   version: "0.0.1"
   type: "jar"
-  location: "../../libs/"
+  location: "../../libs/" # relative to output
