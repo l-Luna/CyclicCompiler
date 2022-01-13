@@ -123,7 +123,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		if(first.isEmpty())
 			return Optional.empty();
 		TypeReference targets = (TypeReference)first.get().arguments.get("value");
-		return Optional.of(targets);
+		return Optional.ofNullable(targets);
 	}
 	
 	public boolean isApplicable(String elementType){
@@ -132,7 +132,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 			return true;
 		// can't cast directly to a specific array because clean() cannot determine the correct type in all circumstances
 		Object[] targets = (Object[])first.get().arguments.get("value");
-		return Arrays.stream(targets).anyMatch(k -> ((EnumConstant)k).name().equals(elementType));
+		return Arrays.stream(targets).anyMatch(k -> k != null && ((EnumConstant)k).name().equals(elementType));
 	}
 	
 	public boolean isApplicable(AnnotatableElement e){
@@ -144,6 +144,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		if(first.isEmpty())
 			return RetentionPolicy.CLASS;
 		EnumConstant policy = (EnumConstant)first.get().arguments.get("value");
+		if(policy == null) return RetentionPolicy.SOURCE; // TODO: classfile annotation values aren't loaded
 		return RetentionPolicy.valueOf(policy.name());
 	}
 }

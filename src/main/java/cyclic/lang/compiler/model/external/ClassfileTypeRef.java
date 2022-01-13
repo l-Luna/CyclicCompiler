@@ -4,8 +4,8 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.ClassReader;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Represents a reference to a type loaded from a class file.
@@ -23,9 +23,11 @@ public class ClassfileTypeRef implements TypeReference{
 	protected List<ClassfileMember.Field> fields = new ArrayList<>();
 	protected List<ClassfileMember.Method> methods = new ArrayList<>();
 	protected List<ClassfileMember.Method> constructors = new ArrayList<>();
+	protected Set<String> annotationSigs = new HashSet<>();
 	
 	private TypeReference superClass;
 	private List<TypeReference> interfaces;
+	private Set<AnnotationTag> annotations = new HashSet<>();
 	
 	public ClassfileTypeRef(byte[] classfile){
 		ClassReader reader = new ClassReader(classfile);
@@ -76,6 +78,10 @@ public class ClassfileTypeRef implements TypeReference{
 		return constructors;
 	}
 	
+	public Set<AnnotationTag> annotations(){
+		return annotations;
+	}
+	
 	//
 	
 	public void resolveRefs(){
@@ -84,6 +90,12 @@ public class ClassfileTypeRef implements TypeReference{
 				.map(x -> x.replace('/', '.'))
 				.map(TypeResolver::resolveFq)
 				.toList();
+		annotations = annotationSigs.stream()
+				.map(k -> k.substring(1, k.length() - 1))
+				.map(k -> k.replace('/', '.'))
+				.map(TypeResolver::resolveFq)
+				.map(k -> new AnnotationTag(k, Map.of(), Map.of(), this))
+				.collect(Collectors.toSet());
 		
 		fields.forEach(ClassfileMember::resolveRefs);
 		methods.forEach(ClassfileMember::resolveRefs);

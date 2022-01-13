@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.external;
 
 import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.Utils;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -62,6 +63,12 @@ import static org.objectweb.asm.Opcodes.*;
 			fill.methods.add(m);
 		// we don't really care about annotations or extra attributes yet
 		// method bodies are already disabled
+		return null;
+	}
+	
+	public AnnotationVisitor visitAnnotation(String descriptor, boolean visible){
+		fill.annotationSigs.add(descriptor);
+		// TODO: get the values too
 		return null;
 	}
 }

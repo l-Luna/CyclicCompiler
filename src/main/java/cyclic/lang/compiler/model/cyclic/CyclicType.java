@@ -240,11 +240,13 @@ public class CyclicType implements TypeReference{
 				throw new CompileTimeException(null, "Annotations can only declare java.lang.Object as super type");
 			
 			boolean markedAnnotation = false;
-			for(TypeReference i : interfaces)
+			for(TypeReference i : interfaces){
+				System.out.println(i);
 				if(!i.fullyQualifiedName().equals(ANNOTATION) && i.annotations().stream().noneMatch(k -> k.annotationType().fullyQualifiedName().equals(CYCLIC_ANNOTATION_CAN_IMPLEMENT)))
 					throw new CompileTimeException(null, "Annotations can only declare Annotation or an annotation-implementable interface as implemented interface");
 				else
 					markedAnnotation = true;
+			}
 			
 			flags = new AccessFlags(flags.visibility(), true, false);
 			superType = TypeResolver.resolveFq(OBJECT);
