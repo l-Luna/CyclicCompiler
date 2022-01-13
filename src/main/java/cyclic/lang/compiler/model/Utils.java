@@ -238,4 +238,11 @@ public final class Utils{
 		}
 		throw new IllegalStateException("Couldn't find " + (isStatic ? "static" : "non-static") + " method \"" + name + "\" in type " + from.fullyQualifiedName() + "!");
 	}
+	
+	public static List<CyclicLangParser.AnnotationContext> getAnnotations(CyclicLangParser.TypeContext name){
+		var ret = new ArrayList<>(name.annotation());
+		if(name.type() != null)
+			ret.addAll(getAnnotations(name.type()));
+		return ret;
+	}
 }

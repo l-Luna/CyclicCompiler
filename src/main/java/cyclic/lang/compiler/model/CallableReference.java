@@ -4,7 +4,9 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +56,14 @@ public interface CallableReference extends AnnotatableElement{
 	
 	default String elementType(){
 		return ElementType.CONSTRUCTOR.name();
+	}
+	
+	/**
+	 * Returns a list of the annotation references to the parameters of this method.
+	 * The returned list should have a length equal to the number of parameters of this method.
+	 */
+	default List<Set<AnnotationTag>> parameterAnnotations(){
+		return new ArrayList<>(parameters().size());
 	}
 	
 	/**

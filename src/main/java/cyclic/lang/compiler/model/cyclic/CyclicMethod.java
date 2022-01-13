@@ -26,6 +26,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	
 	CyclicLangParser.TypeContext retType;
 	List<CyclicLangParser.TypeContext> paramTypeNames = new ArrayList<>();
+	List<List<CyclicLangParser.AnnotationContext>> paramsAnnotationNames = new ArrayList<>();
 	CyclicLangParser.BlockContext blockStatement;
 	CyclicLangParser.ValueContext arrowVal;
 	CyclicLangParser.StatementContext arrowStatement;
@@ -37,6 +38,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	private Set<AnnotationTag> annotations = new HashSet<>();
 	private List<CyclicLangParser.AnnotationContext> unresolvedTypeAnnotations;
 	private Set<AnnotationTag> typeAnnotations = new HashSet<>();
+	private List<Set<AnnotationTag>> paramTypeAnnotations = new ArrayList<>();
 	
 	public Object constantAnnotationComponentValue = null;
 	public Statement body;
@@ -76,6 +78,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type());
 			paramNames.add(p.idPart().getText());
+			paramsAnnotationNames.add(Utils.getAnnotations(p.type()));
 		}
 		
 		Utils.checkDuplicates(parameterNames(), "parameter name in method " + name);
@@ -95,6 +98,8 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			annotations.add(AnnotationTag.fromAst(annotation, this, in));
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedTypeAnnotations)
 			typeAnnotations.add(AnnotationTag.fromAst(annotation, this, in));
+		for(List<CyclicLangParser.AnnotationContext> paramAnnotations : paramsAnnotationNames)
+			paramTypeAnnotations.add(paramAnnotations.stream().map(x -> AnnotationTag.fromAst(x, this, in)).collect(Collectors.toSet()));
 	}
 	
 	public void resolveBody(){
@@ -158,5 +163,9 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	
 	public Set<AnnotationTag> returnTypeAnnotations(){
 		return typeAnnotations;
+	}
+	
+	public List<Set<AnnotationTag>> parameterAnnotations(){
+		return paramTypeAnnotations;
 	}
 }

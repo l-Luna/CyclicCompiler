@@ -13,10 +13,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +44,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		Class<? extends Annotation> annoType = annotation.annotationType();
 		var params = Arrays
 				.stream(annoType.getDeclaredMethods())
+				.filter(x -> x.getReturnType() != void.class)
 				.collect(Collectors.toMap(Method::getName,
 						method -> new AnnotationParam(method.getName(), TypeResolver.resolveFq(method.getReturnType().getCanonicalName()), clean(method.getDefaultValue(), on)), (a, b) -> b));
 		return new AnnotationTag(Utils.forAnyClass(annoType), params, args(annotation, on, params), on);
@@ -58,6 +56,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		var params = ref
 				.methods()
 				.stream()
+				.filter(x -> x.returns() != null && !Objects.equals(x.returns().fullyQualifiedName(), "void"))
 				.filter(k -> k.in().fullyQualifiedName().equals(ref.fullyQualifiedName()))
 				.collect(Collectors.toMap(MethodReference::name, k -> new AnnotationParam(k.name(), k.returns(), k.defaultValueForAnnotation())));
 		Map<String, Object> args = new HashMap<>();
