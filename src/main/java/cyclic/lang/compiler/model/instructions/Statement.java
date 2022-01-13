@@ -405,11 +405,15 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			Label postWrite = new Label();
+			Label postWrite = new Label(), postElse = new Label();
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
 			success.write(mv); // success block
+			mv.visitJumpInsn(Opcodes.GOTO, postElse); // skip else block
 			mv.visitLabel(postWrite);
+			if(fail != null)
+				fail.write(mv);
+			mv.visitLabel(postElse);
 		}
 	}
 	
