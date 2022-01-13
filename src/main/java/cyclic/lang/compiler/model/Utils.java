@@ -81,6 +81,7 @@ public final class Utils{
 		return (bitfield & bit) == bit;
 	}
 	
+	private static Map<Class<?>, TypeReference> classCache = new WeakHashMap<>();
 	/**
 	 * Creates a {@linkplain TypeReference} instance that represents the class passed in, handling
 	 * primitive and array types correctly.
@@ -93,31 +94,33 @@ public final class Utils{
 	 */
 	@Contract("_ -> new")
 	public static @NotNull TypeReference forAnyClass(@NotNull Class<?> type){
-		// generates an invalid switch statement because of generic something-or-other
-		//noinspection IfCanBeSwitch
+		if(classCache.containsKey(type))
+			return classCache.get(type);
+		TypeReference result;
 		if(boolean.class.equals(type))
-			return PlatformDependency.BOOLEAN;
+			result = PlatformDependency.BOOLEAN;
 		else if(byte.class.equals(type))
-			return PlatformDependency.BYTE;
+			result = PlatformDependency.BYTE;
 		else if(short.class.equals(type))
-			return PlatformDependency.SHORT;
+			result = PlatformDependency.SHORT;
 		else if(int.class.equals(type))
-			return PlatformDependency.INT;
+			result = PlatformDependency.INT;
 		else if(char.class.equals(type))
-			return PlatformDependency.CHAR;
+			result = PlatformDependency.CHAR;
 		else if(long.class.equals(type))
-			return PlatformDependency.LONG;
+			result = PlatformDependency.LONG;
 		else if(float.class.equals(type))
-			return PlatformDependency.FLOAT;
+			result = PlatformDependency.FLOAT;
 		else if(double.class.equals(type))
-			return PlatformDependency.DOUBLE;
+			result = PlatformDependency.DOUBLE;
 		else if(void.class.equals(type))
-			return PlatformDependency.VOID;
-		else{
-			if(type.isArray())
-				return new ArrayTypeRef(forAnyClass(type.componentType()));
-			return new JdkTypeRef(type);
-		}
+			result = PlatformDependency.VOID;
+		else if(type.isArray())
+			result = new ArrayTypeRef(forAnyClass(type.componentType()));
+		else
+			result = new JdkTypeRef(type);
+		classCache.put(type, result);
+		return result;
 	}
 	
 	public static String nameFromDescriptor(@NotNull String desc){
