@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
@@ -17,7 +18,7 @@ import java.util.List;
  * so that callable member bodies and default field values can also be filled in.
  *
  * @see CyclicTypeBuilder
- * @see TypeResolverOld
+ * @see TypeResolver
  */
 public interface TypeReference extends AnnotatableElement{
 	

@@ -33,3 +33,9 @@ tasks.withType<JavaCompile>{
     targetCompatibility = JavaVersion.VERSION_17.toString()
     options.compilerArgs.add("--enable-preview")
 }
+
+tasks.withType<Javadoc>{
+    val jdOptions = options as CoreJavadocOptions
+    jdOptions.addStringOption("source", JavaVersion.VERSION_17.toString())
+    jdOptions.addBooleanOption("-enable-preview", true)
+}
