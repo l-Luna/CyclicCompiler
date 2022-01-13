@@ -321,6 +321,9 @@ public abstract class Statement{
 				target.writeInvokeSpecial(mv);
 			else
 				target.writeInvoke(mv);
+			// need to pop if a value is returned
+			if(!target.returns().fullyQualifiedName().equals("void"))
+				mv.visitInsn(Opcodes.POP);
 		}
 	}
 	
@@ -402,13 +405,9 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			Label preWrite = new Label(), postWrite = new Label();
+			Label postWrite = new Label();
 			condition.write(mv);
-			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
-			if(fail != null)
-				fail.write(mv);
-			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
-			mv.visitLabel(preWrite); // branch succeeded
+			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
 			success.write(mv); // success block
 			mv.visitLabel(postWrite);
 		}
@@ -436,13 +435,10 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			Label preWrite = new Label(), postWrite = new Label(), preCheck = new Label();
+			Label postWrite = new Label(), preCheck = new Label();
 			mv.visitLabel(preCheck);
 			condition.write(mv);
-			mv.visitJumpInsn(Opcodes.IFNE, preWrite); // if true, go to success block
-			// no fail block
-			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
-			mv.visitLabel(preWrite); // branch succeeded
+			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
 			success.write(mv); // success block
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
@@ -463,14 +459,11 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			Label preWrite = new Label(), postWrite = new Label(), preCheck = new Label();
+			Label postWrite = new Label(), preCheck = new Label();
 			start.write(mv);
 			mv.visitLabel(preCheck);
 			condition.write(mv);
-			mv.visitJumpInsn(Opcodes.IFNE, preWrite); // if true, go to success block
-			// no fail block
-			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip success block
-			mv.visitLabel(preWrite); // branch succeeded
+			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
 			success.write(mv); // success block
 			increment.write(mv);
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
