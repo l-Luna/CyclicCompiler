@@ -9,7 +9,29 @@ import static cyclic.lang.compiler.model.Utils.isBitSet;
  */
 public enum TypeKind{
 	
-	CLASS, INTERFACE, ENUM, ANNOTATION, RECORD, SINGLE, CONSTRUCTED;
+	// note that only classes, interfaces, and annotations are properly implemented
+	
+	/** A type that is a regular class. */
+	CLASS,
+	
+	/** A type that is an interface. Interfaces are stateless and many interfaces can be implemented on one type. */
+    INTERFACE,
+	
+	/** A type that is an enum. Enums have a limited set of possible values, all of which are constants. */
+	ENUM,
+	
+	/** A type that is an annotation. Types, members, and variables can be annotated with a reference to annotations. */
+	ANNOTATION,
+	
+	/** A type that is a record class. Records are transparent carriers of data. */
+	RECORD,
+	
+	/** A type that is a singleton type. Only one value of a singleton type can exist.
+	 * Unlike an enum, singles can inherit from other regular classes. */
+	SINGLE,
+	
+	/** A type that does not correspond to any declared type. This includes primitives and the {@code void} and {@code null} types. */
+	CONSTRUCTED;
 	
 	// TODO: check for singles (via annotation?)
 	/**

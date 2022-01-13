@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.model;
 
 /**
- * Represents an enum constant.
+ * Represents a constant value of an enum type.
  */
 public record EnumConstant(TypeReference enumType, String name){
 	public EnumConstant(FieldReference reference){

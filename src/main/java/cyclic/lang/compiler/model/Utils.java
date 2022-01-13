@@ -15,8 +15,16 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+/**
+ * Utility methods used within the compiler for parsing ASTs, text, and bitfields.
+ *
+ * <p>Methods and types within this class are considered internal.
+ */
 public final class Utils{
 	
+	/**
+	 * Represents a parsed fully qualified name, with a package name and short name part.
+	 */
 	public record PackageAndName(String pkg, String name){
 		public static PackageAndName fromInternal(String internalName){
 			String[] parts = internalName.split("/");

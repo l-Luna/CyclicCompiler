@@ -1,5 +1,8 @@
 package cyclic.lang.compiler;
 
+/**
+ * Contains type and method names in constant fields.
+ */
 public final class Constants{
 	
 	public static final String OBJECT = "java.lang.Object";
