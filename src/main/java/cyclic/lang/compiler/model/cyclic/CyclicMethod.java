@@ -42,7 +42,7 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	
 	public Object constantAnnotationComponentValue = null;
 	public Statement body;
-	Scope methodScope = new Scope();
+	public Scope methodScope = new Scope();
 	
 	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in, boolean abstractByDefault){
 		name = ctx.idPart().getText();
@@ -87,6 +87,17 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");
 	}
 	
+	public CyclicMethod(CyclicType in, String name, AccessFlags flags, TypeReference returns, List<TypeReference> parameters){
+		this.name = name;
+		this.in = in;
+		this.flags = flags;
+		this.returns = returns;
+		this.parameters = parameters;
+		paramNames = new ArrayList<>(parameters.size());
+		for(int i = 0; i < parameters.size(); i++)
+			paramNames.add("var" + i);
+	}
+	
 	public void resolve(){
 		List<String> imports = in.imports;
 		returns = TypeResolver.resolve(retType, imports, in.packageName());
@@ -108,9 +119,10 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 		for(int i = 0; i < parameters.size(); i++)
 			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
 		
-		body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
-				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
-				new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns);
+		if(body == null)
+			body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
+					(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
+					new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns);
 		
 		if(!flags().isAbstract() && !returns().isAssignableTo(PlatformDependency.VOID))
 			if(!Flow.guaranteedToExit(body))

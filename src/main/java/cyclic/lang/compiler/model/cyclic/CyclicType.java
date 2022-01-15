@@ -3,8 +3,10 @@ package cyclic.lang.compiler.model.cyclic;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.gen.RecordMethods;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
+import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.*;
@@ -38,6 +40,9 @@ public class CyclicType implements TypeReference{
 	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
 	private Set<AnnotationTag> annotations = new HashSet<>();
 	
+	private List<CyclicLangParser.ParameterContext> unresolvedRecordComponents;
+	private List<CyclicRecordComponent> recordComponents = new ArrayList<>();
+	
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
 	public List<String> imports;
@@ -47,6 +52,7 @@ public class CyclicType implements TypeReference{
 		this.packageName = packageName;
 		this.imports = imports;
 		this.unresolvedAnnotations = ast.annotation();
+		this.unresolvedRecordComponents = ast.recordComponents() != null ? ast.recordComponents().parameter() : new ArrayList<>();
 		
 		String typeText = ast.objectType().getText().toLowerCase(Locale.ROOT).replaceAll(" +", "");
 		kind = switch(typeText){
@@ -99,7 +105,7 @@ public class CyclicType implements TypeReference{
 		fieldsAndInherited.addAll(fields);
 		
 		// implicit constructor if none is present - ensures that init blocks and static field inits are written
-		if(constructors.size() == 0 && kind() != TypeKind.INTERFACE && kind() != TypeKind.ANNOTATION)
+		if(constructors.size() == 0 && kind() != TypeKind.INTERFACE && kind() != TypeKind.ANNOTATION && kind() != TypeKind.RECORD)
 			constructors.add(new CyclicConstructor(false, this));
 		
 		if(initBlocks.stream().noneMatch(k -> k.isS))
@@ -132,6 +138,10 @@ public class CyclicType implements TypeReference{
 	
 	public List<? extends CallableReference> constructors(){
 		return constructors;
+	}
+	
+	public List<? extends RecordComponentReference> recordComponents(){
+		return recordComponents;
 	}
 	
 	public TypeReference outerClass(){
@@ -199,7 +209,44 @@ public class CyclicType implements TypeReference{
 	}
 	
 	private void generateMembersForKind(){
-		// e.g. record members, single INSTANCE field, enum everything
+		if(kind() == TypeKind.RECORD){
+			for(CyclicLangParser.ParameterContext component : unresolvedRecordComponents){
+				TypeReference type = TypeResolver.resolve(component.type(), imports, packageName());
+				String name = component.idPart().getText();
+				
+				CyclicField field = new CyclicField(this, name, new AccessFlags(Visibility.PRIVATE, false, true), type);
+				members.add(field);
+				fields.add(field);
+				fieldsAndInherited.add(field);
+				
+				CyclicMethod accessor = new CyclicMethod(this, name, new AccessFlags(Visibility.PUBLIC, false, true), type, List.of());
+				accessor.body = new Statement.ReturnStatement(new Value.FieldValue(field), accessor.methodScope, type);
+				members.add(accessor);
+				methods.add(accessor);
+				methodsAndInherited.add(accessor);
+				
+				recordComponents.add(new CyclicRecordComponent(this, name, type, field, accessor));
+			}
+			
+			addMember(RecordMethods.genEquals(this));
+			addMember(RecordMethods.genToString(this));
+			addMember(RecordMethods.genHashCode(this));
+			addMember(RecordMethods.genCtor(this));
+		}
+	}
+	
+	private void addMember(CyclicMember m){
+		members.add(m);
+		if(m instanceof CyclicMethod method){
+			methods.add(method);
+			methodsAndInherited.add(method);
+		}
+		if(m instanceof CyclicField field){
+			fields.add(field);
+			fieldsAndInherited.add(field);
+		}
+		if(m instanceof CyclicConstructor ctor)
+			constructors.add(ctor);
 	}
 	
 	private void validate(){
@@ -227,6 +274,9 @@ public class CyclicType implements TypeReference{
 			if(fields.stream().anyMatch(x -> !x.isStatic()))
 				throw new CompileTimeException(null, "Interfaces should have no instance fields, but found " + fields.stream().filter(x -> !x.isStatic()).count());
 		}
+		
+		if(kind() != TypeKind.RECORD && unresolvedRecordComponents.size() > 0)
+			throw new CompileTimeException(null, "Non-records should have no record components");
 	}
 	
 	public void resolveInheritance(){

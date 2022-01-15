@@ -31,6 +31,16 @@ public final class Constants{
 	public static final String MAKE_CONCAT_DESC
 			= "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;";
 	
+	// Generated record methods constants
+	public static final String OBJECT_METHODS_INT = "java/lang/runtime/ObjectMethods";
+	public static final String OBJECT_METHODS_BOOTSTRAP = "bootstrap";
+	public static final String OBJECT_METHODS_DESC
+			= "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/TypeDescriptor;Ljava/lang/Class;Ljava/lang/String;[Ljava/lang/invoke/MethodHandle;)Ljava/lang/Object;";
+	
+	public static final String EQUALS_DESC = "(Ljava/lang/Object;)Z";
+	public static final String HASHCODE_DESC = "()I";
+	public static final String TO_STRING_DESC = "()Ljava/lang/String;";
+	
 	// Throw statement
 	public static final String THROWABLE = "java.lang.Throwable";
 	

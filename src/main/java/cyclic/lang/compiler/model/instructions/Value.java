@@ -392,7 +392,8 @@ public abstract class Value{
 		}
 		
 		public void simplify(){
-			from.simplify();
+			if(from != null)
+				from.simplify();
 		}
 		
 		public TypeReference type(){
@@ -401,18 +402,27 @@ public abstract class Value{
 	}
 	
 	public static class LocalVarValue extends Value{
-		Variable local;
+		String localName;
+		int localIdx;
+		TypeReference type;
 		
 		public LocalVarValue(Variable local){
-			this.local = local;
+			localName = local.name;
+			localIdx = local.getVarIndex();
+			type = local.type;
+		}
+		
+		public LocalVarValue(TypeReference type, int localIdx){
+			this.localIdx = localIdx;
+			this.type = type;
 		}
 		
 		public void write(MethodVisitor mv){
-			mv.visitVarInsn(type().localLoadOpcode(), local.getVarIndex());
+			mv.visitVarInsn(type().localLoadOpcode(), localIdx);
 		}
 		
 		public TypeReference type(){
-			return local.type;
+			return type;
 		}
 	}
 	

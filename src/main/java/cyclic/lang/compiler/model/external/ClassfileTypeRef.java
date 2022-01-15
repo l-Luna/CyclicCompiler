@@ -101,8 +101,4 @@ public class ClassfileTypeRef implements TypeReference{
 		methods.forEach(ClassfileMember::resolveRefs);
 		constructors.forEach(ClassfileMember::resolveRefs);
 	}
-	
-	public void resolveInheritance(){
-		TypeReference.super.resolveInheritance();
-	}
 }

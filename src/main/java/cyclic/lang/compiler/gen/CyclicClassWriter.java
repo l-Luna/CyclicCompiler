@@ -31,6 +31,9 @@ public final class CyclicClassWriter{
 		smv.visitMaxs(0, 0);
 		smv.visitEnd();
 		
+		for(var component : type.recordComponents())
+			writer.visitRecordComponent(component.name(), component.type().descriptor(), null);
+		
 		for(var field : type.fields()){
 			// default values are always handled through implicit init blocks
 			FieldVisitor fv = writer.visitField(getFieldAccessFlags(field), field.name(), field.type().descriptor(), null, null);

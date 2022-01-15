@@ -11,11 +11,13 @@ import java.util.List;
 /**
  * Represents a reference to a type. Types have names and members, and may extend one class and implement many.
  *
- * A newly created type reference (e.g. from {@linkplain CyclicTypeBuilder}) will not have references to other types,
+ * <p>A newly created type reference (e.g. from {@linkplain CyclicTypeBuilder}) will not have references to other types,
  * and will only properly return information about its name. Calling {@linkplain TypeReference#resolveRefs()} will fill in
- * information about references to other types that can be resolved, and perform basic validation. To write a type to a file,
- * you will also need to call {@linkplain TypeReference#resolveBodies()} after all referenced types and resolved references,
- * so that callable member bodies and default field values can also be filled in.
+ * information about references to other types that can be resolved, and perform basic validation.
+ * <p>Inherited methods and fields may also not be visible until {@linkplain TypeReference#resolveInheritance()} has been called
+ * after all supertypes have had their references resolved. This also performs some inheritance-related validation.
+ * <p>To write a type to a file, you will also need to call {@linkplain TypeReference#resolveBodies()} after all referenced
+ * types and resolved references, so that callable member bodies and default field values can also be filled in.
  *
  * @see CyclicTypeBuilder
  * @see TypeResolver
@@ -106,6 +108,16 @@ public interface TypeReference extends AnnotatableElement{
 	List<? extends CallableReference> constructors();
 	
 	/**
+	 * If this is a reference to a record type, returns a list of references to the components of this record.
+	 * <p>Otherwise, returns an empty list.
+	 *
+	 * @return The components of this record type.
+	 */
+	default List<? extends RecordComponentReference> recordComponents(){
+		return List.of();
+	}
+	
+	/**
 	 * Resolves references in this type reference to other type references, filling in information like
 	 * its super class. Also performs basic validation, such as checking duplicate method descriptors.
 	 */
@@ -113,7 +125,7 @@ public interface TypeReference extends AnnotatableElement{
 	
 	/**
 	 * Resolves members inherited from supertypes. Should be called after {@linkplain TypeReference#resolveRefs()} has
-	 * been called on all types to be compiled.
+	 * been called on all types to be compiled. Also performs validation related to inheritance.
 	 */
 	default void resolveInheritance(){}
 	

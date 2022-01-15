@@ -167,7 +167,7 @@ public abstract class Statement{
 		// if the LHS is a field value, assign to the field
 		// if the LHS is an array index value, assign to the array
 		return switch(left){
-			case Value.LocalVarValue local -> new VarStatement(in, local.local.name, null, right, false, false);
+			case Value.LocalVarValue local -> new VarStatement(in, local.localName, null, right, false, false);
 			case Value.FieldValue field -> new AssignFieldStatement(in, field.ref, field.from, right);
 			case Value.ArrayIndexValue idx -> new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType);
 			case null, default -> throw new CompileTimeException("Can't assign value to " + ctx.getText());

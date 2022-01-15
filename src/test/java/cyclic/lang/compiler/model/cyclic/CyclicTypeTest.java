@@ -18,7 +18,7 @@ class CyclicTypeTest{
 				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("@interface T;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("annotation T;")),
-				//() -> assertDoesNotThrow(() -> Compiler.compileString("record T(int component);")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("record T(int component);")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("single T;")),
 				
 				() -> assertDoesNotThrow(() -> Compiler.compileString("class permits;")),
@@ -30,7 +30,9 @@ class CyclicTypeTest{
 				() -> assertDoesNotThrow(() -> Compiler.compileString("class T extends Object;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("class T implements Cloneable, java.io.Serializable;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("interface T extends Cloneable, java.io.Serializable;")),
-				() -> assertDoesNotThrow(() -> Compiler.compileString("sealed class T permits F { final class F extends T; }"))
+				() -> assertDoesNotThrow(() -> Compiler.compileString("sealed class T permits F { final class F extends T; }")),
+				
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T(Object component);"))
 		);
 	}
 	

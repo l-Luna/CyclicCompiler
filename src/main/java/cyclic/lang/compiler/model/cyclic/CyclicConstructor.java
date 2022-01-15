@@ -24,8 +24,8 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	CyclicLangParser.StatementContext arrowStatement;
 	
 	List<TypeReference> parameters;
-	public Statement body;
-	Scope methodScope = new Scope();
+	public Statement body = null;
+	public Scope scope = new Scope();
 	
 	// for explicit constructors
 	public CyclicConstructor(CyclicLangParser.ConstructorContext ctx, CyclicType in){
@@ -64,6 +64,15 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		parameters = new ArrayList<>();
 	}
 	
+	// for record ctor
+	public CyclicConstructor(CyclicType in, List<TypeReference> parameters){
+		this.in = in;
+		this.parameters = parameters;
+		flags = new AccessFlags(Visibility.PUBLIC, false, false);
+		for(int i = 0; i < parameters.size(); i++)
+			paramNames.add("var" + (i + 1));
+	}
+	
 	public void resolve(){
 		List<String> imports = in.imports;
 		parameters = paramTypeNames.stream()
@@ -93,21 +102,25 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	
 	public void resolveBody(){
 		if(!isStatic())
-			new Variable("this", in(), methodScope, null);
+			new Variable("this", in(), scope, null);
 		for(int i = 0; i < parameters.size(); i++)
-			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
+			new Variable(paramNames.get(i), parameters.get(i), scope, null);
 		
-		body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
-				(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
-						null; // a semicolon just returns - no implicit return in case of init blocks
+		if(body == null)
+			body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, scope, in, this)).collect(Collectors.toList()), scope) :
+				   (arrowStatement != null) ? Statement.fromAst(arrowStatement, scope, in, this) :
+				    null; // a semicolon just returns - no implicit return in case of init blocks
 		
 		if(hasExplicitCtorCall()){
 			// check that the body is either of those statements, or starts with either, and contains no other references to either
 			// TODO: relax restrictions on pre-super-constructor instructions?
 			if(!(body instanceof Statement.CtorCallStatement) && !(body instanceof Statement.BlockStatement block && block.contains.get(0) instanceof Statement.CtorCallStatement))
 				throw new CompileTimeException(null, "Must have an explicit constructor call first");
-		}else if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0))
+		}else if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
+			System.out.println(in.superClass().constructors());
+			in.superClass().constructors().forEach(x-> System.out.println(x.parameters().size()));
 			throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
+		}
 	}
 	
 	public boolean hasExplicitCtorCall(){

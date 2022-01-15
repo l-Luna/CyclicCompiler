@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class StringConcatValue extends Value{
+public final class StringConcatValue extends Value{
 	
 	private static final Handle MAKE_CONCAT_HANDLE =
 			new Handle(
