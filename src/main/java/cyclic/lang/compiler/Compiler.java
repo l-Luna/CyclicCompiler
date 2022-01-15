@@ -14,6 +14,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -224,6 +225,7 @@ public final class Compiler{
 	public static Map<String, byte[]> compileString(@NotNull String text){
 		project = new CyclicProject();
 		project.include_cyclic_lib_refs = false;
+		toCompile.clear();
 		
 		var types = CyclicTypeBuilder.fromFile(text, null);
 		for(var type : types)
@@ -260,16 +262,23 @@ public final class Compiler{
 	
 	/**
 	 * Compiles a string containing a Cyclic class into a class, and loads it using the given Lookup into the Lookup's package.
-	 * The package declaration in the class is ignored.
 	 * Follows the behaviour of {@linkplain Compiler#compileSingleClass(String)}.
+	 * <p>The class must have the same declared package as the class associated with the lookup.
+	 * <p>The returned class is a hidden class, which do not have names and are more eagerly garbage collected that regular classes.
 	 *
 	 * @param text A string containing a Cyclic class.
 	 * @param defineWith A Lookup to define the class with.
 	 * @return A class instance compiled from the string.
 	 * @throws IllegalAccessException if the lookup does not have package access.
+	 * @see MethodHandles.Lookup#defineHiddenClass(byte[], boolean, MethodHandles.Lookup.ClassOption...)
 	 */
 	@SuppressWarnings("unused")
 	public static Class<?> compileClass(@NotNull String text, @NotNull MethodHandles.Lookup defineWith) throws IllegalAccessException{
-		return defineWith.defineClass(compileSingleClass(text));
+		return defineWith.defineHiddenClass(compileSingleClass(text), true).lookupClass();
+	}
+	
+	public static Method compileSingleMethod(@NotNull String text, @NotNull MethodHandles.Lookup defineWith) throws IllegalAccessException{
+		var holder = compileClass(text, defineWith);
+		return holder.getDeclaredMethods()[0];
 	}
 }

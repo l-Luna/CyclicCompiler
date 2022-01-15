@@ -245,6 +245,20 @@ public abstract class Value{
 				mv.visitLdcInsn(value);
 		}
 		
+		public Value fit(TypeReference target){
+			var s = super.fit(target);
+			if(s != null)
+				return s;
+			// TODO: error if the value is out of range
+			if(!isBool && target instanceof PrimitiveTypeRef pref){
+				if(pref.type == PrimitiveTypeRef.Primitive.SHORT)
+					return new SubstituteTypeValue(PlatformDependency.SHORT, this);
+				if(pref.type == PrimitiveTypeRef.Primitive.BYTE)
+					return new SubstituteTypeValue(PlatformDependency.BYTE, this);
+			}
+			return null;
+		}
+		
 		public TypeReference type(){
 			return isBool ? new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN) : new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.INT);
 		}
