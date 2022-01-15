@@ -27,7 +27,8 @@ public final class CyclicMethodWriter{
 			mv.visitCode();
 			method.body.simplify();
 			method.body.write(mv);
-			mv.visitInsn(Opcodes.RETURN);
+			if(method.returns().fullyQualifiedName().equals("void"))
+				mv.visitInsn(Opcodes.RETURN);
 		}
 		
 		if(method.constantAnnotationComponentValue != null){
@@ -62,9 +63,9 @@ public final class CyclicMethodWriter{
 	}
 	
 	public static void writeCtor(MethodVisitor mv, CyclicConstructor ctor){
-		// TODO: allow hiding metadata
-		for(String paramName : ctor.parameterNames())
-			mv.visitParameter(paramName, 0);
+		if(Compiler.includeDebugInfo && (!ctor.isCanonRecordCtor || ctor.isGeneratedRecordCtor))
+			for(String paramName : ctor.parameterNames())
+				mv.visitParameter(paramName, 0);
 		
 		mv.visitCode();
 		if(ctor.body != null){

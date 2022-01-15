@@ -355,8 +355,8 @@ public abstract class Statement{
 	}
 	
 	public static class CtorCallStatement extends Statement{
+		public CallableReference target;
 		List<Value> args;
-		CallableReference target;
 		
 		public CtorCallStatement(Scope in, CallableReference target, List<Value> args){
 			super(in);

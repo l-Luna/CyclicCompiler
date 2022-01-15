@@ -194,7 +194,7 @@ public class CyclicType implements TypeReference{
 		}else if(kind == TypeKind.SINGLE)
 			if(flags.isAbstract())
 				throw new CompileTimeException(null, "Single types must not be abstract");
-		
+			
 		members.forEach(CyclicMember::resolve);
 		
 		generateMembersForKind();
@@ -259,7 +259,8 @@ public class CyclicType implements TypeReference{
 			if(i.kind() != TypeKind.INTERFACE)
 				throw new CompileTimeException(null, "Cannot implement non-interface type " + i.fullyQualifiedName());
 		
-		Utils.checkDuplicates(constructors.stream().map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
+		// don't include generated record ctors, since those are prepended to the explicit method if present
+		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
 		Utils.checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
 		Utils.checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
 		Utils.checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");

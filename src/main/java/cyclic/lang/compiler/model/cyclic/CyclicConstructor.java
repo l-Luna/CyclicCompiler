@@ -27,6 +27,10 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	public Statement body = null;
 	public Scope scope = new Scope();
 	
+	public boolean isGeneratedRecordCtor = false;
+	public boolean isCanonRecordCtor = false;
+	private boolean isInitBlock = false;
+	
 	// for explicit constructors
 	public CyclicConstructor(CyclicLangParser.ConstructorContext ctx, CyclicType in){
 		this.in = in;
@@ -53,6 +57,7 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		blockStatement = ctx.block();
 		isS = ctx.STATIC() != null;
 		parameters = new ArrayList<>();
+		isInitBlock = true;
 	}
 	
 	// for implicit ctors, including static ones for static field setup
@@ -64,13 +69,13 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 		parameters = new ArrayList<>();
 	}
 	
-	// for record ctor
-	public CyclicConstructor(CyclicType in, List<TypeReference> parameters){
+	// for record canonical ctor
+	public CyclicConstructor(CyclicType in, List<TypeReference> parameters, List<String> paramNames){
 		this.in = in;
 		this.parameters = parameters;
+		this.paramNames = paramNames;
 		flags = new AccessFlags(Visibility.PUBLIC, false, false);
-		for(int i = 0; i < parameters.size(); i++)
-			paramNames.add("var" + (i + 1));
+		isGeneratedRecordCtor = true;
 	}
 	
 	public void resolve(){
@@ -108,15 +113,45 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 				    null; // a semicolon just returns - no implicit return in case of init blocks
 		}
 		
+		if(in().kind() == TypeKind.RECORD){
+			String canon = in.recordComponents().stream()
+					.map(RecordComponentReference::type)
+					.map(TypeReference::descriptor)
+					.collect(Collectors.joining("", "(", ")")) + "V";
+			if(descriptor().equals(canon))
+				isCanonRecordCtor = true;
+		}
+		
 		if(hasExplicitCtorCall()){
+			if(isStatic())
+				throw new CompileTimeException(null, "Constructor call not allowed in static block");
+			
 			// check that the body is either of those statements, or starts with either, and contains no other references to either
 			// TODO: relax restrictions on pre-super-constructor instructions?
-			if(!(body instanceof Statement.CtorCallStatement) && !(body instanceof Statement.BlockStatement block && block.contains.get(0) instanceof Statement.CtorCallStatement))
-				throw new CompileTimeException(null, "Must have an explicit constructor call first");
-		}else if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-			System.out.println(in.superClass().constructors());
-			in.superClass().constructors().forEach(x-> System.out.println(x.parameters().size()));
-			throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
+			Statement.CtorCallStatement ctorCall;
+			if(!(body instanceof Statement.CtorCallStatement cc)){
+				if(!(body instanceof Statement.BlockStatement block && block.contains.get(0) instanceof Statement.CtorCallStatement cc))
+					throw new CompileTimeException(null, "Must have an explicit constructor call first");
+				else
+					ctorCall = cc;
+			}else
+				ctorCall = cc;
+			if(in.kind() == TypeKind.RECORD){
+				if(isCanonRecordCtor)
+					throw new CompileTimeException(null, "Canonical record constructors must not have an explicit constructor call");
+				else if(!ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName())){
+					// no super()s in records
+					throw new CompileTimeException(null, "Record constructors cannot call a super-constructor");
+				}
+			}
+		}else{
+			if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
+				System.out.println(in.superClass().constructors());
+				in.superClass().constructors().forEach(x -> System.out.println(x.parameters().size()));
+				throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
+			}
+			if(in.kind() == TypeKind.RECORD && !(isGeneratedRecordCtor || isCanonRecordCtor || isInitBlock))
+				throw new CompileTimeException(null, "Non-canonical constructor call must defer to canonical constructor");
 		}
 	}
 	

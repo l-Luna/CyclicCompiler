@@ -42,6 +42,12 @@ public final class CyclicClassWriter{
 		
 		for(var ctor : type.constructors()){
 			CyclicConstructor cyc = (CyclicConstructor)ctor;
+			if(cyc.isCanonRecordCtor && !cyc.isGeneratedRecordCtor){
+				System.out.println(cyc.descriptor());
+				System.out.println(cyc.isGeneratedRecordCtor);
+				System.out.println("h");
+				continue; // generate with generated one, which is always present
+			}
 			
 			currentMethod = ctor;
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
@@ -57,7 +63,17 @@ public final class CyclicClassWriter{
 					init.body.simplify();
 					init.body.write(mv);
 				}
+			
 			CyclicMethodWriter.writeCtor(mv, cyc);
+			
+			// if this is generated record one, also append the explicit ctor
+			canonCtor:
+			if(cyc.isGeneratedRecordCtor)
+				for(CallableReference constructor : type.constructors())
+					if(constructor instanceof CyclicConstructor cycc && cycc.isCanonRecordCtor && !cycc.isGeneratedRecordCtor){
+						CyclicMethodWriter.writeCtor(mv, cycc);
+						break canonCtor;
+					}
 			
 			mv.visitInsn(Opcodes.RETURN);
 			mv.visitMaxs(0, 0);

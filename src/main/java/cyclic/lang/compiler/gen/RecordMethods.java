@@ -65,7 +65,7 @@ public final class RecordMethods{
 	}
 	
 	public static CyclicConstructor genCtor(CyclicType record){
-		CyclicConstructor ctor = new CyclicConstructor(record, record.recordComponents().stream().map(RecordComponentReference::type).toList());
+		CyclicConstructor ctor = new CyclicConstructor(record, record.recordComponents().stream().map(RecordComponentReference::type).toList(), record.recordComponents().stream().map(RecordComponentReference::name).toList());
 		ctor.addParamVars();
 		Statement.BlockStatement body = new Statement.BlockStatement(ctor.scope);
 		body.contains = mapListWithIndex(record.recordComponents(),
