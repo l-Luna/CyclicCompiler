@@ -2,9 +2,12 @@ package cyclic.lang.compiler.model;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.model.instructions.Variable;
 import cyclic.lang.compiler.model.jdk.JdkTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.Contract;
@@ -252,5 +255,17 @@ public final class Utils{
 		if(name.type() != null)
 			ret.addAll(getAnnotations(name.type()));
 		return ret;
+	}
+	
+	// add 1 for every long or double var before it
+	public static int adjustVarIndex(Scope in, int localVar){
+		return (int)(localVar + in.getIndexList().stream()
+				.filter(x -> x.type() instanceof PrimitiveTypeRef p && (p.type == PrimitiveTypeRef.Primitive.DOUBLE || p.type == PrimitiveTypeRef.Primitive.LONG))
+				.filter(x -> x.getVarIndex() < localVar)
+				.count());
+	}
+	
+	public static int adjustedIndex(Variable v){
+		return adjustVarIndex(v.in(), v.getVarIndex());
 	}
 }

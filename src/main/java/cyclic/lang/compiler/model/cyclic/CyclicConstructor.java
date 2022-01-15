@@ -101,15 +101,12 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	}
 	
 	public void resolveBody(){
-		if(!isStatic())
-			new Variable("this", in(), scope, null);
-		for(int i = 0; i < parameters.size(); i++)
-			new Variable(paramNames.get(i), parameters.get(i), scope, null);
-		
-		if(body == null)
+		if(body == null){
+			addParamVars();
 			body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, scope, in, this)).collect(Collectors.toList()), scope) :
 				   (arrowStatement != null) ? Statement.fromAst(arrowStatement, scope, in, this) :
 				    null; // a semicolon just returns - no implicit return in case of init blocks
+		}
 		
 		if(hasExplicitCtorCall()){
 			// check that the body is either of those statements, or starts with either, and contains no other references to either
@@ -121,6 +118,13 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 			in.superClass().constructors().forEach(x-> System.out.println(x.parameters().size()));
 			throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
 		}
+	}
+	
+	public void addParamVars(){
+		if(!isStatic())
+			new Variable("this", in(), scope, null);
+		for(int i = 0; i < parameters.size(); i++)
+			new Variable(paramNames.get(i), parameters.get(i), scope, null);
 	}
 	
 	public boolean hasExplicitCtorCall(){

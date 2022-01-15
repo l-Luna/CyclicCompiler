@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 import static cyclic.lang.compiler.Constants.OBJECT;
 
-public class RecordMethods{
+public final class RecordMethods{
 	
 	private static final Handle OBJECT_METHODS_BSM =
 			new Handle(
@@ -66,9 +66,10 @@ public class RecordMethods{
 	
 	public static CyclicConstructor genCtor(CyclicType record){
 		CyclicConstructor ctor = new CyclicConstructor(record, record.recordComponents().stream().map(RecordComponentReference::type).toList());
+		ctor.addParamVars();
 		Statement.BlockStatement body = new Statement.BlockStatement(ctor.scope);
 		body.contains = mapListWithIndex(record.recordComponents(),
-				(x, idx) -> new Statement.AssignFieldStatement(ctor.scope, x.field(), null, new Value.LocalVarValue(x.type(), idx + 1)));
+				(x, idx) -> new Statement.AssignFieldStatement(ctor.scope, x.field(), null, new Value.LocalVarValue(x.type(), Utils.adjustVarIndex(ctor.scope, idx + 1))));
 		ctor.body = body;
 		return ctor;
 	}

@@ -297,7 +297,7 @@ public abstract class Statement{
 				if(adjusted == null)
 					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
 				adjusted.write(mv);
-				mv.visitVarInsn(v.type.localStoreOpcode(), v.getVarIndex());
+				mv.visitVarInsn(v.type.localStoreOpcode(), v.getAdjIndex());
 			}
 		}
 		

@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.Utils;
 
 public class Variable{
 	
@@ -22,5 +23,17 @@ public class Variable{
 	
 	public int getVarIndex(){
 		return index;
+	}
+	
+	public int getAdjIndex(){
+		return Utils.adjustedIndex(this);
+	}
+	
+	public TypeReference type(){
+		return type;
+	}
+	
+	public Scope in(){
+		return in;
 	}
 }

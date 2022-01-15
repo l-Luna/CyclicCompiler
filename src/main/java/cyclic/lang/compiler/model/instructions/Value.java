@@ -408,7 +408,7 @@ public abstract class Value{
 		
 		public LocalVarValue(Variable local){
 			localName = local.name;
-			localIdx = local.getVarIndex();
+			localIdx = local.getAdjIndex();
 			type = local.type;
 		}
 		
