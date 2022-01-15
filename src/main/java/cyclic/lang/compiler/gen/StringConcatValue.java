@@ -21,6 +21,7 @@ public class StringConcatValue extends Value{
 					Constants.MAKE_CONCAT_DESC,
 					false
 			);
+	public static final int MAX_CONCAT_SLOTS = 200;
 	
 	private Value initialLeft, initialRight;
 	private boolean simplified = false;
@@ -30,6 +31,12 @@ public class StringConcatValue extends Value{
 	public StringConcatValue(Value left, Value right){
 		this.initialLeft = left;
 		this.initialRight = right;
+	}
+	
+	// used in long (>200 elements) expressions
+	private StringConcatValue(List<Value> components){
+		this.components = components;
+		simplified = true;
 	}
 	
 	public TypeReference type(){
@@ -47,10 +54,32 @@ public class StringConcatValue extends Value{
 	}
 	
 	public void simplify(){
-		initialLeft.simplify();
-		initialRight.simplify();
-		components.add(initialLeft);
-		components.add(initialRight);
+		// walk down initialLeft and initialRight and flatten all StringConcatValues
+		components = collect(this);
+		components.forEach(Value::simplify);
+		// if we have more than 200, split off the extras into a new value
+		if(components.size() > MAX_CONCAT_SLOTS){
+			int cuts = (int)(components.size() / (float)MAX_CONCAT_SLOTS);
+			for(int i = 0; i < cuts; i++){
+				// remove the first 200 elements and make them a new one
+				List<Value> subset = components.stream().limit(200).toList();
+				components.removeAll(subset);
+				components.add(0, new StringConcatValue(subset));
+			}
+		}
 		simplified = true;
+	}
+	
+	private List<Value> collect(StringConcatValue v){
+		List<Value> ret = new ArrayList<>();
+		if(v.initialLeft instanceof StringConcatValue l)
+			ret.addAll(collect(l));
+		else
+			ret.add(v.initialLeft);
+		if(v.initialRight instanceof StringConcatValue r)
+			ret.addAll(collect(r));
+		else
+			ret.add(v.initialRight);
+		return ret;
 	}
 }
