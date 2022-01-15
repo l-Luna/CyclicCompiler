@@ -13,20 +13,26 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class StringConcatValue extends Value{
+	
 	private static final Handle MAKE_CONCAT_HANDLE =
 			new Handle(
 					Opcodes.H_INVOKESTATIC,
 					Constants.STRING_CONCAT_FACTORY_INT,
-					Constants.MAKE_CONCAT,
+					Constants.MAKE_CONCAT_WITH_CONSTANTS,
 					Constants.MAKE_CONCAT_DESC,
 					false
 			);
+	
+	private static final String TAG_ARG = "\u0001";
 	public static final int MAX_CONCAT_SLOTS = 200;
 	
 	private Value initialLeft, initialRight;
 	private boolean simplified = false;
 	
+	// actual string concatenation
 	private List<Value> components = new ArrayList<>();
+	// constant strings, like "a" + "b"
+	private String constantString = null;
 	
 	public StringConcatValue(Value left, Value right){
 		this.initialLeft = left;
@@ -47,10 +53,16 @@ public class StringConcatValue extends Value{
 		if(!simplified)
 			throw new IllegalStateException("Tried to write string concatenation expression before simplifying it!");
 		
+		if(constantString != null){
+			mv.visitLdcInsn(constantString);
+			return;
+		}
+		
 		components.forEach(x -> x.write(mv));
-		// TODO: use makeConcatWithConstants?
+		// TODO: actually do constants
 		String args = components.stream().map(Value::type).map(TypeReference::descriptor).collect(Collectors.joining("", "(", ")"));
-		mv.visitInvokeDynamicInsn("makeConcat", args + "Ljava/lang/String;", MAKE_CONCAT_HANDLE);
+		String recipe = TAG_ARG.repeat(components.size());
+		mv.visitInvokeDynamicInsn("makeConcatWithConstants", args + "Ljava/lang/String;", MAKE_CONCAT_HANDLE, recipe);
 	}
 	
 	public void simplify(){
@@ -66,6 +78,12 @@ public class StringConcatValue extends Value{
 				components.removeAll(subset);
 				components.add(0, new StringConcatValue(subset));
 			}
+		}
+		if(components.stream().allMatch(x -> x instanceof StringLiteralValue || x instanceof StringConcatValue scv && scv.constantString != null)){
+			StringBuilder constValue = new StringBuilder();
+			for(var part : components)
+				constValue.append(part instanceof StringLiteralValue slv ? slv.value : ((StringConcatValue)part).constantString);
+			constantString = constValue.toString();
 		}
 		simplified = true;
 	}
