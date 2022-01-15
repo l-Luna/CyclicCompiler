@@ -25,7 +25,13 @@ public final class Constants{
 	public static final String OBJECTS = "java.util.Objects";
 	public static final String OBJECTS_REQUIRE_NONNULL = "requireNonNull";
 	
-	// Throwables
+	// String concatenation constants
+	public static final String STRING_CONCAT_FACTORY_INT = "java/lang/invoke/StringConcatFactory";
+	public static final String MAKE_CONCAT = "makeConcat";
+	public static final String MAKE_CONCAT_DESC
+			= "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
+	
+	// Throw statement
 	public static final String THROWABLE = "java.lang.Throwable";
 	
 	// Compiler checked annotations

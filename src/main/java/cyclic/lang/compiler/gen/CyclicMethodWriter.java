@@ -25,6 +25,7 @@ public final class CyclicMethodWriter{
 		
 		if(!(method.flags().isAbstract() || method.isNative())){
 			mv.visitCode();
+			method.body.simplify();
 			method.body.write(mv);
 			mv.visitInsn(Opcodes.RETURN);
 		}
@@ -66,7 +67,9 @@ public final class CyclicMethodWriter{
 			mv.visitParameter(paramName, 0);
 		
 		mv.visitCode();
-		if(ctor.body != null)
+		if(ctor.body != null){
+			ctor.body.simplify();
 			ctor.body.write(mv);
+		}
 	}
 }

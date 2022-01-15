@@ -38,6 +38,10 @@ public abstract class Statement{
 		}
 	}
 	
+	public void simplify(){
+		// simplify values, fit them to types, evaluate constants, check that expressions are valid
+	}
+	
 	public static Statement fromAst(CyclicLangParser.StatementContext ctx, Scope in, CyclicType type, CallableReference callable){
 		Statement result;
 		CompileTimeException.pushContext(ctx);
@@ -203,6 +207,10 @@ public abstract class Statement{
 			for(Statement s : contains)
 				s.write(mv);
 		}
+		
+		public void simplify(){
+			contains.forEach(Statement::simplify);
+		}
 	}
 	
 	public static class ReturnStatement extends Statement{
@@ -229,6 +237,11 @@ public abstract class Statement{
 			adjusted.write(mv);
 			mv.visitInsn(adjusted.type().returnOpcode());
 		}
+		
+		public void simplify(){
+			if(returnValue != null)
+				returnValue.simplify();
+		}
 	}
 	
 	public static class ThrowStatement extends Statement{
@@ -248,6 +261,10 @@ public abstract class Statement{
 			
 			adjusted.write(mv);
 			mv.visitInsn(Opcodes.ATHROW);
+		}
+		
+		public void simplify(){
+			exceptionValue.simplify();
 		}
 	}
 	
@@ -282,6 +299,10 @@ public abstract class Statement{
 				adjusted.write(mv);
 				mv.visitVarInsn(v.type.localStoreOpcode(), v.getVarIndex());
 			}
+		}
+		
+		public void simplify(){
+			value.simplify();
 		}
 	}
 	
@@ -325,6 +346,12 @@ public abstract class Statement{
 			if(!target.returns().fullyQualifiedName().equals("void"))
 				mv.visitInsn(Opcodes.POP);
 		}
+		
+		public void simplify(){
+			if(on != null)
+				on.simplify();
+			args.forEach(Value::simplify);
+		}
 	}
 	
 	public static class CtorCallStatement extends Statement{
@@ -345,6 +372,10 @@ public abstract class Statement{
 				v.fit(target.parameters().get(i)).write(mv);
 			}
 			target.writeInvoke(mv);
+		}
+		
+		public void simplify(){
+			args.forEach(Value::simplify);
 		}
 	}
 	
@@ -369,6 +400,12 @@ public abstract class Statement{
 			toSet.write(mv);
 			fieldRef.writePut(mv);
 		}
+		
+		public void simplify(){
+			if(on != null)
+				on.simplify();
+			toSet.simplify();
+		}
 	}
 	
 	public static class AssignArrayStatement extends Statement{
@@ -389,6 +426,12 @@ public abstract class Statement{
 			index.write(mv);
 			val.write(mv);
 			mv.visitInsn(arrayType.getComponent().arrayStoreOpcode());
+		}
+		
+		public void simplify(){
+			on.simplify();
+			index.simplify();
+			val.simplify();
 		}
 	}
 	
@@ -414,6 +457,13 @@ public abstract class Statement{
 			if(fail != null)
 				fail.write(mv);
 			mv.visitLabel(postElse);
+		}
+		
+		public void simplify(){
+			success.simplify();
+			if(fail != null)
+				fail.simplify();
+			condition.simplify();
 		}
 	}
 	
@@ -447,6 +497,11 @@ public abstract class Statement{
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
 		}
+		
+		public void simplify(){
+			success.simplify();
+			condition.simplify();
+		}
 	}
 	
 	public static class ForStatement extends Statement{
@@ -473,6 +528,13 @@ public abstract class Statement{
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
 		}
+		
+		public void simplify(){
+			success.simplify();
+			start.simplify();
+			increment.simplify();
+			condition.simplify();
+		}
 	}
 	
 	public static class DoWhileStatement extends Statement{
@@ -492,6 +554,11 @@ public abstract class Statement{
 			success.write(mv);
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
+		}
+		
+		public void simplify(){
+			success.simplify();
+			condition.simplify();
 		}
 	}
 }

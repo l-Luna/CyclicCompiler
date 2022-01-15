@@ -194,6 +194,10 @@ public abstract class Value{
 	
 	public void write(MethodVisitor mv){}
 	
+	public void simplify(){
+		// evaluate constant expressions...
+	}
+	
 	public abstract TypeReference type();
 	
 	public static class NullLiteralValue extends Value{
@@ -387,13 +391,16 @@ public abstract class Value{
 			ref.writeFetch(mv);
 		}
 		
+		public void simplify(){
+			from.simplify();
+		}
+		
 		public TypeReference type(){
 			return ref.type();
 		}
 	}
 	
 	public static class LocalVarValue extends Value{
-		
 		Variable local;
 		
 		public LocalVarValue(Variable local){
@@ -447,6 +454,12 @@ public abstract class Value{
 				target.writeInvoke(mv);
 		}
 		
+		public void simplify(){
+			if(on != null)
+				on.simplify();
+			args.forEach(Value::simplify);
+		}
+		
 		public TypeReference type(){
 			return target.returns();
 		}
@@ -465,6 +478,10 @@ public abstract class Value{
 		public void write(MethodVisitor mv){
 			underlying.write(mv); // is a boxed value
 			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, underlying.type().internalName(), type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
+		}
+		
+		public void simplify(){
+			underlying.simplify();
 		}
 		
 		public TypeReference type(){
@@ -486,6 +503,10 @@ public abstract class Value{
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, targetType.internalName(), "valueOf", "(" + underlying.type().descriptor() + ")" + targetType.descriptor(), false);
 		}
 		
+		public void simplify(){
+			underlying.simplify();
+		}
+		
 		public TypeReference type(){
 			return targetType;
 		}
@@ -502,6 +523,10 @@ public abstract class Value{
 		
 		public void write(MethodVisitor mv){
 			underlying.write(mv);
+		}
+		
+		public void simplify(){
+			underlying.simplify();
 		}
 		
 		public TypeReference type(){
@@ -535,7 +560,6 @@ public abstract class Value{
 		}
 		
 		public void write(MethodVisitor mv){
-			// TODO: constructor overloading (this(...), super(...))
 			mv.visitTypeInsn(Opcodes.NEW, ctor.in().internalName());
 			mv.visitInsn(Opcodes.DUP);
 			for(int i = 0; i < args.size(); i++){
@@ -543,6 +567,10 @@ public abstract class Value{
 				v.fit(ctor.parameters().get(i)).write(mv);
 			}
 			ctor.writeInvoke(mv);
+		}
+		
+		public void simplify(){
+			args.forEach(Value::simplify);
 		}
 		
 		public TypeReference type(){
@@ -581,6 +609,10 @@ public abstract class Value{
 			mv.visitTypeInsn(Opcodes.INSTANCEOF, target.internalName());
 		}
 		
+		public void simplify(){
+			checking.simplify();
+		}
+		
 		public TypeReference type(){
 			return PlatformDependency.BOOLEAN;
 		}
@@ -606,6 +638,10 @@ public abstract class Value{
 			}
 		}
 		
+		public void simplify(){
+			casting.simplify();
+		}
+		
 		public TypeReference type(){
 			return new PrimitiveTypeRef(to);
 		}
@@ -623,6 +659,10 @@ public abstract class Value{
 		public void write(MethodVisitor mv){
 			casting.write(mv);
 			mv.visitTypeInsn(Opcodes.CHECKCAST, target.internalName());
+		}
+		
+		public void simplify(){
+			casting.simplify();
 		}
 		
 		public TypeReference type(){
@@ -652,6 +692,11 @@ public abstract class Value{
 			mv.visitInsn(arrayType.getComponent().arrayLoadOpcode());
 		}
 		
+		public void simplify(){
+			array.simplify();
+			index.simplify();
+		}
+		
 		public TypeReference type(){
 			return arrayType.getComponent();
 		}
@@ -671,6 +716,10 @@ public abstract class Value{
 			mv.visitTypeInsn(Opcodes.ANEWARRAY, componentType.internalName());
 		}
 		
+		public void simplify(){
+			length.simplify();
+		}
+		
 		public TypeReference type(){
 			return new ArrayTypeRef(componentType);
 		}
@@ -688,6 +737,10 @@ public abstract class Value{
 		public void write(MethodVisitor mv){
 			length.write(mv);
 			mv.visitIntInsn(Opcodes.NEWARRAY, componentType.arrayTypeCode());
+		}
+		
+		public void simplify(){
+			length.simplify();
 		}
 		
 		public TypeReference type(){
@@ -715,6 +768,11 @@ public abstract class Value{
 				e.write(mv);
 				mv.visitInsn(arrayType.getComponent().arrayStoreOpcode());
 			}
+		}
+		
+		public void simplify(){
+			array.simplify();
+			entries.forEach(Value::simplify);
 		}
 		
 		public TypeReference type(){

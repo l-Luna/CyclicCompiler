@@ -50,8 +50,10 @@ public final class CyclicClassWriter{
 			}
 			
 			for(var init : type.initBlocks) // init blocks go first so that field values can be setup for use
-				if(!init.isStatic() && init.body != null)
+				if(!init.isStatic() && init.body != null){
+					init.body.simplify();
 					init.body.write(mv);
+				}
 			CyclicMethodWriter.writeCtor(mv, cyc);
 			
 			mv.visitInsn(Opcodes.RETURN);

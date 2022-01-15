@@ -29,6 +29,7 @@ public final class Operations{
 		var DOUBLE = PlatformDependency.DOUBLE;
 		var BOOLEAN = PlatformDependency.BOOLEAN;
 		var OBJECT = TypeResolver.resolveFq(Constants.OBJECT);
+		var STRING = TypeResolver.resolveFq(Constants.STRING);
 		
 		// add, subtract, multiply, divide
 		handlers.add(new TypeSetOpHandler(
@@ -43,6 +44,10 @@ public final class Operations{
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.PLUS), Set.of(DOUBLE),
 				(l, r) -> new BinaryOpValue(DOUBLE, Opcodes.DADD, l, r)));
+		handlers.add(new TypeBasedOpHandler(
+				Set.of(Op.PLUS),
+				(l, r) -> l.isAssignableTo(STRING) || r.isAssignableTo(STRING),
+				StringConcatValue::new));
 		
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.MINUS), Set.of(INT),
@@ -329,12 +334,12 @@ public final class Operations{
 		Value getFor(Op op, Value left, Value right);
 	}
 	
-	public static class NamedTypeOpHandler implements OperationHandler{
+	public static class TypeBasedOpHandler implements OperationHandler{
 		Set<Op> handles;
 		BiPredicate<TypeReference, TypeReference> validFqs;
 		BinaryOperator<Value> producer;
 		
-		public NamedTypeOpHandler(Set<Op> handles, BiPredicate<TypeReference, TypeReference> validFqs, BinaryOperator<Value> producer){
+		public TypeBasedOpHandler(Set<Op> handles, BiPredicate<TypeReference, TypeReference> validFqs, BinaryOperator<Value> producer){
 			this.handles = handles;
 			this.validFqs = validFqs;
 			this.producer = producer;
@@ -429,6 +434,11 @@ public final class Operations{
 			mv.visitInsn(opcode);
 		}
 		
+		public void simplify(){
+			left.simplify();
+			right.simplify();
+		}
+		
 		public TypeReference type(){
 			return type;
 		}
@@ -455,4 +465,5 @@ public final class Operations{
 			mv.visitLabel(postWrite);
 		}
 	}
+	
 }
