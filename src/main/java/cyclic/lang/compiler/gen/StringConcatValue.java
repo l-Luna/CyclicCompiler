@@ -10,6 +10,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class StringConcatValue extends Value{
@@ -24,7 +25,8 @@ public class StringConcatValue extends Value{
 			);
 	
 	private static final String TAG_ARG = "\u0001";
-	public static final int MAX_CONCAT_SLOTS = 200;
+	private static final int MAX_CONCAT_SLOTS = 200;
+	private static final Predicate<Value> isConstString = x -> (x instanceof StringConcatValue scv && scv.constantString != null) || x instanceof StringLiteralValue;
 	
 	private Value initialLeft, initialRight;
 	private boolean simplified = false;
@@ -58,10 +60,17 @@ public class StringConcatValue extends Value{
 			return;
 		}
 		
-		components.forEach(x -> x.write(mv));
-		// TODO: actually do constants
-		String args = components.stream().map(Value::type).map(TypeReference::descriptor).collect(Collectors.joining("", "(", ")"));
-		String recipe = TAG_ARG.repeat(components.size());
+		for(Value component : components)
+			if(!isConstString.test(component))
+				component.write(mv);
+		
+		// TODO: actually do non-string constants
+		String args = components.stream().filter(isConstString.negate()).map(Value::type).map(TypeReference::descriptor).collect(Collectors.joining("", "(", ")"));
+		String recipe = components.stream().map(x ->
+				x instanceof StringLiteralValue slv ? slv.value :
+				x instanceof StringConcatValue scv && scv.constantString != null ? scv.constantString :
+				TAG_ARG)
+				.collect(Collectors.joining());
 		mv.visitInvokeDynamicInsn("makeConcatWithConstants", args + "Ljava/lang/String;", MAKE_CONCAT_HANDLE, recipe);
 	}
 	
@@ -79,7 +88,7 @@ public class StringConcatValue extends Value{
 				components.add(0, new StringConcatValue(subset));
 			}
 		}
-		if(components.stream().allMatch(x -> x instanceof StringLiteralValue || x instanceof StringConcatValue scv && scv.constantString != null)){
+		if(components.stream().allMatch(isConstString)){
 			StringBuilder constValue = new StringBuilder();
 			for(var part : components)
 				constValue.append(part instanceof StringLiteralValue slv ? slv.value : ((StringConcatValue)part).constantString);
