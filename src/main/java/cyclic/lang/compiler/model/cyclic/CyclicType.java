@@ -313,21 +313,23 @@ public class CyclicType implements TypeReference{
 		}
 		
 		// don't inherit overridden methods
-		for(MethodReference method : Stream.concat(superType.methods().stream(), interfaces.stream().flatMap(x -> x.methods().stream())).toList()){
-			if(methods.stream().noneMatch(x -> x.nameAndDescriptor().equals(method.nameAndDescriptor()))){
-				if(method.flags().isAbstract() && !flags.isAbstract())
-					throw new CompileTimeException(null, "Abstract supertype method " + method.nameAndDescriptor() + " must be overridden in concrete subclass");
-				methodsAndInherited.add(method);
-			}else if(method.flags().isFinal() && !(method.flags().visibility() == Visibility.PRIVATE))
-				throw new CompileTimeException(null, "Method " + method.nameAndDescriptor() + " cannot be overridden");
-		}
+		for(MethodReference method : Stream.concat(superType.methods().stream(), interfaces.stream().flatMap(x -> x.methods().stream())).toList())
+			if(method.flags().visibility() != Visibility.PRIVATE){
+				if(methods.stream().noneMatch(x -> x.overrides(method))){
+					if(method.flags().isAbstract() && !flags.isAbstract())
+						throw new CompileTimeException(null, "Abstract supertype method " + method.nameAndDescriptor() + " must be overridden in concrete subclass");
+					methodsAndInherited.add(method);
+				}else if(method.flags().isFinal())
+					throw new CompileTimeException(null, "Method " + method.nameAndDescriptor() + " cannot be overridden");
+			}
 		
-		for(FieldReference field : superType.fields()){
-			if(fields.stream().noneMatch(x -> x.name().equals(field.name())))
-				fieldsAndInherited.add(field);
-			else if(!(field.flags().visibility() == Visibility.PRIVATE))
-				throw new CompileTimeException(null, "Field " + field.name() + " is defined in supertype and cannot be duplicated");
-		}
+		for(FieldReference field : superType.fields())
+			if(field.flags().visibility() != Visibility.PRIVATE){
+				if(fields.stream().noneMatch(x -> x.name().equals(field.name())))
+					fieldsAndInherited.add(field);
+				else
+					throw new CompileTimeException(null, "Field " + field.name() + " is defined in supertype and cannot be duplicated");
+			}
 	}
 	
 	public void resolveBodies(){
