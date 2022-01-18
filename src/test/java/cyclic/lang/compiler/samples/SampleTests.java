@@ -116,6 +116,9 @@ public class SampleTests{
 								counter += 1;
 							}while(false);
 							
+							for(Object i : java.util.List.of(0, 0, 0))
+								counter += (Integer)i;
+							
 							return counter;
 						}
 					}
@@ -229,9 +232,17 @@ public class SampleTests{
 					""", lookup)
 					.invoke(null);
 			
+			Assertions.assertEquals(Integer.class, Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static Object test() -> Integer.class;
+					}
+					""", lookup)
+					.invoke(null));
+			
 			Assertions.assertEquals(int.class, Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
-					class A{
+					class Holder{
 						static Object test() -> int.class;
 					}
 					""", lookup)
@@ -239,11 +250,18 @@ public class SampleTests{
 			
 			Assertions.assertEquals(void.class, Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
-					class A{
+					class Holder{
 						static Object test() -> void.class;
 					}
 					""", lookup)
 					.invoke(null));
+			
+			Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						Object test() -> this;
+					}
+					""", lookup);
 			
 		}catch(IllegalAccessException | InvocationTargetException e){
 			throw new AssertionError(e);

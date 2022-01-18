@@ -86,22 +86,24 @@ public abstract class Statement{
 			result = new WhileStatement(in, success, cond);
 		}else if(ctx.forStatement() != null){
 			var f = ctx.forStatement();
-			Statement setup = f.start != null ? fromAst(f.start, in, type, callable) : new NoopStatement(in);
-			Statement increment = f.end != null ? fromAst(f.end, in, type, callable) : new NoopStatement(in);
-			Value c = Value.fromAst(f.cond, in, type, callable);
+			Scope forScope = new Scope(in);
+			Statement setup = f.start != null ? fromAst(f.start, forScope, type, callable) : new NoopStatement(in);
+			Statement increment = f.end != null ? fromAst(f.end, forScope, type, callable) : new NoopStatement(in);
+			Value c = Value.fromAst(f.cond, forScope, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(f.action, in, type, callable);
+			Statement success = fromAst(f.action, forScope, type, callable);
 			// could just implement it as synthetic block statements
-			result = new ForStatement(in, success, setup, increment, cond);
+			result = new ForStatement(forScope, success, setup, increment, cond);
 		}else if(ctx.doWhile() != null){
+			Scope doScope = new Scope(in);
 			Value c = Value.fromAst(ctx.doWhile().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(ctx.doWhile().statement(), in, type, callable);
-			result = new DoWhileStatement(in, success, cond);
+			Statement success = fromAst(ctx.doWhile().statement(), doScope, type, callable);
+			result = new DoWhileStatement(doScope, success, cond);
 		}else if(ctx.foreachStatement() != null){
 			var fe = ctx.foreachStatement();
 			
