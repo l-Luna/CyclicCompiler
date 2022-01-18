@@ -83,4 +83,12 @@ public class ArrayTypeRef implements TypeReference{
 	public String toString(){
 		return getComponent().toString() + "[]";
 	}
+	
+	public boolean equals(Object o){
+		return o instanceof TypeReference t && t.fullyQualifiedName().equals(fullyQualifiedName());
+	}
+	
+	public int hashCode(){
+		return fullyQualifiedName().hashCode();
+	}
 }

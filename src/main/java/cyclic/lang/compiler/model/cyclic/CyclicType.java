@@ -210,6 +210,9 @@ public class CyclicType implements TypeReference{
 	
 	private void generateMembersForKind(){
 		if(kind() == TypeKind.RECORD){
+			if(fields.stream().anyMatch(x -> !x.isStatic()))
+				throw new CompileTimeException(null, "Record types may not have non-static members");
+			
 			for(CyclicLangParser.ParameterContext component : unresolvedRecordComponents){
 				TypeReference type = TypeResolver.resolve(component.type(), imports, packageName());
 				String name = component.idPart().getText();
@@ -219,11 +222,17 @@ public class CyclicType implements TypeReference{
 				fields.add(field);
 				fieldsAndInherited.add(field);
 				
+				// check if there's already an override-equivalent method
 				CyclicMethod accessor = new CyclicMethod(this, name, new AccessFlags(Visibility.PUBLIC, false, true), type, List.of());
-				accessor.body = new Statement.ReturnStatement(new Value.FieldValue(field), accessor.methodScope, type);
-				members.add(accessor);
-				methods.add(accessor);
-				methodsAndInherited.add(accessor);
+				var explicitAccessor = methods.stream().filter(accessor::overrides).findFirst();
+				if(explicitAccessor.isPresent())
+					accessor = explicitAccessor.get();
+				else{
+					accessor.body = new Statement.ReturnStatement(new Value.FieldValue(field), accessor.methodScope, type);
+					members.add(accessor);
+					methods.add(accessor);
+					methodsAndInherited.add(accessor);
+				}
 				
 				recordComponents.add(new CyclicRecordComponent(this, name, type, field, accessor));
 			}
@@ -349,5 +358,13 @@ public class CyclicType implements TypeReference{
 	
 	public String toString(){
 		return "Cyclic:" + fullyQualifiedName();
+	}
+	
+	public boolean equals(Object o){
+		return o instanceof TypeReference t && t.fullyQualifiedName().equals(fullyQualifiedName());
+	}
+	
+	public int hashCode(){
+		return fullyQualifiedName().hashCode();
 	}
 }

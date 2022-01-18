@@ -44,6 +44,19 @@ public interface MethodReference extends CallableReference{
 	boolean isSynchronized();
 	
 	/**
+	 * Returns whether this method would override the given method if it was in a subclass.
+	 * <p>True if both methods have the same name, same parameter types, and the return type of this method is assignable
+	 * to the return type of the other.
+	 *
+	 * @param other
+	 * 		The method that is being considered overriding.
+	 * @return Whether this method would override the given method.
+	 */
+	default boolean overrides(MethodReference other){
+		return other.name().equals(name()) && returns().isAssignableTo(other.returns()) && other.parameters().equals(parameters());
+	}
+	
+	/**
 	 * If this method is an annotation component, returns the default value of this component if it exists; otherwise returns null.
 	 * <p>{@linkplain Enum}, {@linkplain Class}, and {@linkplain java.lang.annotation.Annotation} values are represented as
 	 * {@linkplain EnumConstant}, {@linkplain TypeReference}, and {@linkplain AnnotationTag} values, mirroring {@linkplain AnnotationTag}.

@@ -101,4 +101,12 @@ public class ClassfileTypeRef implements TypeReference{
 		methods.forEach(ClassfileMember::resolveRefs);
 		constructors.forEach(ClassfileMember::resolveRefs);
 	}
+	
+	public boolean equals(Object o){
+		return o instanceof TypeReference t && t.fullyQualifiedName().equals(fullyQualifiedName());
+	}
+	
+	public int hashCode(){
+		return fullyQualifiedName().hashCode();
+	}
 }

@@ -308,4 +308,13 @@ public class PrimitiveTypeRef implements TypeReference{
 			case VOID, NULL -> throw new IllegalStateException();
 		};
 	}
+	
+	// don't hardcode this here, it's technically valid to have another impl of this
+	public boolean equals(Object o){
+		return o instanceof TypeReference t && t.fullyQualifiedName().equals(fullyQualifiedName());
+	}
+	
+	public int hashCode(){
+		return fullyQualifiedName().hashCode();
+	}
 }

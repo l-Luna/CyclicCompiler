@@ -138,6 +138,14 @@ public class SampleTests{
 					""", lookup)
 					.invoke(null, "k"));
 			
+			Assertions.assertEquals("12345", Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static String test() -> ("1" + "2") + ("3" + "4" + 5);
+					}
+					""", lookup)
+					.invoke(null));
+			
 			Assertions.assertEquals("k".repeat(14 * 21), Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{

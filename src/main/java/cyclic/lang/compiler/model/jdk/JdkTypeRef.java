@@ -84,6 +84,14 @@ public class JdkTypeRef implements TypeReference{
 	}
 	
 	public String toString(){
-		return "System:" + fullyQualifiedName();
+		return "JDK:" + fullyQualifiedName();
+	}
+	
+	public boolean equals(Object o){
+		return o instanceof TypeReference t && t.fullyQualifiedName().equals(fullyQualifiedName());
+	}
+	
+	public int hashCode(){
+		return fullyQualifiedName().hashCode();
 	}
 }

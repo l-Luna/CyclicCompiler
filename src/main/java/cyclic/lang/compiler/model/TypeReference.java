@@ -108,6 +108,21 @@ public interface TypeReference extends AnnotatableElement{
 	List<? extends CallableReference> constructors();
 	
 	/**
+	 * Returns whether this is a reference to the same type as the given other type reference.
+	 * <p>Two references to the same type must have the same {@linkplain TypeReference#fullyQualifiedName()}.
+	 *
+	 * @return Whether this is a reference to the same type as the given type reference.
+	 */
+	boolean equals(Object other);
+	
+	/**
+	 * Returns a hash code for this type reference. This is always equal to {@code fullyQualifiedName().hashCode()}.
+	 *
+	 * @return A hash code for this type reference.
+	 */
+	int hashCode();
+	
+	/**
 	 * If this is a reference to a record type, returns a list of references to the components of this record.
 	 * <p>Otherwise, returns an empty list.
 	 *
