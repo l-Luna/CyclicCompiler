@@ -19,7 +19,7 @@ public class PrimitiveTypeRef implements TypeReference{
 	}
 	
 	public enum Primitive{
-		BYTE, SHORT, INT, BOOLEAN, LONG, FLOAT, DOUBLE, CHAR, VOID, NULL
+		BYTE, SHORT, INT, BOOLEAN, LONG, FLOAT, DOUBLE, CHAR, VOID, NULL;
 	}
 	
 	public String shortName(){
@@ -78,6 +78,21 @@ public class PrimitiveTypeRef implements TypeReference{
 		if(type == NULL) // null is assignable to any non-primitive type
 			return !(target instanceof PrimitiveTypeRef other) || other.type == NULL;
 		return fullyQualifiedName().equals(target.fullyQualifiedName());
+	}
+	
+	public static String getPrimitiveDesc(String name){
+		return switch(name){
+			case "boolean" -> "Z";
+			case "byte" -> "B";
+			case "short" -> "S";
+			case "int" -> "I";
+			case "char" -> "C";
+			case "long" -> "J";
+			case "float" -> "F";
+			case "double" -> "D";
+			case "void" -> "V";
+			default -> throw new IllegalArgumentException();
+		};
 	}
 	
 	public static String getPrimitiveDesc(Primitive type){

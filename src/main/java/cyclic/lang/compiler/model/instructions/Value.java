@@ -4,6 +4,7 @@ import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.gen.Operations;
+import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
@@ -12,9 +13,7 @@ import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.Nullable;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 import java.util.List;
 
@@ -32,6 +31,7 @@ public abstract class Value{
 			case CyclicLangParser.UnaryOpValueContext uop -> Operations.resolveUnary(uop.unaryop().getText(), fromAst(uop.value(), scope, type, method));
 			case CyclicLangParser.ParenValueContext paren -> fromAst(paren.value(), scope, type, method);
 			case CyclicLangParser.ArrayIndexValueContext ind -> new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
+			case CyclicLangParser.PrimitiveClassValueContext prim -> new PrimitiveClassValue(PrimitiveTypeRef.getPrimitiveDesc(prim.primitiveType().getText()));
 			case CyclicLangParser.IntLitContext intLit -> {
 				String text = intLit.INTLIT().getText();
 				if(text.endsWith("f"))
@@ -615,6 +615,32 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			// TODO: generics
+			return TypeResolver.resolveFq(Constants.CLASS);
+		}
+	}
+	
+	public static class PrimitiveClassValue extends Value{
+		private static final Handle PRIMITIVE_CLASS_HANDLE =
+				new Handle(
+						Opcodes.H_INVOKESTATIC,
+						Constants.CONSTANT_BOOTSTRAPS_INT,
+						Constants.PRIMITIVE_CLASS,
+						Constants.PRIMITIVE_CLASS_DESC,
+						false
+				);
+		
+		public String descriptor;
+		
+		public PrimitiveClassValue(String descriptor){
+			this.descriptor = descriptor;
+		}
+		
+		public void write(MethodVisitor mv){
+			mv.visitLdcInsn(new ConstantDynamic(descriptor, "Ljava/lang/Class;", PRIMITIVE_CLASS_HANDLE));
+		}
+		
+		public TypeReference type(){
+			// TODO: generics; consider that int.class is Class<Integer>
 			return TypeResolver.resolveFq(Constants.CLASS);
 		}
 	}

@@ -184,6 +184,18 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRawType(CyclicLangParser.RawTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#primitiveType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrimitiveType(CyclicLangParser.PrimitiveTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#inferType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInferType(CyclicLangParser.InferTypeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#modifiers}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -336,6 +348,13 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitInlineDecleration(CyclicLangParser.InlineDeclerationContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code primitiveClassValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrimitiveClassValue(CyclicLangParser.PrimitiveClassValueContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#initialisation}.
 	 * @param ctx the parse tree

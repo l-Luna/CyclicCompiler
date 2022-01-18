@@ -31,6 +31,12 @@ public final class Constants{
 	public static final String MAKE_CONCAT_DESC
 			= "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/invoke/CallSite;";
 	
+	// Primitive class (e.g. int.class) constants
+	public static final String CONSTANT_BOOTSTRAPS_INT = "java/lang/invoke/ConstantBootstraps";
+	public static final String PRIMITIVE_CLASS = "primitiveClass";
+	public static final String PRIMITIVE_CLASS_DESC
+			= "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Class;";
+	
 	// Generated record methods constants
 	public static final String OBJECT_METHODS_INT = "java/lang/runtime/ObjectMethods";
 	public static final String OBJECT_METHODS_BOOTSTRAP = "bootstrap";

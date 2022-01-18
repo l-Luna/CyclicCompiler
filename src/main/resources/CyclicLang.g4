@@ -84,15 +84,25 @@ genericTypeUses: LESSER genericTypeUse (COMMA genericTypeUse)* GREATER;
 genericTypeUse: (QUESTION (EXTENDS | SUPER))? type;
 
 rawType
-    : INT
-    | DEC
-    | DOUBLE
-    | BYTE
-    | BOOL
-    | VOID
-    | VAR
-    | VAL
+    : primitiveType
+    | inferType
     | id
+    ;
+
+primitiveType
+    : BOOL
+    | BYTE
+    | SHORT
+    | INT
+    | LONG
+    | FLOAT
+    | DOUBLE
+    | VOID
+    ;
+
+inferType
+    : VAR
+    | VAL
     ;
 
 modifiers: modifier*;
@@ -111,6 +121,7 @@ value
     | varDecl                                   #inlineDecleration
     | switchStatement                           #switchValue
     | id DOT CLASS                              #classValue
+    | primitiveType DOT CLASS                   #primitiveClassValue
     | cast                                      #castValue
     | unaryop value                             #unaryOpValue
     | newArray                                  #newArrayValue
@@ -312,11 +323,13 @@ ELIPSES: '...';
 DASHARROW: '->';
 EQARROW: '=>'; // Unused
 
-INT: 'int';
-DEC: 'float';
-DOUBLE: 'double';
-BYTE: 'byte';
 BOOL: 'boolean';
+BYTE: 'byte';
+SHORT: 'short';
+INT: 'int';
+LONG: 'long';
+FLOAT: 'float';
+DOUBLE: 'double';
 VOID: 'void';
 
 VAR: 'var';

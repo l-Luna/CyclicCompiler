@@ -200,6 +200,7 @@ public class SampleTests{
 							byte b = 0;
 							b = 1;
 							short s = 0;
+							s = ((byte)1);
 							s = 1;
 							int i = 0;
 							i = 1;
@@ -221,10 +222,28 @@ public class SampleTests{
 							k = null;
 							String str = "";
 							str = null;
+							Integer in = 5;
+							int ini = in;
 						}
 					}
 					""", lookup)
 					.invoke(null);
+			
+			Assertions.assertEquals(int.class, Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class A{
+						static Object test() -> int.class;
+					}
+					""", lookup)
+					.invoke(null));
+			
+			Assertions.assertEquals(void.class, Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class A{
+						static Object test() -> void.class;
+					}
+					""", lookup)
+					.invoke(null));
 			
 		}catch(IllegalAccessException | InvocationTargetException e){
 			throw new AssertionError(e);
