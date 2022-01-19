@@ -312,8 +312,8 @@ public class CyclicType implements TypeReference{
 				interfaces.add(TypeResolver.resolveFq(ANNOTATION));
 		}
 		
-		// don't inherit overridden methods
-		for(MethodReference method : Stream.concat(superType.methods().stream(), interfaces.stream().flatMap(x -> x.methods().stream())).toList())
+		// inherit methods that aren't hidden
+		for(MethodReference method : inheritedMethods())
 			if(method.flags().visibility() != Visibility.PRIVATE){
 				if(methods.stream().noneMatch(x -> x.overrides(method))){
 					if(method.flags().isAbstract() && !flags.isAbstract())
@@ -356,6 +356,12 @@ public class CyclicType implements TypeReference{
 						method.flags = new AccessFlags(Visibility.PUBLIC, true, false);
 					}else if(superInterfaces().stream().flatMap(k -> k.methods().stream()).noneMatch(k -> k.nameAndDescriptor().equals(method.nameAndDescriptor())))
 						throw new CompileTimeException(null, "An annotation method may only have a non-return-statement body if that method implements an interface method");
+		
+		// check @Override annotations
+		for(CyclicMethod method : methods)
+			if(method.annotations().stream().anyMatch(k -> k.annotationType().fullyQualifiedName().equals(OVERRIDE)))
+				if(inheritedMethods().stream().noneMatch(method::overrides))
+					throw new CompileTimeException(null, "Method \"" + method.summary() + "\" has @Override annotation but does not override any members");
 	}
 	
 	public String toString(){
@@ -368,5 +374,29 @@ public class CyclicType implements TypeReference{
 	
 	public int hashCode(){
 		return fullyQualifiedName().hashCode();
+	}
+	
+	private List<MethodReference> inheritedMethods(){
+		return Stream.concat(
+				superType.methods().stream(),
+				interfaces.stream().flatMap(x -> x.methods().stream())
+		).filter(k -> k.flags().visibility() != Visibility.PRIVATE).toList();
+	}
+	
+	private Set<String> suppresses = null;
+	private Set<String> suppressedWarns(){
+		if(suppresses != null)
+			return suppresses;
+		
+		return suppresses = annotations().stream()
+				.filter(x -> x.annotationType().fullyQualifiedName().equals(SUPPRESS_WARNINGS))
+				.map(x -> (Object[])x.arguments().get("value"))
+				.flatMap(Arrays::stream)
+				.map(String.class::cast)
+				.collect(Collectors.toSet());
+	}
+	
+	private boolean isWarningSuppressed(String warning){
+		return suppressedWarns().contains(warning);
 	}
 }
