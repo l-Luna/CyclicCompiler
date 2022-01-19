@@ -119,11 +119,15 @@ public class SampleTests{
 							for(Object i : java.util.List.of(0, 0, 0))
 								counter += (Integer)i;
 							
+							var array = new int[]{ 0, 1, 2, 3 };
+							for(int y : array)
+								counter += y;
+							
 							return counter;
 						}
 					}
 					""", lookup);
-			Assertions.assertEquals(201, loops.invoke(null, 100));
+			Assertions.assertEquals(207, loops.invoke(null, 100));
 			
 			Assertions.assertEquals("12", Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;

@@ -250,6 +250,13 @@ public final class Utils{
 		throw new IllegalStateException("Couldn't find " + (isStatic ? "static" : "non-static") + " method \"" + name + "\" in type " + from.fullyQualifiedName() + "!");
 	}
 	
+	public static FieldReference getField(TypeReference from, String name){
+		for(FieldReference field : from.fields())
+			if(field.name().equals(name))
+				return field;
+		throw new IllegalStateException("Couldn't find field \"" + name + "\" on type \"" + from.shortName() + "\"!");
+	}
+	
 	public static List<CyclicLangParser.AnnotationContext> getAnnotations(CyclicLangParser.TypeContext name){
 		var ret = new ArrayList<>(name.annotation());
 		if(name.type() != null)

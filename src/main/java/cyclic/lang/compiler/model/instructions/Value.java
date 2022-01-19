@@ -396,6 +396,11 @@ public abstract class Value{
 			this.ref = ref;
 		}
 		
+		public FieldValue(FieldReference ref, Value from){
+			this.ref = ref;
+			this.from = from;
+		}
+		
 		public void write(MethodVisitor mv){
 			if(from != null)
 				from.write(mv);

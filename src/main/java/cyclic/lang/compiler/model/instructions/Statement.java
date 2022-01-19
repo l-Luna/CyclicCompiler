@@ -16,9 +16,10 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static cyclic.lang.compiler.Constants.*;
+import static cyclic.lang.compiler.Constants.THROWABLE;
 
 public abstract class Statement{
 	
@@ -52,8 +53,9 @@ public abstract class Statement{
 			statement.contains = ctx.block().statement().stream().map(k -> fromAst(k, statement.blockScope, type, callable)).collect(Collectors.toList());
 			result = statement;
 		}else if(ctx.varDecl() != null){
-			boolean isFinal = ctx.varDecl().modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || ctx.varDecl().type().getText().equals("val");
-			boolean infer = ctx.varDecl().type().getText().equals("var") || ctx.varDecl().type().getText().equals("val");
+			String typeName = ctx.varDecl().type().getText();
+			boolean isFinal = ctx.varDecl().modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || typeName.equals("val");
+			boolean infer = typeName.equals("var") || typeName.equals("val");
 			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, callable) : null;
 			if(infer && initial == null)
 				throw new CompileTimeException("Can't infer the type of a variable without an initial value.");
@@ -106,32 +108,19 @@ public abstract class Statement{
 			result = new DoWhileStatement(doScope, success, cond);
 		}else if(ctx.foreachStatement() != null){
 			var fe = ctx.foreachStatement();
-			
-			/*    for(T t : x)
-			 *         act;
-			 *  becomes
-			 *     Objects.requireNonNull(x);
-			 *     Iterator iter = x.iterator();
-			 *     while(iter.hasNext())
-			 *         T t = iter.next();
-			 *         act;
-			 */
 			Value iterating = Value.fromAst(fe.value(), in, type, callable);
-			TypeReference iteratorType = TypeResolver.resolveFq(ITERATOR);
-			BlockStatement container = new BlockStatement(in);
-			Variable iterator = new Variable("~", iteratorType, container.blockScope, null);
-			Variable iterationVar = new Variable(fe.idPart().getText(), TypeResolver.resolve(fe.type(), type.imports, type.packageName()), container.blockScope, container);
-			Statement action = fromAst(fe.statement(), container.blockScope, type, callable);
-			// TODO: generics
-			container.contains = List.of(
-					new CallStatement(container.blockScope, null, Utils.resolveSingleMethod(OBJECTS, OBJECTS_REQUIRE_NONNULL, true, OBJECT, STRING), List.of(iterating, new Value.StringLiteralValue("Iteration variable was null."))),
-					new VarStatement(container.blockScope, iterator, new Value.CallValue(iterating, List.of(), Utils.resolveSingleMethod(ITERABLE, ITERABLE_ITERATOR, false))),
-					new WhileStatement(container.blockScope,
-							List.of(new VarStatement(container.blockScope, iterationVar, new Value.CallValue(new Value.LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_NEXT, false))),
-									action),
-							new Value.CallValue(new Value.LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_HAS_NEXT, false)))
-			);
-			result = container;
+			String varName = fe.idPart().getText();
+			String varTypeName = TypeResolver.getBaseName(fe.type());
+			TypeReference varType = varTypeName.equals("var") || varTypeName.equals("val") ? null : TypeResolver.resolve(varTypeName, imports, type.packageName());
+			boolean isFinal = varTypeName.equals("val") || fe.FINAL() != null;
+			result = null;
+			for(ForEachStyle style : ForEachStyle.STYLES)
+				if(style.appliesTo(iterating.type())){
+					result = style.forEachStatement(iterating, varName, varType, isFinal, in, scope -> Statement.fromAst(fe.statement(), scope, type, callable));
+					break;
+				}
+			if(result == null)
+				throw new CompileTimeException("Value of type \"" + iterating.type().fullyQualifiedName() + "\" cannot be iterated on");
 		}else if(ctx.throwStatement() != null){
 			Value toThrow = Value.fromAst(ctx.throwStatement().value(), in, type, callable);
 			result = new ThrowStatement(toThrow, in);
@@ -202,6 +191,11 @@ public abstract class Statement{
 			contains = statements;
 			for(var s : statements)
 				s.in = blockScope;
+		}
+		
+		public BlockStatement(Function<Scope, List<Statement>> statements, Scope in){
+			this(in);
+			contains = statements.apply(blockScope);
 		}
 		
 		public void write(MethodVisitor mv){
