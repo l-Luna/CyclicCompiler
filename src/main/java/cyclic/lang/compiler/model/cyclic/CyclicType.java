@@ -228,7 +228,7 @@ public class CyclicType implements TypeReference{
 				if(explicitAccessor.isPresent())
 					accessor = explicitAccessor.get();
 				else{
-					accessor.body = new Statement.ReturnStatement(new Value.FieldValue(field), accessor.methodScope, type);
+					accessor.body = new Statement.ReturnStatement(new Value.FieldValue(field), accessor.methodScope, type, accessor);
 					members.add(accessor);
 					methods.add(accessor);
 					methodsAndInherited.add(accessor);

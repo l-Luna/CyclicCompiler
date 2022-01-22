@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CyclicConstructor implements CallableReference, CyclicMember{
+public class CyclicConstructor implements CyclicCallable{
 	
 	CyclicType in;
 	AccessFlags flags;
@@ -108,9 +108,12 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	public void resolveBody(){
 		if(body == null){
 			addParamVars();
-			body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, scope, in, this)).collect(Collectors.toList()), scope) :
+			body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, scope, in, this)).collect(Collectors.toList()), scope, this) :
 				   (arrowStatement != null) ? Statement.fromAst(arrowStatement, scope, in, this) :
 				    null; // a semicolon just returns - no implicit return in case of init blocks
+			
+			if(body != null)
+				body.from = this;
 		}
 		
 		if(in().kind() == TypeKind.RECORD){
@@ -164,5 +167,9 @@ public class CyclicConstructor implements CallableReference, CyclicMember{
 	
 	public boolean hasExplicitCtorCall(){
 		return Flow.firstMatching(body, Statement.CtorCallStatement.class::isInstance).isPresent();
+	}
+	
+	public Statement getBody(){
+		return body;
 	}
 }

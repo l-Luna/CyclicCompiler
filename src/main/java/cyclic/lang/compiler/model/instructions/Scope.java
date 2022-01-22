@@ -27,7 +27,7 @@ public class Scope{
 	}
 	
 	public Variable get(String name){
-		if("~".equals(name))
+		if(name.startsWith("~"))
 			return null;
 		for(var var : variables)
 			if(var.name.equals(name))

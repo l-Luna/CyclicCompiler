@@ -2,6 +2,7 @@ package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
@@ -434,13 +435,17 @@ public final class Operations{
 			mv.visitInsn(opcode);
 		}
 		
-		public void simplify(){
-			left.simplify();
-			right.simplify();
+		public void simplify(Statement in){
+			left.simplify(in);
+			right.simplify(in);
 		}
 		
 		public TypeReference type(){
 			return type;
+		}
+		
+		public String toString(){
+			return operation != null ? left + " " + operation.symbol + " " + right : super.toString();
 		}
 	}
 	

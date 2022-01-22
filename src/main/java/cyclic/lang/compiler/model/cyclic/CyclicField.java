@@ -83,7 +83,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 	public CyclicConstructor assign(){
 		if(defaultVal != null){
 			CyclicConstructor ret = new CyclicConstructor(isStatic(), in);
-			ret.body = new Statement.AssignFieldStatement(ret.scope, this, isStatic() ? null : new Value.ThisValue(in), Value.fromAst(defaultVal, ret.scope, in, ret));
+			ret.body = new Statement.AssignFieldStatement(ret.scope, this, isStatic() ? null : new Value.ThisValue(in), Value.fromAst(defaultVal, ret.scope, in, ret), ret);
 			return ret;
 		}
 		return null;

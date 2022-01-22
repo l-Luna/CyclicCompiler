@@ -104,16 +104,22 @@ public class SampleTests{
 							int counter = 0;
 							
 							int x = 0;
+							counter = counter;
+							if(true)
+								x = x;
 							while(x < times){
 								counter += 1;
 								x += 1;
 							}
 							
-							for(int i = 0; i < times; i += 1;)
+							for(int b = 0; b < times; b += 1;){
 								counter += 1;
+								int z = b;
+							}
 							
 							do{
-								counter += 1;
+								int f = 1;
+								counter += f;
 							}while(false);
 							
 							for(Object i : java.util.List.of(0, 0, 0))
@@ -122,6 +128,12 @@ public class SampleTests{
 							var array = new int[]{ 0, 1, 2, 3 };
 							for(int y : array)
 								counter += y;
+							
+							for(int y : array){
+								for(Object i : java.util.List.of(0, 0, 0)){
+									counter += (Integer)i;
+								}
+							}
 							
 							return counter;
 						}

@@ -36,4 +36,8 @@ public class Variable{
 	public Scope in(){
 		return in;
 	}
+	
+	public String name(){
+		return name;
+	}
 }

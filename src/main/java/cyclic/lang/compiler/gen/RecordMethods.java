@@ -48,7 +48,7 @@ public final class RecordMethods{
 		constArgs.add(record.recordComponents().stream().map(RecordComponentReference::name).collect(Collectors.joining(";")));
 		constArgs.addAll(record.recordComponents().stream().map(RecordMethods::asHandle).toList());
 		call.constArgs = constArgs;
-		method.body = new Statement.ReturnStatement(call, method.methodScope, returns);
+		method.body = new Statement.ReturnStatement(call, method.methodScope, returns, method);
 		return method;
 	}
 	
@@ -67,9 +67,10 @@ public final class RecordMethods{
 	public static CyclicConstructor genCtor(CyclicType record){
 		CyclicConstructor ctor = new CyclicConstructor(record, record.recordComponents().stream().map(RecordComponentReference::type).toList(), record.recordComponents().stream().map(RecordComponentReference::name).toList());
 		ctor.addParamVars();
-		Statement.BlockStatement body = new Statement.BlockStatement(ctor.scope);
+		Statement.BlockStatement body = new Statement.BlockStatement(ctor.scope, ctor);
+		body.from = ctor;
 		body.contains = mapListWithIndex(record.recordComponents(),
-				(x, idx) -> new Statement.AssignFieldStatement(ctor.scope, x.field(), null, new Value.LocalVarValue(x.type(), Utils.adjustVarIndex(ctor.scope, idx + 1))));
+				(x, idx) -> new Statement.AssignFieldStatement(ctor.scope, x.field(), null, new Value.LocalVarValue(x.type(), Utils.adjustVarIndex(ctor.scope, idx + 1)), ctor));
 		ctor.body = body;
 		return ctor;
 	}

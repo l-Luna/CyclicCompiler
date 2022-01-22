@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CyclicMethod implements MethodReference, CyclicMember{
+public class CyclicMethod implements MethodReference, CyclicCallable{
 	
 	String name;
 	CyclicType in;
@@ -120,9 +120,11 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
 		
 		if(body == null)
-			body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope) :
+			body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope, this) :
 					(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
-					new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns);
+					new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns, this);
+		
+		body.from = this;
 		
 		if(!flags().isAbstract() && !returns().isAssignableTo(PlatformDependency.VOID))
 			if(!Flow.guaranteedToExit(body))
@@ -179,5 +181,9 @@ public class CyclicMethod implements MethodReference, CyclicMember{
 	
 	public List<Set<AnnotationTag>> parameterAnnotations(){
 		return paramTypeAnnotations;
+	}
+	
+	public Statement getBody(){
+		return body;
 	}
 }

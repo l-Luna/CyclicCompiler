@@ -4,6 +4,7 @@ import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -64,9 +65,10 @@ public final class Flow{
 	 */
 	public static Optional<Statement> firstMatching(Statement body, Predicate<Statement> condition){
 		// TODO: consider "do{ ...; yield ...; }" values
+		if(condition.test(body))
+			return Optional.of(body);
 		return switch(body){
-			case default -> condition.test(body) ? Optional.of(body) : Optional.empty();
-			case null -> Optional.empty();
+			case null, default -> Optional.empty();
 			case Statement.WhileStatement s -> firstMatching(s.success, condition);
 			case Statement.DoWhileStatement s -> firstMatching(s.success, condition);
 			case Statement.BlockStatement s -> s.contains.stream()
@@ -83,7 +85,7 @@ public final class Flow{
 	}
 	
 	/**
-	 * Checks if every code path in the given statement is guaranteed to execute at least one terminal statement that matches
+	 * Checks if every code path in the given statement is guaranteed to execute at least one statement that matches
 	 * the given condition.
 	 *
 	 * @param body
@@ -105,6 +107,35 @@ public final class Flow{
 			case Statement.DoWhileStatement s -> guaranteedToRun(s.success, condition); // guaranteed to run at least once
 			// only guaranteed if guaranteed on both branches
 			case Statement.IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
+		};
+	}
+	
+	public static int minOccurrencesBefore(Statement body, Statement before, Predicate<Statement> condition, boolean forceEnter){
+		return switch(body){
+			case default -> body != before && condition.test(body) ? 1 : 0;
+			case null -> 0;
+			case Statement.BlockStatement s -> {
+				var cont = new AtomicBoolean(true);
+				yield s.contains.stream()
+						.takeWhile(x -> cont.get() && (firstMatching(x, y -> y == before).isEmpty() || cont.getAndSet(false)))
+						.mapToInt(k -> minOccurrencesBefore(k, before, condition, !cont.get()))
+						.sum();
+			}
+			case Statement.WhileStatement s -> forceEnter ? minOccurrencesBefore(s.success, before, condition, false) : 0;
+			case Statement.ForStatement s -> minOccurrencesBefore(s.start, before, condition, false) + (forceEnter ? minOccurrencesBefore(s.success, before, condition, false) + minOccurrencesBefore(s.increment, before, condition, false) : 0);
+			case Statement.DoWhileStatement s -> minOccurrencesBefore(s.success, before, condition, false); // guaranteed to run at least once
+			case Statement.IfStatement s -> {
+				if(forceEnter){
+					if(s.fail == null)
+						yield minOccurrencesBefore(s.success, before, condition, false);
+					// could be entering either branch
+					if(firstMatching(s.success, y -> y == before).isPresent())
+						yield minOccurrencesBefore(s.success, before, condition, false);
+					else
+						yield minOccurrencesBefore(s.fail, before, condition, false);
+				}
+				yield Math.min(minOccurrencesBefore(s.success, before, condition, false), minOccurrencesBefore(s.fail, before, condition, false));
+			}
 		};
 	}
 	

@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.MethodVisitor;
@@ -34,8 +35,8 @@ public final class DynamicCallValue extends Value{
 		mv.visitInvokeDynamicInsn(name, descriptor, bootstrapHandle, constArgs.toArray());
 	}
 	
-	public void simplify(){
-		args.forEach(Value::simplify);
+	public void simplify(Statement in){
+		args.forEach(value -> value.simplify(in));
 	}
 	
 	public TypeReference type(){

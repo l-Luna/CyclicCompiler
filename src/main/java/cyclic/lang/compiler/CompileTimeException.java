@@ -1,13 +1,9 @@
 package cyclic.lang.compiler;
 
+import cyclic.lang.compiler.model.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Stack;
-import java.util.stream.Collectors;
 
 /**
  * Thrown when the Cyclic compiler encounters invalid code that is not a syntax error.
@@ -16,10 +12,13 @@ public class CompileTimeException extends RuntimeException{
 	
 	private static String curFile;
 	private static Stack<Context> curText = new Stack<>();
+	private Context ctx;
 	
 	public CompileTimeException(ParserRuleContext context, String message){
 		super(message);
 		pushContext(context);
+		ctx = curText.peek();
+		popContext();
 	}
 	
 	public CompileTimeException(String message){
@@ -31,18 +30,7 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public static void pushContext(ParserRuleContext context){
-		curText.push(context == null ? null : new Context(getAllTokens(context).stream().map(ParseTree::getText).collect(Collectors.joining(" ")), context.start.getLine(), context.start.getCharPositionInLine()));
-	}
-	
-	private static List<TerminalNode> getAllTokens(ParserRuleContext ctx){
-		var ret = new ArrayList<TerminalNode>();
-		if(ctx.children != null)
-			for(var child : ctx.children)
-				if(child instanceof TerminalNode t)
-					ret.add(t);
-				else if(child instanceof ParserRuleContext r)
-					ret.addAll(getAllTokens(r));
-		return ret;
+		curText.push(context == null ? null : new Context(Utils.format(context), context.start.getLine(), context.start.getCharPositionInLine()));
 	}
 	
 	public static void popContext(){
@@ -51,8 +39,11 @@ public class CompileTimeException extends RuntimeException{
 	
 	public String getMessage(){
 		var message = "Error in class \"" + curFile + "\"";
-		if(curText.peek() != null)
-			message += ", at " + curText.peek();
+		Context c = ctx;
+		if(c == null && curText.size() > 0)
+			c = curText.peek();
+		if(c != null)
+			message += ", at " + c;
 		String details = super.getMessage();
 		if(details != null && !details.isBlank())
 			message += ":\n\t\t" + details;

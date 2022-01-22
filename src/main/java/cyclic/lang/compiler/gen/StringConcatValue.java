@@ -2,6 +2,7 @@ package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.Handle;
@@ -74,10 +75,10 @@ public final class StringConcatValue extends Value{
 		mv.visitInvokeDynamicInsn("makeConcatWithConstants", args + "Ljava/lang/String;", MAKE_CONCAT_HANDLE, recipe);
 	}
 	
-	public void simplify(){
+	public void simplify(Statement in){
 		// walk down initialLeft and initialRight and flatten all StringConcatValues
 		components = collect(this);
-		components.forEach(Value::simplify);
+		components.forEach(value -> value.simplify(in));
 		// if we have more than 200, split off the extras into a new value
 		if(components.size() > MAX_CONCAT_SLOTS){
 			int cuts = (int)(components.size() / (float)MAX_CONCAT_SLOTS);

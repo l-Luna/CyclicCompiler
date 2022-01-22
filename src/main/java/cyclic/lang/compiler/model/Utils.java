@@ -10,6 +10,8 @@ import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
@@ -274,5 +276,39 @@ public final class Utils{
 	
 	public static int adjustedIndex(Variable v){
 		return adjustVarIndex(v.in(), v.getVarIndex());
+	}
+	
+	public static String format(List<TerminalNode> tokens){
+		var current = new StringBuilder();
+		TerminalNode last = null;
+		int curLine = tokens.size() > 0 ? tokens.get(0).getSymbol().getLine() : 0;
+		for(TerminalNode token : tokens){
+			if(last != null){
+				int space = token.getSymbol().getStartIndex() - last.getSymbol().getStartIndex() - last.getText().length();
+				if(token.getSymbol().getLine() > curLine)
+					current.append("\n");
+				if(space > 0)
+					current.append(" ".repeat(space));
+			}
+			current.append(token);
+			last = token;
+			curLine = last.getSymbol().getLine();
+		}
+		return current.toString();
+	}
+	
+	public static String format(ParserRuleContext ctx){
+		return format(getAllTokens(ctx));
+	}
+	
+	public static List<TerminalNode> getAllTokens(ParserRuleContext ctx){
+		var ret = new ArrayList<TerminalNode>();
+		if(ctx.children != null)
+			for(var child : ctx.children)
+				if(child instanceof TerminalNode t)
+					ret.add(t);
+				else if(child instanceof ParserRuleContext r)
+					ret.addAll(getAllTokens(r));
+		return ret;
 	}
 }
