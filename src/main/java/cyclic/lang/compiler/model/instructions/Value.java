@@ -59,7 +59,7 @@ public abstract class Value{
 						var target = TypeResolver.resolveOptional(newTypeName, type.imports, type.packageName());
 						yield target.map(TypeValue::new).orElseGet(() -> new TypeValue(newTypeName));
 					}else
-						yield new FieldValue(name, on);
+						yield new FieldValue(name, on, method);
 				}else{// otherwise, it could be a local variable,
 					Variable local = scope.get(name);
 					if(local != null)
@@ -85,7 +85,7 @@ public abstract class Value{
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
-				yield new InitializationValue(args, Utils.resolveConstructor(of, args));
+				yield new InitializationValue(args, Utils.resolveConstructor(of, args, method));
 			}
 			case CyclicLangParser.BinaryOpValueContext bin -> {
 				Value left = Value.fromAst(bin.left, scope, type, method);
@@ -99,12 +99,16 @@ public abstract class Value{
 					throw new CompileTimeException("Can't use \"this\" in a static method");
 				yield new ThisValue(method.in());
 			}
-			case CyclicLangParser.ClassValueContext clss ->
-					// TODO: generics
-					new ClassValue(TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName()));
+			case CyclicLangParser.ClassValueContext clss -> {
+				// TODO: generics
+				TypeReference target = TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName());
+				if(!Utils.visibleFrom(target, method != null ? method : type))
+					throw new CompileTimeException("Target type is not accessible from here");
+				yield new ClassValue(target);
+			}
 			case CyclicLangParser.InstanceCheckValueContext inst -> {
 				var check = new InstanceofValue(TypeResolver.resolve(inst.type(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
-				yield inst.EXCLAMATION() != null ? new Operations.BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IFEQ, check, null) : check;
+				yield inst.EXCLAMATION() == null ? check : new Operations.BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IFEQ, check, null);
 			}
 			case CyclicLangParser.CastValueContext castCtx -> {
 				TypeReference target = TypeResolver.resolve(castCtx.cast().type(), type.imports, type.packageName());
@@ -399,10 +403,14 @@ public abstract class Value{
 		
 		public FieldReference ref;
 		
-		public FieldValue(String fieldName, Value from){
+		public FieldValue(String fieldName, Value from, @Nullable CallableReference method){
 			this.fieldName = fieldName;
 			this.from = from;
-			ref = from.type().fields().stream().filter(x -> x.name().equals(fieldName)).findFirst().orElseThrow(() -> new CompileTimeException(text, "Could not find field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
+			ref = from.type().fields().stream()
+					.filter(x -> x.name().equals(fieldName))
+					.filter(x -> Utils.visibleFrom(x, method))
+					.findFirst()
+					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
 		}
 		
 		public FieldValue(FieldReference ref){

@@ -22,7 +22,7 @@ import java.util.List;
  * @see CyclicTypeBuilder
  * @see TypeResolver
  */
-public interface TypeReference extends AnnotatableElement{
+public interface TypeReference extends AnnotatableElement, MemberReference{
 	
 	/**
 	 * Returns the short name of this type. For example, the short name of <code>cyclic.lang.compiler.model.TypeReference</code>
@@ -173,7 +173,7 @@ public interface TypeReference extends AnnotatableElement{
 	}
 	
 	/**
-	 * Returns the descriptor of this type. This is usually in the form <code>LinternalName;</code>, 
+	 * Returns the descriptor of this type. This is usually in the form <code>LinternalName;</code>,
 	 * @return The descriptor of this type.
 	 */
 	default String descriptor(){
@@ -217,6 +217,10 @@ public interface TypeReference extends AnnotatableElement{
 	
 	default String elementType(){
 		return ElementType.TYPE.name();
+	}
+	
+	default TypeReference in(){
+		return this;
 	}
 	
 	/**

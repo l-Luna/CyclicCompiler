@@ -155,7 +155,7 @@ public abstract class Statement{
 			List<Value> args = ctx.ctorCall().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
 			boolean isSuperCall = ctx.ctorCall().SUPER() != null;
 			var t = callable.in();
-			result = new CtorCallStatement(in, Utils.resolveConstructor(isSuperCall ? t.superClass() : t, args), args, callable);
+			result = new CtorCallStatement(in, Utils.resolveConstructor(isSuperCall ? t.superClass() : t, args, callable), args, callable);
 		}else
 			result = new NoopStatement(in, callable);
 		

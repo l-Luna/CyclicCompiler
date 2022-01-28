@@ -20,7 +20,8 @@ public class CyclicProject{
 	           cyclic_lib = jdk;
 	
 	public boolean include_debug = true,
-	               include_cyclic_lib_refs = true;
+	               include_cyclic_lib_refs = true,
+	               no_output = false;
 	
 	public List<String> default_imports = new ArrayList<>();
 	

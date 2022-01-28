@@ -15,14 +15,7 @@ import java.util.stream.Collectors;
  * @see TypeReference
  * @see MethodReference
  */
-public interface CallableReference extends AnnotatableElement{
-	
-	/**
-	 * Returns a reference to the type that this callable is declared in.
-	 *
-	 * @return The type this is in.
-	 */
-	TypeReference in();
+public interface CallableReference extends AnnotatableElement, MemberReference{
 	
 	/**
 	 * Returns a list of references to the types of this callable's parameters, in order.
@@ -39,13 +32,6 @@ public interface CallableReference extends AnnotatableElement{
 	 * @return A list of parameter names.
 	 */
 	List<String> parameterNames();
-	
-	/**
-	 * Returns the shared access flags of this callable.
-	 *
-	 * @return The access flags.
-	 */
-	AccessFlags flags();
 	
 	/**
 	 * Returns whether this callable is static. True for static methods and static initializers.

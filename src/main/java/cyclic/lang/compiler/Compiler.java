@@ -101,6 +101,12 @@ public final class Compiler{
 		});
 		
 		var out = compileFileSet(todo, inputFolder);
+		
+		if(project.no_output){
+			System.out.println("Skipping output and packaging (because the project has \"no_output\" set to true).");
+			return;
+		}
+		
 		AtomicInteger output = new AtomicInteger();
 		out.forEach((name, bytes) -> {
 			CompileTimeException.setFile(name);

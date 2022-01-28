@@ -200,7 +200,9 @@ public final class Utils{
 		}
 		MethodReference found = null;
 		candidates:
-		for(MethodReference x : candidates)
+		for(MethodReference x : candidates){
+			if(!visibleFrom(x, from))
+				continue;
 			if(x.name().equals(name)){
 				List<TypeReference> parameters = x.parameters();
 				if(parameters.size() != args.size())
@@ -211,15 +213,18 @@ public final class Utils{
 				found = x;
 				break;
 			}
+		}
 		if(found == null) // TODO: return null and check in CallValue to allow for pass expressions
-			throw new IllegalStateException("Could not find method " + name + " given candidates " + candidates.stream().map(MethodReference::nameAndDescriptor).collect(Collectors.joining(", ", "[", "]")) + " for args of type " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
+			throw new CompileTimeException(null, "Could not find method " + name + " given candidates " + candidates.stream().map(MethodReference::summary).collect(Collectors.joining(", ", "[", "]")) + " for args of type " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
 		return found;
 	}
 	
-	public static CallableReference resolveConstructor(TypeReference of, List<Value> args){
+	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, CallableReference from){
 		CallableReference found = null;
 		candidates:
 		for(var x : of.constructors()){
+			if(!visibleFrom(x, from))
+				continue;
 			if(x.parameters().size() != args.size())
 				continue;
 			for(int i = 0; i < x.parameters().size(); i++)
@@ -229,7 +234,7 @@ public final class Utils{
 			break;
 		}
 		if(found == null)  // TODO: return null and check in CallValue to allow for pass expressions
-			throw new IllegalStateException("Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
+			throw new CompileTimeException(null, "Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
 		return found;
 	}
 	
@@ -310,5 +315,16 @@ public final class Utils{
 				else if(child instanceof ParserRuleContext r)
 					ret.addAll(getAllTokens(r));
 		return ret;
+	}
+	
+	public static boolean visibleFrom(MemberReference member, MemberReference from){
+		return switch(member.flags().visibility()){
+			case PUBLIC -> true;
+			case PACKAGE_PRIVATE -> member.in().packageName().equals(from.in().packageName());
+			case PROTECTED -> member.in().packageName().equals(from.in().packageName()) || from.in().isAssignableTo(member.in());
+			// TODO: some sort of nest system?
+			case PRIVATE -> member.in().equals(from.in());
+			case null -> false;
+		};
 	}
 }

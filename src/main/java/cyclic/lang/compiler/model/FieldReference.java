@@ -13,7 +13,7 @@ import java.lang.annotation.ElementType;
  *
  * @see TypeReference
  */
-public interface FieldReference extends AnnotatableElement{
+public interface FieldReference extends AnnotatableElement, MemberReference{
 	
 	/**
 	 * Returns a reference to the type that this field is declared in.
