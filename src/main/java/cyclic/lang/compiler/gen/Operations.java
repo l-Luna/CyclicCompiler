@@ -1,36 +1,34 @@
 package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.Constants;
+import cyclic.lang.compiler.model.Flow;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
-import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 
-import static cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive.BOOLEAN;
+import static cyclic.lang.compiler.resolve.PlatformDependency.*;
 
 public final class Operations{
 	
 	private static List<OperationHandler> handlers = new ArrayList<>();
 	
 	static{
-		var INT = PlatformDependency.INT;
-		var LONG = PlatformDependency.LONG;
-		var FLOAT = PlatformDependency.FLOAT;
-		var DOUBLE = PlatformDependency.DOUBLE;
-		var BOOLEAN = PlatformDependency.BOOLEAN;
 		var OBJECT = TypeResolver.resolveFq(Constants.OBJECT);
 		var STRING = TypeResolver.resolveFq(Constants.STRING);
+		
+		handlers.add(new ConstantOpHandler());
 		
 		// add, subtract, multiply, divide
 		handlers.add(new TypeSetOpHandler(
@@ -272,6 +270,8 @@ public final class Operations{
 			if(handler.handles().contains(op))
 				if(handler.validFor(left, right)){
 					Value ret = handler.getFor(op, left, right);
+					if(ret == null)
+						continue;
 					if(ret instanceof BinaryOpValue v)
 						v.operation = op;
 					return ret;
@@ -285,8 +285,8 @@ public final class Operations{
 		symbol = symbol.trim();
 		if(symbol.equals("+") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return value; // no effect from +
-		else if(symbol.equals("!") && value.type() instanceof PrimitiveTypeRef prim && prim.type == BOOLEAN)
-			return new BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IFEQ, value, null);
+		else if(symbol.equals("!") && value.type() instanceof PrimitiveTypeRef prim && prim.type == PrimitiveTypeRef.Primitive.BOOLEAN)
+			return new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFEQ, value, null);
 		else if(symbol.equals("-") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return new UnaryOpValue(prim, value, switch(prim.type){
 				case BYTE, SHORT, INT -> Opcodes.INEG;
@@ -393,6 +393,90 @@ public final class Operations{
 		}
 	}
 	
+	public static class ConstantOpHandler implements OperationHandler{
+		
+		public Set<Op> handles(){
+			return EnumSet.allOf(Op.class);
+		}
+		
+		public boolean validFor(Value left, Value right){
+			return Flow.constantValue(left).isPresent() && Flow.constantValue(right).isPresent();
+		}
+		
+		@SuppressWarnings("OptionalGetWithoutIsPresent") // checked in validFor
+		public Value getFor(Op op, Value left, Value right){
+			Object cl = Flow.constantValue(left).get();
+			Object cr = Flow.constantValue(right).get();
+			
+			// widen bytes/shorts/chars into ints, then narrow them after
+			if(cl instanceof Byte b)
+				cl = (int)b;
+			if(cl instanceof Short s)
+				cl = (int)s;
+			if(cl instanceof Character c)
+				cl = (int)c;
+			if(cr instanceof Byte b)
+				cr = (int)b;
+			if(cr instanceof Short s)
+				cr = (int)s;
+			if(cr instanceof Character c)
+				cr = (int)c;
+			
+			Value value = switch(op){
+				case PLUS ->
+						cl instanceof String sl && cr instanceof String sr ? new Value.StringLiteralValue(sl + sr) :
+						applyToNumbers(cl, cr, (x, y) -> x.doubleValue() + y.doubleValue());
+				case MINUS -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() - y.doubleValue());
+				case DIVIDE -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() / y.doubleValue());
+				case MULTIPLY -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() * y.doubleValue());
+				case MOD -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() % y.doubleValue());
+				case GREATER -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() > y.doubleValue());
+				case GEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() >= y.doubleValue());
+				case LESSER -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() < y.doubleValue());
+				case LEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() <= y.doubleValue());
+				case EQUALS -> new Value.IntLiteralValue(cl.equals(cr) ? 1 : 0, true);
+				case NOTEQUALS -> new Value.IntLiteralValue(cl.equals(cr) ? 0 : 1, true);
+				case default -> null;
+			};
+			
+			// narrow back if needed
+			if(value != null && value.type().equals(INT))
+				if(!left.type().equals(INT) && !right.type().equals(INT))
+					if(left.type().equals(CHAR) || right.type().equals(CHAR))
+						return new Value.PrimitiveCastValue(value, PrimitiveTypeRef.Primitive.CHAR);
+					else if(left.type().equals(SHORT) || right.type().equals(SHORT))
+						return new Value.PrimitiveCastValue(value, PrimitiveTypeRef.Primitive.SHORT);
+					else if(left.type().equals(BYTE) || right.type().equals(BYTE))
+						return new Value.PrimitiveCastValue(value, PrimitiveTypeRef.Primitive.BYTE);
+			
+			return value;
+		}
+		
+		private Value applyToNumbers(Object left, Object right, BinaryOperator<Number> apply){
+			if(left instanceof Integer il && right instanceof Integer ir)
+				return new Value.IntLiteralValue(apply.apply(il, ir).intValue());
+			if(left instanceof Long ll && right instanceof Long lr)
+				return new Value.LongLiteralValue(apply.apply(ll, lr).longValue());
+			if(left instanceof Float fl && right instanceof Float fr)
+				return new Value.FloatLiteralValue(apply.apply(fl, fr).floatValue());
+			if(left instanceof Double dl && right instanceof Double dr)
+				return new Value.DoubleLiteralValue(apply.apply(dl, dr).doubleValue());
+			return null;
+		}
+		
+		private Value applyBoolToNumbers(Object left, Object right, BiPredicate<Number, Number> apply){
+			if(left instanceof Integer il && right instanceof Integer ir)
+				return new Value.IntLiteralValue(apply.test(il, ir) ? 1 : 0, true);
+			if(left instanceof Long ll && right instanceof Long lr)
+				return new Value.IntLiteralValue(apply.test(ll, lr) ? 1 : 0, true);
+			if(left instanceof Float fl && right instanceof Float fr)
+				return new Value.IntLiteralValue(apply.test(fl, fr) ? 1 : 0, true);
+			if(left instanceof Double dl && right instanceof Double dr)
+				return new Value.IntLiteralValue(apply.test(dl, dr) ? 1 : 0, true);
+			return null;
+		}
+	}
+	
 	public static class UnaryOpValue extends Value{
 		TypeReference type;
 		Value from;
@@ -470,5 +554,4 @@ public final class Operations{
 			mv.visitLabel(postWrite);
 		}
 	}
-	
 }

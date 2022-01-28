@@ -42,12 +42,8 @@ public final class CyclicClassWriter{
 		
 		for(var ctor : type.constructors()){
 			CyclicConstructor cyc = (CyclicConstructor)ctor;
-			if(cyc.isCanonRecordCtor && !cyc.isGeneratedRecordCtor){
-				System.out.println(cyc.descriptor());
-				System.out.println(cyc.isGeneratedRecordCtor);
-				System.out.println("h");
+			if(cyc.isCanonRecordCtor && !cyc.isGeneratedRecordCtor)
 				continue; // generate with generated one, which is always present
-			}
 			
 			currentMethod = ctor;
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
