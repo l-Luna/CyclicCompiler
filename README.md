@@ -3,7 +3,7 @@ A compiler and standard library for a Java-like pet JVM language, Cyclic.
 
 Cyclic is effectively "my take on Java", and borrows most of its syntax for regular code (i.e. classes and interfaces), while hopefully avoiding its more confusing or legacy components, and making currently-hardcoded parts of the language more applicable to user types, *without hurting readability* like I feel other JVM languages tend to do.
 
-It's currently missing a lot: you won't find generics, lambdas, or working enums and records here yet. For regular classes and interfaces, though, the core functionality should be largely there.
+It's currently missing a lot: you won't find generics, lambdas, or enums here yet. For regular classes, interfaces, and records, though, the core functionality should be largely there.
 
 While the full Java module system isn't present, there is a simple YAML-based format for defining a project; with an associated input and output folder, set of jar dependencies, required JDK version, and output jars.
 
