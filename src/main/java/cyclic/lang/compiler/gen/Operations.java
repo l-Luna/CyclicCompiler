@@ -279,9 +279,7 @@ public final class Operations{
 		throw new IllegalArgumentException("Found no handlers for operation " + symbol + " that can handle values of types " + left.type().fullyQualifiedName() + " and " + right.type().fullyQualifiedName() + "!");
 	}
 	
-	// much simpler, no handlers
-	// since 1 unary op is a no-op, 1 is applicable to one type only, and the other has simple logic
-	public static Value resolveUnary(String symbol, Value value){
+	public static Value resolvePrefix(String symbol, Value value){
 		symbol = symbol.trim();
 		if(symbol.equals("+") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return value; // no effect from +
@@ -295,7 +293,20 @@ public final class Operations{
 				case DOUBLE -> Opcodes.DNEG;
 				default -> throw new IllegalStateException();
 			});
-		throw new IllegalStateException("Unable to apply unary operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
+		else if(symbol.equals("++") || symbol.equals("--")){
+			var inlineAssign = Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1)));
+			inlineAssign.returnPreAssign = true;
+			inlineAssign.target = value;
+			return inlineAssign;
+		}
+		throw new IllegalStateException("Unable to apply prefix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
+	}
+	
+	public static Value resolvePostfix(String symbol, Value value){
+		symbol = symbol.trim();
+		if(symbol.equals("++") || symbol.equals("--"))
+			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1)));
+		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
 	}
 	
 	public enum Op{
@@ -319,7 +330,6 @@ public final class Operations{
 		LEQ("<="),
 		GREATER(">"),
 		LESSER("<"),
-		ASSIGN("="),
 		PASS("|>");
 		
 		public final String symbol;
@@ -520,8 +530,10 @@ public final class Operations{
 		}
 		
 		public void simplify(Statement in){
-			left.simplify(in);
-			right.simplify(in);
+			if(left != null)
+				left.simplify(in);
+			if(right != null)
+				right.simplify(in);
 		}
 		
 		public TypeReference type(){

@@ -59,6 +59,7 @@ statement
     | varDecl SEMICOLON
     | varAssignment SEMICOLON
     | initialisation SEMICOLON
+    | varIncrement SEMICOLON
     | ifStatement
     | whileStatement
     | forStatement
@@ -109,21 +110,21 @@ modifiers: modifier*;
 
 value
     : left=value binaryop right=value           #binaryOpValue
-    | value DOT call                            #functionValue
-    | call                                      #functionValue
-    | SUPER DOT call                            #functionValue
+    | left=value binaryop? ASSIGN right=value   #inlineAssignValue // can't use varAssignment due to recursive rules
+    | value DOT call                            #functionValue // can't merge due to recursive rules
+    | (SUPER DOT)? call                         #functionValue
     | value EXCLAMATION? INSTANCEOF type        #instanceCheckValue
     | array=value LSQUAR index=value RSQUAR     #arrayIndexValue
     | value DOT idPart                          #varValue
     | DO statement                              #doValue
     | initialisation                            #initialisationValue
     | LPAREN value RPAREN                       #parenValue
-    | varDecl                                   #inlineDecleration
     | switchStatement                           #switchValue
     | id DOT CLASS                              #classValue
     | primitiveType DOT CLASS                   #primitiveClassValue
     | cast                                      #castValue
-    | unaryop value                             #unaryOpValue
+    | prefixop value                            #prefixOpValue
+    | value postfixop                           #postfixOpValue
     | newArray                                  #newArrayValue
     | newListedArray                            #newListedArrayValue
     | THIS                                      #thisValue
@@ -162,6 +163,10 @@ caseClause: CASE value DASHARROW (statement | value SEMICOLON);
 defaultClause: DEFAULT DASHARROW (statement | value SEMICOLON);
 yieldStatement: YIELD value SEMICOLON;
 
+varIncrement
+    : value (PLUSPLUS | MINUSMINUS)
+    ;
+
 binaryop
     : SLASH
     | STAR
@@ -183,14 +188,20 @@ binaryop
     | RSHIFT
     | ULSHIFT
     | URSHIFT
-    | ASSIGN
     | PASS
     ;
 
-unaryop
+prefixop
     : PLUS
     | MINUS
     | EXCLAMATION
+    | PLUSPLUS
+    | MINUSMINUS
+    ;
+
+postfixop
+    : PLUSPLUS
+    | MINUSMINUS
     ;
 
 id: idPart (DOT idPart)*;
@@ -276,10 +287,13 @@ STRLIT: QUOTE (~'"')*? QUOTE;
 BOOLLIT: TRUE | FALSE;
 NULL: 'null';
 
-BITAND: '&';
-BITOR: '|';
 AND: '&&';
 OR: '||';
+PLUSPLUS: '++';
+MINUSMINUS: '--';
+
+BITAND: '&';
+BITOR: '|';
 UP: '^';
 
 STAR: '*';

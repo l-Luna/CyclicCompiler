@@ -76,7 +76,7 @@ public abstract class Statement{
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, callable);
 			if(ctx.varAssignment().binaryop() != null)
 				right = Operations.resolveBinary(ctx.varAssignment().binaryop().getText(), left, right);
-			result = createAssignStatement(ctx.varAssignment().value(0), in, left, right, callable);
+			result = createAssignStatement(in, left, right, callable);
 		}else if(ctx.call() != null){
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, callable) : null;
 			boolean isSuperCall = ctx.SUPER() != null;
@@ -156,6 +156,10 @@ public abstract class Statement{
 			boolean isSuperCall = ctx.ctorCall().SUPER() != null;
 			var t = callable.in();
 			result = new CtorCallStatement(in, Utils.resolveConstructor(isSuperCall ? t.superClass() : t, args, callable), args, callable);
+		}else if(ctx.varIncrement() != null){
+			Value toAssign = Value.fromAst(ctx.varIncrement().value(), in, type, callable);
+			String symbol = ctx.varIncrement().PLUSPLUS() != null ? "++" : "--";
+			result = new ValueStatement(in, callable, Operations.resolvePostfix(symbol, toAssign));
 		}else
 			result = new NoopStatement(in, callable);
 		
@@ -165,7 +169,7 @@ public abstract class Statement{
 		return result;
 	}
 	
-	private static Statement createAssignStatement(CyclicLangParser.ValueContext ctx, Scope in, Value left, Value right, CyclicCallable from){
+	public static Statement createAssignStatement(Scope in, Value left, Value right, CyclicCallable from){
 		// if the LHS is a local variable value, reuse the variable
 		// if the LHS is a field value, assign to the field
 		// if the LHS is an array index value, assign to the array
@@ -173,7 +177,7 @@ public abstract class Statement{
 			case Value.LocalVarValue local -> new VarStatement(in, local.localName, null, right, false, false, from);
 			case Value.FieldValue field -> new AssignFieldStatement(in, field.ref, field.from, right, from);
 			case Value.ArrayIndexValue idx -> new AssignArrayStatement(in, idx.array, idx.index, right, idx.arrayType, from);
-			case null, default -> throw new CompileTimeException("Can't assign value to " + ctx.getText());
+			case null, default -> throw new CompileTimeException("Can't assign value to " + left);
 		};
 	}
 	
@@ -568,6 +572,26 @@ public abstract class Statement{
 		public void simplify(){
 			success.simplify();
 			condition.simplify(this);
+		}
+	}
+	
+	public static class ValueStatement extends Statement{
+		// TODO: refactor CallStatement, VarStatement, Assign*Statement to use their Value counterparts
+		Value value;
+		
+		public ValueStatement(Scope in, @NotNull CyclicCallable from, Value value){
+			super(in, from);
+			this.value = value;
+		}
+		
+		public void write(MethodVisitor mv){
+			super.write(mv);
+			value.write(mv);
+			mv.visitInsn(Opcodes.POP);
+		}
+		
+		public void simplify(){
+			value.simplify(this);
 		}
 	}
 }

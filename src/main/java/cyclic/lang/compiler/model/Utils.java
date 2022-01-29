@@ -317,7 +317,7 @@ public final class Utils{
 		return ret;
 	}
 	
-	public static boolean visibleFrom(MemberReference member, MemberReference from){
+	public static boolean visibleFrom(MemberReference member, @NotNull MemberReference from){
 		return switch(member.flags().visibility()){
 			case PUBLIC -> true;
 			case PACKAGE_PRIVATE -> member.in().packageName().equals(from.in().packageName());

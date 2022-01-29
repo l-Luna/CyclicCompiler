@@ -12,6 +12,7 @@ import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 
@@ -29,10 +30,20 @@ public abstract class Value{
 			case CyclicLangParser.NullLitContext ignored -> new NullLiteralValue();
 			case CyclicLangParser.BoolLitContext boolLit -> new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
 			case CyclicLangParser.StrLitContext strLit -> new StringLiteralValue(strLit.getText().substring(1, strLit.getText().length() - 1));
-			case CyclicLangParser.UnaryOpValueContext uop -> Operations.resolveUnary(uop.unaryop().getText(), fromAst(uop.value(), scope, type, method));
 			case CyclicLangParser.ParenValueContext paren -> fromAst(paren.value(), scope, type, method);
 			case CyclicLangParser.ArrayIndexValueContext ind -> new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
 			case CyclicLangParser.PrimitiveClassValueContext prim -> new PrimitiveClassValue(PrimitiveTypeRef.getPrimitiveDesc(prim.primitiveType().getText()));
+			
+			case CyclicLangParser.PrefixOpValueContext preOp -> Operations.resolvePrefix(preOp.prefixop().getText(), fromAst(preOp.value(), scope, type, method));
+			case CyclicLangParser.PostfixOpValueContext postOp -> Operations.resolvePostfix(postOp.postfixop().getText(), fromAst(postOp.value(), scope, type, method));
+			case CyclicLangParser.InlineAssignValueContext ia -> {
+				Value toAssign = fromAst(ia.left, scope, type, method);
+				Value newValue = fromAst(ia.right, scope, type, method);
+				if(ia.binaryop() != null)
+					newValue = Operations.resolveBinary(ia.binaryop().getText(), toAssign, newValue);
+				yield createInlineAssignValue(toAssign, newValue);
+			}
+			
 			case CyclicLangParser.IntLitContext intLit -> {
 				String text = intLit.INTLIT().getText();
 				if(text.endsWith("f"))
@@ -59,7 +70,7 @@ public abstract class Value{
 						var target = TypeResolver.resolveOptional(newTypeName, type.imports, type.packageName());
 						yield target.map(TypeValue::new).orElseGet(() -> new TypeValue(newTypeName));
 					}else
-						yield new FieldValue(name, on, method);
+						yield new FieldValue(name, on, method, type);
 				}else{// otherwise, it could be a local variable,
 					Variable local = scope.get(name);
 					if(local != null)
@@ -92,7 +103,7 @@ public abstract class Value{
 				Value right = Value.fromAst(bin.right, scope, type, method);
 				yield Operations.resolveBinary(bin.binaryop().getText(), left, right);
 			}
-			case CyclicLangParser.ThisValueContext i -> {
+			case CyclicLangParser.ThisValueContext ignored -> {
 				if(method == null)
 					throw new CompileTimeException("Can't use \"this\" outside of methods");
 				if(method.isStatic())
@@ -158,6 +169,16 @@ public abstract class Value{
 		if(result != null)
 			result.text = ctx;
 		return result;
+	}
+	
+	@NotNull
+	public static InlineAssignValue createInlineAssignValue(Value toAssign, Value newValue){
+		return switch(toAssign){
+			case LocalVarValue lvv -> new InlineAssignValue(newValue, lvv.localIdx);
+			case FieldValue fv -> new InlineAssignValue(newValue, fv.from, fv.ref);
+			case ArrayIndexValue aiv -> new InlineAssignValue(newValue, aiv.array, aiv.index);
+			case default -> throw new CompileTimeException("Can't assign value to " + toAssign);
+		};
 	}
 	
 	/**
@@ -403,12 +424,12 @@ public abstract class Value{
 		
 		public FieldReference ref;
 		
-		public FieldValue(String fieldName, Value from, @Nullable CallableReference method){
+		public FieldValue(String fieldName, Value from, @Nullable CallableReference method, @NotNull TypeReference mIn){
 			this.fieldName = fieldName;
 			this.from = from;
 			ref = from.type().fields().stream()
 					.filter(x -> x.name().equals(fieldName))
-					.filter(x -> Utils.visibleFrom(x, method))
+					.filter(x -> Utils.visibleFrom(x, method == null ? mIn : method))
 					.findFirst()
 					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
 		}
@@ -849,8 +870,8 @@ public abstract class Value{
 		public void write(MethodVisitor mv){
 			array.write(mv);
 			for(int i = 0; i < entries.size(); i++){
-				Value e = entries.get(i);
 				mv.visitInsn(Opcodes.DUP);
+				Value e = entries.get(i);
 				new IntLiteralValue(i).write(mv);
 				e.write(mv);
 				mv.visitInsn(arrayType.getComponent().arrayStoreOpcode());
@@ -864,6 +885,82 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return arrayType;
+		}
+	}
+	
+	public static class InlineAssignValue extends Value{
+		// TODO: refactor this, it sucks
+		
+		Value newValue;
+		
+		// only one of these lines should be set
+		int localIdx = -10;
+		Value fieldOf = null; FieldReference field = null;
+		Value array = null, arrayIndex = null;
+		
+		// if true, evaluate to the value pre-assignment, like in ++x
+		public boolean returnPreAssign = false;
+		public Value target;
+		
+		public InlineAssignValue(Value newValue, int varIdx){
+			this.newValue = newValue;
+			localIdx = varIdx;
+		}
+		
+		public InlineAssignValue(Value newValue, Value on, FieldReference target){
+			this.newValue = newValue;
+			fieldOf = on;
+			field = target;
+		}
+		
+		public InlineAssignValue(Value newValue, Value array, Value index){
+			this.newValue = newValue;
+			this.array = array;
+			this.arrayIndex = index;
+		}
+		
+		public void write(MethodVisitor mv){
+			if(returnPreAssign)
+				target.write(mv);
+			
+			if(localIdx > -10){
+				newValue.write(mv);
+				if(!returnPreAssign)
+					mv.visitInsn(Opcodes.DUP);
+				mv.visitVarInsn(newValue.type().localStoreOpcode(), localIdx);
+			}else if(field != null){
+				boolean farDup = true;
+				if(fieldOf != null)
+					fieldOf.write(mv);
+				else if(!field.isStatic())
+					mv.visitVarInsn(Opcodes.ALOAD, 0);
+				else
+					farDup = false;
+				newValue.write(mv);
+				if(!returnPreAssign){
+					if(farDup){
+						mv.visitInsn((newValue.type().equals(PlatformDependency.LONG) || newValue.type().equals(PlatformDependency.DOUBLE))
+								? Opcodes.DUP2_X1 : Opcodes.DUP_X1);
+					}else{
+						mv.visitInsn((newValue.type().equals(PlatformDependency.LONG) || newValue.type().equals(PlatformDependency.DOUBLE))
+								? Opcodes.DUP2 : Opcodes.DUP);
+					}
+				}
+				field.writePut(mv);
+			}else if(array != null && arrayIndex != null){
+				array.write(mv);
+				arrayIndex.write(mv);
+				newValue.write(mv);
+				if(!returnPreAssign)
+					mv.visitInsn((newValue.type().equals(PlatformDependency.LONG) || newValue.type().equals(PlatformDependency.DOUBLE))
+							? Opcodes.DUP2_X2 : Opcodes.DUP_X2);
+				mv.visitInsn(((ArrayTypeRef)array.type()).getComponent().arrayStoreOpcode());
+			}else
+				throw new IllegalStateException();
+		}
+		
+		public TypeReference type(){
+			return newValue.type();
 		}
 	}
 }

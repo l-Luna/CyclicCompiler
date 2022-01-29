@@ -83,6 +83,22 @@ public class SampleTests{
 					""", lookup)
 					.invoke(null));
 			
+			Assertions.assertEquals(4, Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int test() -> (1 + 1) + (1 + 1);
+					}
+					""", lookup)
+					.invoke(null));
+			
+			Assertions.assertEquals(0, Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int test() -> (1 + 1) - (1 + 1);
+					}
+					""", lookup)
+					.invoke(null));
+			
 			Method oneOrTwo = Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
@@ -112,7 +128,7 @@ public class SampleTests{
 								x += 1;
 							}
 							
-							for(int b = 0; b < times; b += 1;){
+							for(int b = 0; b < times; b++;){
 								counter += 1;
 								int z = b;
 							}

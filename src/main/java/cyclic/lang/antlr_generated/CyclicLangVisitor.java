@@ -202,6 +202,13 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitModifiers(CyclicLangParser.ModifiersContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code prefixOpValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPrefixOpValue(CyclicLangParser.PrefixOpValueContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code thisValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
@@ -230,12 +237,19 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDoValue(CyclicLangParser.DoValueContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code unaryOpValue}
+	 * Visit a parse tree produced by the {@code inlineAssignValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUnaryOpValue(CyclicLangParser.UnaryOpValueContext ctx);
+	T visitInlineAssignValue(CyclicLangParser.InlineAssignValueContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code postfixOpValue}
+	 * labeled alternative in {@link CyclicLangParser#value}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostfixOpValue(CyclicLangParser.PostfixOpValueContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code nullLit}
 	 * labeled alternative in {@link CyclicLangParser#value}.
@@ -341,13 +355,6 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSwitchValue(CyclicLangParser.SwitchValueContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code inlineDecleration}
-	 * labeled alternative in {@link CyclicLangParser#value}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitInlineDecleration(CyclicLangParser.InlineDeclerationContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code primitiveClassValue}
 	 * labeled alternative in {@link CyclicLangParser#value}.
@@ -482,17 +489,29 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitYieldStatement(CyclicLangParser.YieldStatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#varIncrement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVarIncrement(CyclicLangParser.VarIncrementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#binaryop}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitBinaryop(CyclicLangParser.BinaryopContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link CyclicLangParser#unaryop}.
+	 * Visit a parse tree produced by {@link CyclicLangParser#prefixop}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitUnaryop(CyclicLangParser.UnaryopContext ctx);
+	T visitPrefixop(CyclicLangParser.PrefixopContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#postfixop}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostfixop(CyclicLangParser.PostfixopContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#id}.
 	 * @param ctx the parse tree
