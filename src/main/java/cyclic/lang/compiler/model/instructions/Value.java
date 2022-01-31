@@ -40,7 +40,7 @@ public abstract class Value{
 				Value toAssign = fromAst(ia.left, scope, type, method);
 				Value newValue = fromAst(ia.right, scope, type, method);
 				if(ia.binaryop() != null)
-					newValue = Operations.resolveBinary(ia.binaryop().getText(), toAssign, newValue);
+					newValue = Operations.resolveBinary(ia.binaryop().getText(), toAssign, newValue, null);
 				yield createInlineAssignValue(toAssign, newValue);
 			}
 			
@@ -101,7 +101,7 @@ public abstract class Value{
 			case CyclicLangParser.BinaryOpValueContext bin -> {
 				Value left = Value.fromAst(bin.left, scope, type, method);
 				Value right = Value.fromAst(bin.right, scope, type, method);
-				yield Operations.resolveBinary(bin.binaryop().getText(), left, right);
+				yield Operations.resolveBinary(bin.binaryop().getText(), left, right, bin);
 			}
 			case CyclicLangParser.ThisValueContext ignored -> {
 				if(method == null)
@@ -375,6 +375,10 @@ public abstract class Value{
 		public String value;
 		
 		public StringLiteralValue(String value){
+			// TODO: all escape codes
+			value = value.replace("\\\"", "\"");
+			value = value.replace("\\n", "\n");
+			
 			this.value = value;
 		}
 		

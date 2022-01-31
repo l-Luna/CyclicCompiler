@@ -22,7 +22,7 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public CompileTimeException(String message){
-		super(message);
+		this(null, message);
 	}
 	
 	public static void setFile(String filename){

@@ -57,7 +57,7 @@ public final class TypeResolver{
 	 */
 	public static TypeReference resolve(String name, List<String> imports, String currentPackage){
 		return resolveOptional(name, imports, currentPackage)
-				.orElseThrow(() -> new TypeNotFoundException(name + " was not found in imports " + String.join(", ", imports) + " or package " + currentPackage));
+				.orElseThrow(() -> new TypeNotFoundException(name + " was not found in imports [" + String.join(", ", imports) + "] or package " + currentPackage));
 	}
 	
 	/**

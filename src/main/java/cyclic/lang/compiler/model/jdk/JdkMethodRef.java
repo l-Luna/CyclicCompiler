@@ -65,4 +65,8 @@ public class JdkMethodRef implements MethodReference{
 	public Object defaultValueForAnnotation(){
 		return underlying.getDefaultValue();
 	}
+	
+	public String toString(){
+		return "JDK: " + summary();
+	}
 }

@@ -2,7 +2,9 @@ package cyclic.lang.compiler.model;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.ElementType;
@@ -60,10 +62,11 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	TypeReference outerClass();
 	
 	/**
-	 * Returns a reference to this type's super class. This may be null for {@linkplain Object}.
+	 * Returns a reference to this type's super class. This may be null for {@linkplain Object} or primitives.
 	 *
 	 * @return A reference to this type's super class.
 	 */
+	@Nullable
 	TypeReference superClass();
 	
 	/**
@@ -181,6 +184,37 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	}
 	
 	/**
+	 * Returns the closest supertype of two types.
+	 *
+	 * <p>If this type is a primitive, or if the other type is a primitive or null, this
+	 * returns null.
+	 * <p>If either type is an interface, this returns Object.
+	 * <p>Otherwise, this finds the first supertype of this type that the other type can be assigned to.
+	 *
+	 * @param other
+	 * 		The type to find a common supertype with.
+	 * @return The closest supertype of two types.
+	 */
+	@Nullable
+	default TypeReference commonSuperType(TypeReference other){
+		if(other == null)
+			return null;
+		if(this instanceof PrimitiveTypeRef || other instanceof PrimitiveTypeRef)
+			return null;
+		if(kind() == TypeKind.INTERFACE || other.kind() == TypeKind.INTERFACE)
+			return TypeResolver.resolveFq(Constants.OBJECT);
+		if(isAssignableTo(other))
+			return other;
+		if(other.isAssignableTo(this))
+			return this;
+		TypeReference ref = this;
+		do{
+			ref = ref.superClass();
+		}while(!other.isAssignableTo(ref) && ref != null);
+		return ref;
+	}
+	
+	/**
 	 * Returns whether an instance of this type can be assigned to a variable or parameter of the target type.
 	 * <p>
 	 * For a primitive type, this is true iff the target represents the same primitive type. For the null type,
@@ -201,6 +235,9 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 * @return Whether an instance of this type is assignable to the target type.
 	 */
 	default boolean isAssignableTo(TypeReference target){
+		if(target == null)
+			return false;
+		
 		// special case Object for interfaces
 		if(target.fullyQualifiedName().equals(Constants.OBJECT))
 			return true;

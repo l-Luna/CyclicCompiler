@@ -136,7 +136,9 @@ public class PrimitiveTypeRef implements TypeReference{
 		return switch(type){
 			case NULL -> Opcodes.AALOAD;
 			case BYTE, BOOLEAN -> Opcodes.BALOAD;
-			case CHAR, SHORT, INT -> Opcodes.IALOAD;
+			case INT -> Opcodes.IALOAD;
+			case SHORT -> Opcodes.SALOAD;
+			case CHAR -> Opcodes.CALOAD;
 			case LONG -> Opcodes.LALOAD;
 			case FLOAT -> Opcodes.FALOAD;
 			case DOUBLE -> Opcodes.DALOAD;

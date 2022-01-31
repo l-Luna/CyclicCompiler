@@ -176,13 +176,14 @@ public final class Utils{
 	}
 	
 	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall){
+		record Target(MethodReference ref, int reach){}
+		
 		// possible method references are:
 		// - from the value being called on, if present, OR
 		// - static members of the current type in a static method, OR
 		// - static or instance methods of the current type in an instance method, with an implicit this added by CallStatement/CallValue
-		// if this is a super.X() call, `on` must be null, we must be in a non-static context, and we look at the supertype of from.in()
-		// then wrap it with a MethodReference that uses invokespecial
 		List<MethodReference> candidates = new ArrayList<>();
+		List<Target> targets = new ArrayList<>();
 		if(superCall && on != null)
 			throw new IllegalArgumentException("Can't resolve a super method on a non-this object instance");
 		if(superCall && from.isStatic())
@@ -198,7 +199,6 @@ public final class Utils{
 					? type.methods().stream().filter(MethodReference::isStatic).toList()
 					: type.methods());
 		}
-		MethodReference found = null;
 		candidates:
 		for(MethodReference x : candidates){
 			if(!visibleFrom(x, from))
@@ -207,16 +207,24 @@ public final class Utils{
 				List<TypeReference> parameters = x.parameters();
 				if(parameters.size() != args.size())
 					continue;
-				for(int i = 0; i < parameters.size(); i++)
-					if(args.get(i).fit(parameters.get(i)) == null)
-						continue candidates;
-				found = x;
-				break;
+				int reach = 0;
+				for(int i = 0; i < parameters.size(); i++){
+					TypeReference pTarget = parameters.get(i);
+					Value arg = args.get(i);
+					if(arg.type() != null && arg.type().isAssignableTo(pTarget))
+						continue;
+					if(arg.fit(pTarget) != null){
+						reach = 1;
+						continue;
+					}
+					continue candidates;
+				}
+				targets.add(new Target(x, reach));
 			}
 		}
-		if(found == null) // TODO: return null and check in CallValue to allow for pass expressions
+		if(targets.size() == 0) // TODO: return null and check in CallValue to allow for pass expressions
 			throw new CompileTimeException(null, "Could not find method " + name + " given candidates " + candidates.stream().map(MethodReference::summary).collect(Collectors.joining(", ", "[", "]")) + " for args of type " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
-		return found;
+		return targets.stream().min(Comparator.comparingInt(Target::reach)).get().ref();
 	}
 	
 	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, CallableReference from){

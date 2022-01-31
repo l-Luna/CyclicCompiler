@@ -75,7 +75,7 @@ public abstract class Statement{
 			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, callable);
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, callable);
 			if(ctx.varAssignment().binaryop() != null)
-				right = Operations.resolveBinary(ctx.varAssignment().binaryop().getText(), left, right);
+				right = Operations.resolveBinary(ctx.varAssignment().binaryop().getText(), left, right, null);
 			result = createAssignStatement(in, left, right, callable);
 		}else if(ctx.call() != null){
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, callable) : null;

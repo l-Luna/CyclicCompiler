@@ -186,4 +186,8 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	public Statement getBody(){
 		return body;
 	}
+	
+	public String toString(){
+		return "Cyclic: " + summary();
+	}
 }

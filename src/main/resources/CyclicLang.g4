@@ -109,22 +109,22 @@ inferType
 modifiers: modifier*;
 
 value
-    : left=value binaryop right=value           #binaryOpValue
-    | left=value binaryop? ASSIGN right=value   #inlineAssignValue // can't use varAssignment due to recursive rules
-    | value DOT call                            #functionValue // can't merge due to recursive rules
-    | (SUPER DOT)? call                         #functionValue
+    : value DOT call                            #functionValue // can't merge due to recursive rules
     | value EXCLAMATION? INSTANCEOF type        #instanceCheckValue
     | array=value LSQUAR index=value RSQUAR     #arrayIndexValue
     | value DOT idPart                          #varValue
+    | prefixop value                            #prefixOpValue
+    | value postfixop                           #postfixOpValue
+    | left=value binaryop? ASSIGN right=value   #inlineAssignValue // can't use varAssignment due to recursive rules
+    | left=value binaryop right=value           #binaryOpValue
+    | LPAREN value RPAREN                       #parenValue
+    | (SUPER DOT)? call                         #functionValue
     | DO statement                              #doValue
     | initialisation                            #initialisationValue
-    | LPAREN value RPAREN                       #parenValue
     | switchStatement                           #switchValue
     | id DOT CLASS                              #classValue
     | primitiveType DOT CLASS                   #primitiveClassValue
     | cast                                      #castValue
-    | prefixop value                            #prefixOpValue
-    | value postfixop                           #postfixOpValue
     | newArray                                  #newArrayValue
     | newListedArray                            #newListedArrayValue
     | THIS                                      #thisValue
@@ -283,7 +283,7 @@ IF: 'if';
 
 DECLIT: MINUS? DIGIT* DOT DIGIT+ ('f' | 'd')?;
 INTLIT: MINUS? DIGIT+ ('f' | 'd' | 'l')?;
-STRLIT: QUOTE (~'"')*? QUOTE;
+STRLIT: QUOTE (ESCAPE_QUOTE | (~[\r\n"]))*? (QUOTE);
 BOOLLIT: TRUE | FALSE;
 NULL: 'null';
 
@@ -327,12 +327,14 @@ RSQUAR: ']';
 
 COLON: ':';
 SEMICOLON: ';';
-QUOTE: '"';
 DOT: '.';
 COMMA: ',';
 EXCLAMATION: '!';
 QUESTION: '?';
 ELIPSES: '...';
+
+ESCAPE_QUOTE: '\\"';
+QUOTE: '"';
 
 DASHARROW: '->';
 EQARROW: '=>'; // Unused
@@ -358,4 +360,5 @@ NONDIGIT: [a-zA-Z_$£#];
 
 SING_COMMENT: '//' ~[\r\n]* -> channel(HIDDEN);
 WS: [ \n\r\t] -> channel(HIDDEN);
+
 UNMATCHED: . ; //Should make an error

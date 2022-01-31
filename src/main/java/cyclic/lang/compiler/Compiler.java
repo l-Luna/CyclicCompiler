@@ -1,5 +1,6 @@
 package cyclic.lang.compiler;
 
+import cyclic.lang.compiler.gen.AsmCyclicCW;
 import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
@@ -209,7 +210,7 @@ public final class Compiler{
 		
 		for(var type : toCompile.values()){
 			CompileTimeException.setFile(type.fullyQualifiedName());
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+			ClassWriter writer = new AsmCyclicCW(ClassWriter.COMPUTE_FRAMES);
 			CyclicClassWriter.writeClass(writer, type);
 			ret.put(type.fullyQualifiedName(), writer.toByteArray());
 		}
@@ -244,7 +245,7 @@ public final class Compiler{
 		
 		for(var type : toCompile.values()){
 			CompileTimeException.setFile(type.fullyQualifiedName());
-			ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+			ClassWriter writer = new AsmCyclicCW(ClassWriter.COMPUTE_FRAMES);
 			CyclicClassWriter.writeClass(writer, type);
 			ret.put(type.fullyQualifiedName(), writer.toByteArray());
 		}

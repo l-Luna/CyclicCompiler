@@ -170,6 +170,16 @@ public class CyclicType implements TypeReference{
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
+		if(!Utils.visibleFrom(superType, this))
+			throw new CompileTimeException(null, "Type " + superType.fullyQualifiedName() + " is not visible here and cannot be extended");
+		
+		var inaccessible = interfaces.stream()
+				.filter(x -> !Utils.visibleFrom(x, this))
+				.map(TypeReference::fullyQualifiedName)
+				.collect(Collectors.joining(", ", "[", "]"));
+		if(!inaccessible.equals("[]"))
+			throw new CompileTimeException(null, "Types " + inaccessible + " are not visible here and cannot be implemented");
+		
 		if(kind == TypeKind.INTERFACE){
 			if(flags.isFinal())
 				throw new CompileTimeException(null, "Interfaces must not be final");
@@ -315,12 +325,22 @@ public class CyclicType implements TypeReference{
 		// inherit methods that aren't hidden
 		for(MethodReference method : inheritedMethods())
 			if(method.flags().visibility() != Visibility.PRIVATE){
-				if(methods.stream().noneMatch(x -> x.overrides(method))){
+				CyclicMethod overrides = null;
+				for(CyclicMethod x : methods)
+					if(x.overrides(method)){
+						overrides = x;
+						break;
+					}
+				if(overrides == null){
 					if(method.flags().isAbstract() && !flags.isAbstract())
-						throw new CompileTimeException(null, "Abstract supertype method " + method.nameAndDescriptor() + " must be overridden in concrete subclass");
+						throw new CompileTimeException(null, "Abstract supertype method " + method.summary() + " must be overridden in concrete subclass");
 					methodsAndInherited.add(method);
-				}else if(method.flags().isFinal())
-					throw new CompileTimeException(null, "Method " + method.nameAndDescriptor() + " cannot be overridden");
+				}else{
+					if(method.flags().isFinal())
+						throw new CompileTimeException(null, "Method " + method.summary() + " cannot be overridden");
+					if(overrides.flags().visibility().ordinal() < method.flags().visibility().ordinal())
+						throw new CompileTimeException(null, "Method " + method.summary() + " cannot have its visibility narrowed");
+				}
 			}
 		
 		for(FieldReference field : superType.fields())

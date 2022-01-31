@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.gen;
 
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.Flow;
 import cyclic.lang.compiler.model.TypeReference;
@@ -7,6 +8,8 @@ import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -261,10 +264,10 @@ public final class Operations{
 		for(var op : Op.values())
 			if(op.symbol.equals(symbol))
 				return op;
-		throw new IllegalArgumentException("Unknown operation: " + symbol);
+		throw new CompileTimeException("Unknown operation: " + symbol);
 	}
 	
-	public static Value resolveBinary(String symbol, Value left, Value right){
+	public static Value resolveBinary(String symbol, Value left, Value right, @Nullable ParserRuleContext expr){
 		Op op = forSymbol(symbol);
 		for(var handler : handlers)
 			if(handler.handles().contains(op))
@@ -276,7 +279,7 @@ public final class Operations{
 						v.operation = op;
 					return ret;
 				}
-		throw new IllegalArgumentException("Found no handlers for operation " + symbol + " that can handle values of types " + left.type().fullyQualifiedName() + " and " + right.type().fullyQualifiedName() + "!");
+		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.type().fullyQualifiedName() + " and " + right.type().fullyQualifiedName() + "!");
 	}
 	
 	public static Value resolvePrefix(String symbol, Value value){
@@ -294,7 +297,7 @@ public final class Operations{
 				default -> throw new IllegalStateException();
 			});
 		else if(symbol.equals("++") || symbol.equals("--")){
-			var inlineAssign = Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1)));
+			var inlineAssign = Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
 			inlineAssign.returnPreAssign = true;
 			inlineAssign.target = value;
 			return inlineAssign;
@@ -305,7 +308,7 @@ public final class Operations{
 	public static Value resolvePostfix(String symbol, Value value){
 		symbol = symbol.trim();
 		if(symbol.equals("++") || symbol.equals("--"))
-			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1)));
+			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
 		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
 	}
 	
