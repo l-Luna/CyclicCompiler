@@ -296,19 +296,19 @@ public final class Operations{
 				case DOUBLE -> Opcodes.DNEG;
 				default -> throw new IllegalStateException();
 			});
-		else if(symbol.equals("++") || symbol.equals("--")){
-			var inlineAssign = Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
-			inlineAssign.returnPreAssign = true;
-			inlineAssign.target = value;
-			return inlineAssign;
-		}
+		else if(symbol.equals("++") || symbol.equals("--"))
+			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
 		throw new IllegalStateException("Unable to apply prefix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
 	}
 	
 	public static Value resolvePostfix(String symbol, Value value){
 		symbol = symbol.trim();
-		if(symbol.equals("++") || symbol.equals("--"))
-			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
+		if(symbol.equals("++") || symbol.equals("--")){
+			var inlineAssign = Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
+			inlineAssign.returnPreAssign = true;
+			inlineAssign.target = value;
+			return inlineAssign;
+		}
 		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
 	}
 	

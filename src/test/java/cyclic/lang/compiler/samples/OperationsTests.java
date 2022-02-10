@@ -69,7 +69,7 @@ public class OperationsTests{
 		Assertions.assertArrayEquals(new int[]{ 1, 1 }, (int[])Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
-						static int[] test(int x) -> new int[] { x++, x };
+						static int[] test(int x) -> new int[] { ++x, x };
 					}
 					""", lookup)
 				.invoke(null, 0));
@@ -77,7 +77,7 @@ public class OperationsTests{
 		Assertions.assertArrayEquals(new int[]{ 0, 1 }, (int[])Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
-						static int[] test(int x) -> new int[] { ++x, x };
+						static int[] test(int x) -> new int[] { x++, x };
 					}
 					""", lookup)
 				.invoke(null, 0));
@@ -85,7 +85,7 @@ public class OperationsTests{
 		Assertions.assertArrayEquals(new int[]{ -1, -1 }, (int[])Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
-						static int[] test(int x) -> new int[] { x--, x };
+						static int[] test(int x) -> new int[] { --x, x };
 					}
 					""", lookup)
 				.invoke(null, 0));
@@ -93,7 +93,7 @@ public class OperationsTests{
 		Assertions.assertArrayEquals(new int[]{ 0, -1 }, (int[])Compiler.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
-						static int[] test(int x) -> new int[] { --x, x };
+						static int[] test(int x) -> new int[] { x--, x };
 					}
 					""", lookup)
 				.invoke(null, 0));
@@ -126,7 +126,7 @@ public class OperationsTests{
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int value = 0;
-						static int[] test(int x) -> new int[] { value += x, --value, value-- };
+						static int[] test(int x) -> new int[] { value += x, value--, --value };
 					}
 					""", lookup)
 				.invoke(null, 7)));
@@ -137,7 +137,7 @@ public class OperationsTests{
 						int value = 0;
 						static int[] test(int x){
 							var h = new Holder();
-							return new int[] { h.value += x, --h.value, h.value-- };
+							return new int[] { h.value += x, h.value--, --h.value };
 						};
 					}
 					""", lookup)
@@ -147,7 +147,7 @@ public class OperationsTests{
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] value = new int[]{ 0, 1, 2 };
-						static int[] test(int x) -> new int[] { value[1] += x, --value[0], value[0]--, value[2] %= 2 };
+						static int[] test(int x) -> new int[] { value[1] += x, value[0]--, --value[0], value[2] %= 2 };
 					}
 					""", lookup)
 				.invoke(null, 7));
@@ -158,7 +158,7 @@ public class OperationsTests{
 						int[] value = new int[] { 0, 1, 2, 3 };
 						static int[] test(int x){
 							var h = new Holder();
-							return new int[] { h.value[1] += x, --h.value[0], h.value[0]--, h.value[2] %= 3 };
+							return new int[] { h.value[1] += x, h.value[0]--, --h.value[0], h.value[2] %= 3 };
 						};
 					}
 					""", lookup)
