@@ -1,0 +1,10 @@
+source: "cyclic/"
+output: "out/"
+
+jdk: 17
+
+include_debug: true
+
+dependencies:
+- location: "libs/cyclic_lib-0.0.1.jar"
+  type: "jar"

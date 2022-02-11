@@ -1,0 +1,39 @@
+package calc;
+
+import java.util.*;
+import calc.exprs.*;
+
+class Calc{
+
+    private static List symbols = List.of("(", ")", "+", "-", "*", "/", "^", "%");
+    private static List opsByPrec = List.of("-", "+", "*", "/");
+
+    public static void main(String[] args){
+        var input = args[0];
+
+        print("Input: \"" + input + "\"");
+
+        var tokens = new ArrayList();
+        var curToken = new StringBuilder();
+        for(var cchar : input.toCharArray()){
+            var ch = String.valueOf(cchar);
+            if(symbols.contains(ch) || ch.isBlank()){
+                if(curToken.length() > 0)
+                    tokens.add(curToken.toString());
+                if(!ch.isBlank())
+                    tokens.add(ch);
+                curToken = new StringBuilder();
+            }else
+                curToken.append(ch.trim());
+        }
+        if(curToken.toString().trim().length() > 0)
+            tokens.add(curToken.toString().trim());
+
+        print("Tokens: " + tokens);
+
+        Expr expr = Parse.parse(tokens);
+        print("Answer: " + expr.eval());
+    }
+
+    static void print(Object s) -> System.out.println(s);
+}

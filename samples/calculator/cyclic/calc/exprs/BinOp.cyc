@@ -1,0 +1,22 @@
+package calc.exprs;
+
+import calc.*;
+
+public record BinOp(Expr left, Expr right, String op) implements Expr{
+
+    public float eval(){
+        if(op.equals("+"))
+            return left.eval() + right.eval();
+        if(op.equals("-"))
+            return left.eval() - right.eval();
+        if(op.equals("*"))
+            return left.eval() * right.eval();
+        if(op.equals("/"))
+            return left.eval() / right.eval();
+        if(op.equals("^"))
+            return (float)Math.pow(left.eval(), right.eval());
+        if(op.equals("%"))
+            return left.eval() % right.eval();
+        throw new IllegalArgumentException(op);
+    }
+}

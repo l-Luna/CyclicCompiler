@@ -1,0 +1,8 @@
+package calc.exprs;
+
+import calc.*;
+
+public record Constant(float value) implements Expr{
+
+    public float eval() -> value();
+}

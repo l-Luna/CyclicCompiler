@@ -1,0 +1,58 @@
+package calc;
+
+import java.util.*;
+import calc.exprs.*;
+
+class Parse{
+
+    private static int tokenPtr = 0;
+    private static List curTokens = null;
+
+    private static List ops = List.of("-", "+", "*", "/", "^", "%");
+
+    public static Expr parse(List tokens){
+        tokenPtr = 0;
+        curTokens = tokens;
+        return parseRecurse(false);
+    }
+
+    // expr: expr binOp expr | integer | constant | '(' expr ')'
+    private static Expr parseRecurse(boolean excludeBinOp){
+        if(!excludeBinOp){
+            Expr left = parseRecurse(true);
+            var next = curToken();
+            if(next != null && ops.contains(next)){
+                Expr right = parseRecurse(false);
+                return new BinOp(left, right, next);
+            }else{
+                tokenPtr--;
+                return left;
+            }
+        }
+
+        var next = curToken();
+        if("(".equals(next)){
+            Expr ret = parseRecurse(false);
+            expect(")");
+            return ret;
+        }
+
+        if("pi".equals(next))
+            return new Constant((float)Math.PI);
+        if("e".equals(next))
+            return new Constant((float)Math.E);
+
+        return new Constant(Float.parseFloat(next));
+    }
+
+    private static String curToken(){
+        if(tokenPtr < curTokens.size())
+            return (String)curTokens.get(tokenPtr++);
+        else return null;
+    }
+
+    private static void expect(String expected){
+        if(!curToken().equals(expected))
+            throw new IllegalStateException();
+    }
+}

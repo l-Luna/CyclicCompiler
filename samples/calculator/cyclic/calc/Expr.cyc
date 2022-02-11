@@ -1,0 +1,6 @@
+package calc;
+
+public interface Expr{
+
+    public float eval();
+}
