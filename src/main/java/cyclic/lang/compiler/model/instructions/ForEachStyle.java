@@ -93,7 +93,7 @@ public interface ForEachStyle{
 							new BlockStatement(scope -> List.of(new VarStatement(scope, iterationVar, new ArrayIndexValue(new LocalVarValue(array), new LocalVarValue(index)), c), action), container.blockScope, c),
 							new VarStatement(container.blockScope, index, new IntLiteralValue(0), c),
 							new VarStatement(container.blockScope, index, new BinaryOpValue(PlatformDependency.INT, Opcodes.IADD, new LocalVarValue(index), new IntLiteralValue(1)), c),
-							new BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IF_ICMPLT, new LocalVarValue(index), new FieldValue(Utils.getField(iterating.type(), "length"), new LocalVarValue(array))),
+							new BranchBoolBinaryOpValue(Opcodes.IF_ICMPLT, new LocalVarValue(index), new FieldValue(Utils.getField(iterating.type(), "length"), new LocalVarValue(array))),
 							c)
 			);
 			return container;

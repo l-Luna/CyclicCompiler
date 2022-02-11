@@ -104,13 +104,12 @@ public final class Operations{
 				(l, r) -> new BinaryOpValue(DOUBLE, Opcodes.DREM, l, r)));
 		
 		// short-circuiting operations
-		// TODO: short-circuiting
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.AND), Set.of(BOOLEAN),
-				(l, r) -> new BinaryOpValue(BOOLEAN, Opcodes.IAND, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFNE, l, null, r, null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.OR), Set.of(BOOLEAN),
-				(l, r) -> new BinaryOpValue(BOOLEAN, Opcodes.IOR, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFNE, l, null, null, r)));
 		
 		// bitwise operations
 		handlers.add(new TypeSetOpHandler(
@@ -175,89 +174,89 @@ public final class Operations{
 		// object equality
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(INT, BOOLEAN),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ICMPEQ, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ICMPEQ, l, r)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(LONG),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(FLOAT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(DOUBLE),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFEQ, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.EQUALS), Set.of(OBJECT), // op handlers are checked in order, this should only happen with objects or primitives w/ objects
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ACMPEQ, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ACMPEQ, l, r)));
 		
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.NOTEQUALS), Set.of(INT, BOOLEAN),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ICMPNE, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ICMPNE, l, r)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.NOTEQUALS), Set.of(LONG),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.NOTEQUALS), Set.of(FLOAT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.NOTEQUALS), Set.of(DOUBLE),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFNE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.NOTEQUALS), Set.of(OBJECT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ACMPNE, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ACMPNE, l, r)));
 		
 		// greater/eq, lesser/eq
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GEQ), Set.of(INT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ICMPGE, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ICMPGE, l, r)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GEQ), Set.of(LONG),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFGE, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFGE, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GEQ), Set.of(FLOAT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFGE, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFGE, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GEQ), Set.of(DOUBLE),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFGE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFGE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
 		
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LEQ), Set.of(INT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ICMPLE, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ICMPLE, l, r)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LEQ), Set.of(LONG),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFLE, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFLE, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LEQ), Set.of(FLOAT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFLE, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFLE, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LEQ), Set.of(DOUBLE),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFLE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFLE, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
 		
 		// greater, lesser
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GREATER), Set.of(INT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ICMPGT, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ICMPGT, l, r)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GREATER), Set.of(LONG),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFGT, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFGT, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GREATER), Set.of(FLOAT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFGT, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFGT, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.GREATER), Set.of(DOUBLE),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFGT, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFGT, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
 		
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LESSER), Set.of(INT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IF_ICMPLT, l, r)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IF_ICMPLT, l, r)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LESSER), Set.of(LONG),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFLT, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFLT, new BinaryOpValue(INT, Opcodes.LCMP, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LESSER), Set.of(FLOAT),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFLT, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFLT, new BinaryOpValue(INT, Opcodes.FCMPG, l, r), null)));
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.LESSER), Set.of(DOUBLE),
-				(l, r) -> new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFLT, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
+				(l, r) -> new BranchBoolBinaryOpValue(Opcodes.IFLT, new BinaryOpValue(INT, Opcodes.DCMPG, l, r), null)));
 	}
 	
 	public static Op forSymbol(String symbol){
@@ -287,7 +286,7 @@ public final class Operations{
 		if(symbol.equals("+") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return value; // no effect from +
 		else if(symbol.equals("!") && value.type() instanceof PrimitiveTypeRef prim && prim.type == PrimitiveTypeRef.Primitive.BOOLEAN)
-			return new BranchBoolBinaryOpValue(BOOLEAN, Opcodes.IFEQ, value, null);
+			return new BranchBoolBinaryOpValue(Opcodes.IFEQ, value, null);
 		else if(symbol.equals("-") && value.type() instanceof PrimitiveTypeRef prim && prim.isNumber())
 			return new UnaryOpValue(prim, value, switch(prim.type){
 				case BYTE, SHORT, INT -> Opcodes.INEG;
@@ -550,8 +549,19 @@ public final class Operations{
 	
 	public static class BranchBoolBinaryOpValue extends BinaryOpValue{
 		
-		public BranchBoolBinaryOpValue(TypeReference type, int opcode, Value left, Value right){
-			super(type, opcode, left, right);
+		private Value condTrue = new IntLiteralValue(1, true);
+		private Value condFalse = new IntLiteralValue(0, true);
+		
+		public BranchBoolBinaryOpValue(int opcode, Value left, Value right){
+			super(BOOLEAN, opcode, left, right);
+		}
+		
+		public BranchBoolBinaryOpValue(int opcode, Value left, Value right, Value ifTrue, Value ifFalse){
+			super(BOOLEAN, opcode, left, right);
+			if(ifTrue != null)
+				condTrue = ifTrue;
+			if(ifFalse != null)
+				condFalse = ifFalse;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -562,11 +572,16 @@ public final class Operations{
 				right.write(mv);
 			// opcode is instead a branch instruction
 			mv.visitJumpInsn(opcode, preWrite);
-			mv.visitInsn(Opcodes.ICONST_0); // branch failed, push false
+			condFalse.write(mv); // branch failed, push false
 			mv.visitJumpInsn(Opcodes.GOTO, postWrite); // skip pushing true
 			mv.visitLabel(preWrite); // branch succeeded
-			mv.visitInsn(Opcodes.ICONST_1); // push true
+			condTrue.write(mv); // push true
 			mv.visitLabel(postWrite);
+		}
+		
+		public void simplify(Statement in){
+			condTrue.simplify(in);
+			condFalse.simplify(in);
 		}
 	}
 }

@@ -119,7 +119,7 @@ public abstract class Value{
 			}
 			case CyclicLangParser.InstanceCheckValueContext inst -> {
 				var check = new InstanceofValue(TypeResolver.resolve(inst.type(), type.imports, type.packageName()), fromAst(inst.value(), scope, type, method));
-				yield inst.EXCLAMATION() == null ? check : new Operations.BranchBoolBinaryOpValue(PlatformDependency.BOOLEAN, Opcodes.IFEQ, check, null);
+				yield inst.EXCLAMATION() == null ? check : new Operations.BranchBoolBinaryOpValue(Opcodes.IFEQ, check, null);
 			}
 			case CyclicLangParser.CastValueContext castCtx -> {
 				TypeReference target = TypeResolver.resolve(castCtx.cast().type(), type.imports, type.packageName());
