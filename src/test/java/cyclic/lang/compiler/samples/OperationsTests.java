@@ -138,7 +138,7 @@ public class OperationsTests{
 						static int[] test(int x){
 							var h = new Holder();
 							return new int[] { h.value += x, h.value--, --h.value };
-						};
+						}
 					}
 					""", lookup)
 				.invoke(null, 7));
@@ -159,9 +159,66 @@ public class OperationsTests{
 						static int[] test(int x){
 							var h = new Holder();
 							return new int[] { h.value[1] += x, h.value[0]--, --h.value[0], h.value[2] %= 3 };
-						};
+						}
 					}
 					""", lookup)
 				.invoke(null, 7));
+	}
+	
+	@Test
+	void testShortCircuitOps(){
+		MethodHandles.Lookup lookup = MethodHandles.lookup();
+		
+		Assertions.assertThrows(InvocationTargetException.class, () -> Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static boolean test(){
+							String k = null;
+							if(k != null & k.equals(""))
+								return true;
+							return false;
+						}
+					}
+					""", lookup)
+				.invoke(null));
+		
+		Assertions.assertDoesNotThrow(() -> Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static boolean test(){
+							String k = null;
+							if(k != null && k.equals(""))
+								return true;
+							return false;
+						}
+					}
+					""", lookup)
+				.invoke(null));
+		
+		Assertions.assertThrows(InvocationTargetException.class, () -> Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static boolean test(){
+							String k = null;
+							if(k == null | k.equals(""))
+								return true;
+							return false;
+						}
+					}
+					""", lookup)
+				.invoke(null));
+		
+		Assertions.assertDoesNotThrow(() -> Compiler.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static boolean test(){
+							String k = null;
+							if(k == null || k.equals(""))
+								return true;
+							return false;
+						}
+					}
+					""", lookup)
+				.invoke(null));
 	}
 }
