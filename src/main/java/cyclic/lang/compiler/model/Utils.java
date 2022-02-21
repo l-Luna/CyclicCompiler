@@ -18,6 +18,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Utility methods used within the compiler for parsing ASTs, text, and bitfields.
@@ -255,7 +256,15 @@ public final class Utils{
 		}
 		if(targets.size() == 0)
 			return null;
-		return targets.stream().min(Comparator.comparingInt(Target::reach)).get().ref();
+		targets.sort(Comparator.comparingInt(Target::reach));
+		var bests = targets.stream()
+				.filter(x -> x.reach() == targets.get(0).reach())
+				.toList();
+		if(bests.size() > 1){ // TODO: ????????????????????????????????????????????? specificity
+			var error = "Ambiguous method call \"%s\" on value of type \"%s\" with arguments of types %s: candidates: %s".formatted(name, on != null ? on.type() : "", args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")), bests.stream().map(Target::ref).map(MethodReference::summary).toList());
+			System.err.println(error);
+		}
+		return bests.get(0).ref();
 	}
 	
 	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, CallableReference from){

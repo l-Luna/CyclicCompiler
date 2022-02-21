@@ -102,19 +102,27 @@ public class CallsTests{
 							total += p;
 						return total;
 					}
+					static int count(String... in) -> in.length * 2;
+					static int count(Object... in) -> in.length;
 					
 					static int testNoSum() -> sumInt();
 					static int testSumInt() -> sumInt(1, 2, 3, 4);
 					static int testSumInt2() -> sumInt(1);
 					static long testSumLong() -> sumLong(1, 2, 3, 4);
 					static long testSumLongExplicit() -> sumLong(new long[]{1, 2, 3, 4});
+					static int testCount() -> count(new Object(), "", new Object());
+					static int testCountStrings() -> count("", "", "");
 				}
 				""", lookup);
 		
 		assertEquals(0, (int)holder.getDeclaredMethod("testNoSum").invoke(null));
 		assertEquals(1 + 2 + 3 + 4, (int)holder.getDeclaredMethod("testSumInt").invoke(null));
 		assertEquals(1, (int)holder.getDeclaredMethod("testSumInt2").invoke(null));
+		assertEquals(1 + 2 + 3 + 4, (long)holder.getDeclaredMethod("testSumLong").invoke(null));
 		assertEquals(1 + 2 + 3 + 4, (long)holder.getDeclaredMethod("testSumLongExplicit").invoke(null));
+		assertEquals(3, (int)holder.getDeclaredMethod("testCount").invoke(null));
+		// TODO: this only passes because the string version is first
+		assertEquals(6, (int)holder.getDeclaredMethod("testCountStrings").invoke(null));
 	}
 	
 	@Test
