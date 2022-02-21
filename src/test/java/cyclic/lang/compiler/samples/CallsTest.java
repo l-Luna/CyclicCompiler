@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import static cyclic.lang.compiler.Compiler.compileSingleMethod;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -96,5 +97,13 @@ public class CallsTest{
 					static String test(char[] x) -> x |> new String();
 				}
 				""", lookup).invoke(null, "abcde".toCharArray()));
+		
+		assertEquals(List.of(2, 1, 0), compileSingleMethod("""
+				package cyclic.lang.compiler.samples;
+				import java.util.List;
+				class Holder{
+					static List test() -> 2 |> (1 |> (0 |> List.of()));
+				}
+				""", lookup).invoke(null));
 	}
 }
