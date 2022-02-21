@@ -175,6 +175,10 @@ public final class Utils{
 	}
 	
 	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall){
+		// reach 0 -> no implicit conversions or varargs
+		// reach 1 -> implicit conversions, no varargs
+		// reach 2 -> varargs, no implicit conversions
+		// reach 3 -> varargs, implicit conversions
 		record Target(MethodReference ref, int reach){}
 		
 		// possible method references are:
@@ -204,9 +208,37 @@ public final class Utils{
 				continue;
 			if(x.name().equals(name)){
 				List<TypeReference> parameters = x.parameters();
-				if(parameters.size() != args.size())
+				int reach;
+				varargs:
+				if(x.isVarargs()){
+					if(args.size() < parameters.size() - 1)
+						break varargs;
+					reach = 2;
+					for(int i = 0; i < args.size(); i++){
+						Value arg = args.get(i);
+						TypeReference checking;
+						if(i + 1 < parameters.size())
+							checking = parameters.get(i);
+						else{
+							checking = parameters.get(parameters.size() - 1);
+							if(checking instanceof ArrayTypeRef arr)
+								checking = arr.getComponent();
+							else
+								break varargs; // invalid varargs method
+						}
+						if(arg.type().isAssignableTo(checking))
+							continue;
+						if(arg.fit(checking) != null){
+							reach = 3;
+							continue;
+						}
+						break varargs;
+					}
+					targets.add(new Target(x, reach));
+				}
+				if(x.parameters().size() != args.size())
 					continue;
-				int reach = 0;
+				reach = 0;
 				for(int i = 0; i < parameters.size(); i++){
 					TypeReference pTarget = parameters.get(i);
 					Value arg = args.get(i);

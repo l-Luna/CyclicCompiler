@@ -7,6 +7,7 @@ import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.instructions.Variable;
+import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
@@ -22,7 +23,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	CyclicType in;
 	AccessFlags flags;
 	List<String> paramNames = new ArrayList<>();
-	boolean isN = false, isSyn = false, isSt = false;
+	boolean isN = false, isSyn = false, isSt = false, isVargs = false;
 	
 	CyclicLangParser.TypeContext retType;
 	List<CyclicLangParser.TypeContext> paramTypeNames = new ArrayList<>();
@@ -79,9 +80,16 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 			paramTypeNames.add(p.type());
 			paramNames.add(p.idPart().getText());
 			paramsAnnotationNames.add(Utils.getAnnotations(p.type()));
+			isVargs = p.ELIPSES() != null; // only the last assignment stays
 		}
 		
 		Utils.checkDuplicates(parameterNames(), "parameter name in method " + name);
+		
+		for(int i = 0; i < ctx.parameters().parameter().size() - 1; i++){
+			var param = ctx.parameters().parameter(i);
+			if(param.ELIPSES() != null)
+				throw new CompileTimeException(param, "Var-args parameter must be last");
+		}
 		
 		if(isA && (arrowStatement != null || arrowVal != null || blockStatement != null))
 			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");
@@ -104,6 +112,9 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		parameters = paramTypeNames.stream()
 				.map(x -> TypeResolver.resolve(x, imports, in.packageName()))
 				.collect(Collectors.toList());
+		
+		if(isVarargs())
+			parameters.set(parameters.size() - 1, new ArrayTypeRef(parameters.get(parameters.size() - 1)));
 		
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
 			annotations.add(AnnotationTag.fromAst(annotation, this, in));
@@ -165,6 +176,10 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	
 	public boolean isStatic(){
 		return isSt;
+	}
+	
+	public boolean isVarargs(){
+		return isVargs;
 	}
 	
 	public Object defaultValueForAnnotation(){

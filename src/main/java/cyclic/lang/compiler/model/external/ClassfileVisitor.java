@@ -54,6 +54,7 @@ import static org.objectweb.asm.Opcodes.*;
 		m.isStatic = Utils.isBitSet(access, ACC_STATIC);
 		m.isNative = Utils.isBitSet(access, ACC_NATIVE);
 		m.isSynchronized = Utils.isBitSet(access, ACC_SYNCHRONIZED);
+		m.isVarargs = Utils.isBitSet(access, ACC_VARARGS);
 		m.returnsName = parts.get(parts.size() - 1);
 		for(int i = 0; i < parts.size() - 1; i++)
 			m.paramTypeNames.add(parts.get(i));

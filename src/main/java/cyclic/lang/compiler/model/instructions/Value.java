@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -155,13 +156,7 @@ public abstract class Value{
 			case CyclicLangParser.NewListedArrayValueContext array -> {
 				TypeReference component = TypeResolver.resolve(array.newListedArray().type(), type.imports, type.packageName());
 				List<Value> entries = array.newListedArray().value().stream().map(k -> fromAst(k, scope, type, method)).toList();
-				Value length = new IntLiteralValue(entries.size());
-				Value arrayValue;
-				if(component instanceof PrimitiveTypeRef p)
-					arrayValue = new NewPrimitiveArrayValue(p, length);
-				else
-					arrayValue = new NewArrayValue(component, length);
-				yield new NewListedArrayValue(arrayValue, entries, (ArrayTypeRef)arrayValue.type());
+				yield new NewListedArrayValue(entries, component);
 			}
 			case null, default -> null;
 		};
@@ -532,6 +527,24 @@ public abstract class Value{
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
+			// for varargs methods, all extra parameters are stuffed into an array
+			if(target.isVarargs()){
+				args = new ArrayList<>(args);
+				ArrayTypeRef varParam = (ArrayTypeRef)target.parameters().get(target.parameters().size() - 1);
+				if(args.size() == target.parameters().size()){
+					// if the last argument is not a (the right kind of) array, it also needs boxing
+					if(args.get(args.size() - 1).fit(varParam) == null)
+						args.set(args.size() - 1, new NewListedArrayValue(List.of(args.get(args.size() - 1)), varParam.getComponent()));
+				}else{
+					int length = args.size() - target.parameters().size() + 1;
+					var newEntries = new ArrayList<Value>(length);
+					for(int i = 0; i < length; i++){
+						newEntries.add(0, args.get(args.size() - 1));
+						args.remove(args.size() - 1);
+					}
+					args.add(new NewListedArrayValue(newEntries, varParam.getComponent()));
+				}
+			}
 			for(int i = 0; i < args.size(); i++){
 				Value v = args.get(i);
 				v.fit(target.parameters().get(i)).write(mv);
@@ -882,10 +895,19 @@ public abstract class Value{
 		Value array;
 		ArrayTypeRef arrayType;
 		
-		public NewListedArrayValue(Value array, List<Value> entries, ArrayTypeRef arrayType){
-			this.array = array;
-			this.entries = entries;
-			this.arrayType = arrayType;
+		public NewListedArrayValue(List<Value> entries, TypeReference componentType){
+			this.entries = entries.stream()
+					.map(x -> x.fit(componentType))
+					.collect(Collectors.toCollection(ArrayList::new));
+			int invalidIdx = this.entries.indexOf(null);
+			if(invalidIdx != -1)
+				throw new CompileTimeException(null, "Expression \"" + entries.get(invalidIdx) + "\" cannot be converted to \"" + componentType.fullyQualifiedName() + "\"");
+			var length = new IntLiteralValue(entries.size());
+			if(componentType instanceof PrimitiveTypeRef p)
+				array = new NewPrimitiveArrayValue(p, length);
+			else
+				array = new NewArrayValue(componentType, length);
+			this.arrayType = (ArrayTypeRef)array.type();
 		}
 		
 		public void write(MethodVisitor mv){

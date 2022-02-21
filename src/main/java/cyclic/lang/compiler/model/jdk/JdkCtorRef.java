@@ -40,4 +40,8 @@ public class JdkCtorRef implements CallableReference{
 	public boolean isStatic(){
 		return false;
 	}
+	
+	public boolean isVarargs(){
+		return underlying.isVarArgs();
+	}
 }

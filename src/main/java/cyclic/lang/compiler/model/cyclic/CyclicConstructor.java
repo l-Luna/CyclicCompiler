@@ -6,6 +6,7 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Variable;
+import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public class CyclicConstructor implements CyclicCallable{
 	CyclicType in;
 	AccessFlags flags;
 	List<String> paramNames = new ArrayList<>();
-	boolean isS = false;
+	boolean isS = false, isVargs = false;
 	
 	List<CyclicLangParser.TypeContext> paramTypeNames = new ArrayList<>();
 	CyclicLangParser.BlockContext blockStatement;
@@ -40,9 +41,16 @@ public class CyclicConstructor implements CyclicCallable{
 		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type());
 			paramNames.add(p.idPart().getText());
+			isVargs = p.ELIPSES() != null; // only the last assignment stays
 		}
 		
 		Utils.checkDuplicates(parameterNames(), "parameter name in constructor");
+		
+		for(int i = 0; i < ctx.parameters().parameter().size() - 1; i++){
+			var param = ctx.parameters().parameter(i);
+			if(param.ELIPSES() != null)
+				throw new CompileTimeException(param, "Var-args parameter must be last");
+		}
 		
 		if(ctx.statement() != null)
 			arrowStatement = ctx.statement();
@@ -83,6 +91,9 @@ public class CyclicConstructor implements CyclicCallable{
 		parameters = paramTypeNames.stream()
 				.map(x -> TypeResolver.resolve(x, imports, in.packageName()))
 				.collect(Collectors.toList());
+		
+		if(isVarargs())
+			parameters.set(parameters.size() - 1, new ArrayTypeRef(parameters.get(parameters.size() - 1)));
 	}
 	
 	public TypeReference in(){
@@ -103,6 +114,10 @@ public class CyclicConstructor implements CyclicCallable{
 	
 	public boolean isStatic(){
 		return isS; // only ever true for init blocks
+	}
+	
+	public boolean isVarargs(){
+		return isVargs;
 	}
 	
 	public void resolveBody(){

@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 		String name, returnsName;
 		List<String> paramTypeNames = new ArrayList<>();
 		List<TypeReference> paramTypes;
-		boolean isStatic, isNative, isSynchronized;
+		boolean isStatic, isNative, isSynchronized, isVarargs;
 		AccessFlags flags;
 		
 		public String name(){
@@ -89,6 +89,10 @@ import java.util.stream.Collectors;
 		
 		public boolean isStatic(){
 			return isStatic;
+		}
+		
+		public boolean isVarargs(){
+			return isVarargs;
 		}
 		
 		public boolean isNative(){

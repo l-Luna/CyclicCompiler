@@ -40,6 +40,14 @@ public interface CallableReference extends AnnotatableElement, MemberReference{
 	 */
 	boolean isStatic();
 	
+	/**
+	 * Returns whether this callable is defined as var-args. Var-args callables must have at least one parameter, and
+	 * the last parameter must be a list type.
+	 *
+	 * @return Whether this callable is var-args.
+	 */
+	boolean isVarargs();
+	
 	default String elementType(){
 		return ElementType.CONSTRUCTOR.name();
 	}

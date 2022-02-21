@@ -54,6 +54,10 @@ public class JdkMethodRef implements MethodReference{
 		return Utils.isBitSet(underlying.getModifiers(), Opcodes.ACC_STATIC);
 	}
 	
+	public boolean isVarargs(){
+		return underlying.isVarArgs();
+	}
+	
 	public Set<AnnotationTag> annotations(){
 		return Arrays.stream(underlying.getAnnotations()).map(k -> AnnotationTag.fromAnnotation(k, this)).collect(Collectors.toSet());
 	}
