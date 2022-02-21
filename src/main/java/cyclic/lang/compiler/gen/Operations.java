@@ -4,6 +4,7 @@ import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.Flow;
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
@@ -31,7 +32,11 @@ public final class Operations{
 		var OBJECT = TypeResolver.resolveFq(Constants.OBJECT);
 		var STRING = TypeResolver.resolveFq(Constants.STRING);
 		
+		// constant expressions; 1 + 1
 		handlers.add(new ConstantOpHandler());
+		
+		// pass expressions; "3" |> Integer.parseInt()
+		handlers.add(new PassOpHandler());
 		
 		// add, subtract, multiply, divide
 		handlers.add(new TypeSetOpHandler(
@@ -485,6 +490,32 @@ public final class Operations{
 				return new Value.IntLiteralValue(apply.test(fl, fr) ? 1 : 0, true);
 			if(left instanceof Double dl && right instanceof Double dr)
 				return new Value.IntLiteralValue(apply.test(dl, dr) ? 1 : 0, true);
+			return null;
+		}
+	}
+	
+	public static class PassOpHandler implements OperationHandler{
+		
+		public Set<Op> handles(){
+			return Set.of(Op.PASS);
+		}
+		
+		public boolean validFor(Value left, Value right){
+			return right instanceof Value.CallValue || right instanceof Value.InitializationValue;
+		}
+		
+		public Value getFor(Op op, Value left, Value oRight){
+			if(oRight instanceof Value.CallValue right){
+				List<Value> newArgs = new ArrayList<>(right.args);
+				newArgs.add(0, left);
+				String funcName = right.name;
+				return new Value.CallValue(right.on, newArgs, Utils.resolveMethod(funcName, right.on, newArgs, right.method, right.isSuperCall), right.isSuperCall, funcName, right.method);
+			}
+			if(oRight instanceof Value.InitializationValue right){
+				List<Value> newArgs = new ArrayList<>(right.args);
+				newArgs.add(0, left);
+				return new Value.InitializationValue(newArgs, Utils.resolveConstructor(right.of, newArgs, right.from), right.of, right.from);
+			}
 			return null;
 		}
 	}

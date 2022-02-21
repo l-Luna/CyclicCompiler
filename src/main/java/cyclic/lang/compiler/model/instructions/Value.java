@@ -91,12 +91,13 @@ public abstract class Value{
 				boolean isSuperCall = func.SUPER() != null;
 				List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				// TODO: "X.super.Y()" for interface methods? maybe "X:super.Y()"?
-				yield new CallValue(on, args, Utils.resolveMethod(func.call().idPart().getText(), on, args, method, isSuperCall), isSuperCall);
+				var funcName = func.call().idPart().getText();
+				yield new CallValue(on, args, Utils.resolveMethod(funcName, on, args, method, isSuperCall), isSuperCall, funcName, method);
 			}
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
-				yield new InitializationValue(args, Utils.resolveConstructor(of, args, method));
+				yield new InitializationValue(args, Utils.resolveConstructor(of, args, method), of, method);
 			}
 			case CyclicLangParser.BinaryOpValueContext bin -> {
 				Value left = Value.fromAst(bin.left, scope, type, method);
@@ -498,11 +499,15 @@ public abstract class Value{
 	}
 	
 	public static class CallValue extends Value{
-		Value on;
-		List<Value> args;
-		MethodReference target;
+		public Value on;
+		public List<Value> args;
+		public MethodReference target;
 		// must be tracked here for using invokespecial
-		boolean isSuperCall = false;
+		public boolean isSuperCall = false;
+		
+		// for pass expressions
+		public String name;
+		public CallableReference method;
 		
 		public CallValue(Value on, List<Value> args, MethodReference target){
 			this.on = on;
@@ -510,11 +515,13 @@ public abstract class Value{
 			this.target = target;
 		}
 		
-		public CallValue(Value on, List<Value> args, MethodReference target, boolean isSuperCall){
+		public CallValue(Value on, List<Value> args, MethodReference target, boolean isSuperCall, String name, CallableReference method){
 			this.on = on;
 			this.args = args;
 			this.target = target;
 			this.isSuperCall = isSuperCall;
+			this.name = name;
+			this.method = method;
 		}
 		
 		// make sure that changes here are mirrored in InitializationValue
@@ -536,6 +543,8 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
+			if(target == null)
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
@@ -637,12 +646,18 @@ public abstract class Value{
 	}
 	
 	public static class InitializationValue extends Value{
-		List<Value> args;
-		CallableReference ctor;
+		public List<Value> args;
+		public CallableReference ctor;
 		
-		public InitializationValue(List<Value> args, CallableReference ctor){
+		// for pass expressions
+		public TypeReference of;
+		public CallableReference from;
+		
+		public InitializationValue(List<Value> args, CallableReference ctor, TypeReference of, CallableReference from){
 			this.args = args;
 			this.ctor = ctor;
+			this.of = of;
+			this.from = from;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -656,11 +671,13 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
+			if(ctor == null)
+				throw new CompileTimeException(text, "Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of types [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
 			args.forEach(value -> value.simplify(in));
 		}
 		
 		public TypeReference type(){
-			return ctor.in();
+			return of;
 		}
 	}
 	

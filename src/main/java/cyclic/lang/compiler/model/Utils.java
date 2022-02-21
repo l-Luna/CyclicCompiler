@@ -18,7 +18,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Utility methods used within the compiler for parsing ASTs, text, and bitfields.
@@ -222,8 +221,8 @@ public final class Utils{
 				targets.add(new Target(x, reach));
 			}
 		}
-		if(targets.size() == 0) // TODO: return null and check in CallValue to allow for pass expressions
-			throw new CompileTimeException(null, "Could not find method " + name + " given candidates " + candidates.stream().map(MethodReference::summary).collect(Collectors.joining(", ", "[", "]")) + " for args of type " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
+		if(targets.size() == 0)
+			return null;
 		return targets.stream().min(Comparator.comparingInt(Target::reach)).get().ref();
 	}
 	
@@ -241,8 +240,6 @@ public final class Utils{
 			found = x;
 			break;
 		}
-		if(found == null)  // TODO: return null and check in CallValue to allow for pass expressions
-			throw new CompileTimeException(null, "Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of type [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
 		return found;
 	}
 	
