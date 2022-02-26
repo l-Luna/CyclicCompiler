@@ -39,3 +39,12 @@ tasks.withType<Javadoc>{
     jdOptions.addStringOption("source", JavaVersion.VERSION_17.toString())
     jdOptions.addBooleanOption("-enable-preview", true)
 }
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "cyclic.lang.compiler.Compiler"
+    }
+    configurations["compileClasspath"].forEach { file ->
+        from(zipTree(file.absoluteFile))
+    }
+}
