@@ -144,7 +144,6 @@ public class CallsTests{
 		assertEquals(1 + 2 + 3 + 4, (long)holder.getDeclaredMethod("testSumLong").invoke(null));
 		assertEquals(1 + 2 + 3 + 4, (long)holder.getDeclaredMethod("testSumLongExplicit").invoke(null));
 		assertEquals(3, (int)holder.getDeclaredMethod("testCount").invoke(null));
-		// TODO: this only passes because the string version is first
 		assertEquals(6, (int)holder.getDeclaredMethod("testCountStrings").invoke(null));
 	}
 	
