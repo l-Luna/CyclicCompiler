@@ -170,11 +170,11 @@ public class CyclicType implements TypeReference{
 		superType = TypeResolver.resolve(superTypeName, imports, packageName());
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
-		if(!Utils.visibleFrom(superType, this))
+		if(!Visibility.visibleFrom(superType, this))
 			throw new CompileTimeException(null, "Type " + superType.fullyQualifiedName() + " is not visible here and cannot be extended");
 		
 		var inaccessible = interfaces.stream()
-				.filter(x -> !Utils.visibleFrom(x, this))
+				.filter(x -> !Visibility.visibleFrom(x, this))
 				.map(TypeReference::fullyQualifiedName)
 				.collect(Collectors.joining(", ", "[", "]"));
 		if(!inaccessible.equals("[]"))

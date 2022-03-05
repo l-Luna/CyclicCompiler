@@ -234,7 +234,7 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 * 		The type that is being tested.
 	 * @return Whether an instance of this type is assignable to the target type.
 	 */
-	default boolean isAssignableTo(TypeReference target){
+	default boolean isAssignableTo(@Nullable TypeReference target){
 		if(target == null)
 			return false;
 		

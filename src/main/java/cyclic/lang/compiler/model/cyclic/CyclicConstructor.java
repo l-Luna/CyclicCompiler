@@ -163,7 +163,7 @@ public class CyclicConstructor implements CyclicCallable{
 				}
 			}
 		}else{
-			if(in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
+			if(!isCanonRecordCtor && in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
 				System.out.println(in.superClass().constructors());
 				in.superClass().constructors().forEach(x -> System.out.println(x.parameters().size()));
 				throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");

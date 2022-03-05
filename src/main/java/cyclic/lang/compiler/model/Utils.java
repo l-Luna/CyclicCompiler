@@ -8,6 +8,7 @@ import cyclic.lang.compiler.model.instructions.Variable;
 import cyclic.lang.compiler.model.jdk.JdkTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.resolve.MethodResolver;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -18,7 +19,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Utility methods used within the compiler for parsing ASTs, text, and bitfields.
@@ -176,18 +176,11 @@ public final class Utils{
 	}
 	
 	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall){
-		// reach 0 -> no implicit conversions or varargs
-		// reach 1 -> implicit conversions, no varargs
-		// reach 2 -> varargs, no implicit conversions
-		// reach 3 -> varargs, implicit conversions
-		record Target(MethodReference ref, int reach){}
-		
 		// possible method references are:
 		// - from the value being called on, if present, OR
 		// - static members of the current type in a static method, OR
 		// - static or instance methods of the current type in an instance method, with an implicit this added by CallStatement/CallValue
 		List<MethodReference> candidates = new ArrayList<>();
-		List<Target> targets = new ArrayList<>();
 		if(superCall && on != null)
 			throw new IllegalArgumentException("Can't resolve a super method on a non-this object instance");
 		if(superCall && from.isStatic())
@@ -199,89 +192,26 @@ public final class Utils{
 			var type = from.in();
 			if(superCall)
 				type = type.superClass();
-			candidates.addAll(from.isStatic()
-					? type.methods().stream().filter(MethodReference::isStatic).toList()
-					: type.methods());
+			if(type != null)
+				candidates.addAll(from.isStatic()
+						? type.methods().stream().filter(MethodReference::isStatic).toList()
+						: type.methods());
 		}
-		candidates:
-		for(MethodReference x : candidates){
-			if(!visibleFrom(x, from))
-				continue;
-			if(x.name().equals(name)){
-				List<TypeReference> parameters = x.parameters();
-				int reach;
-				varargs:
-				if(x.isVarargs()){
-					if(args.size() < parameters.size() - 1)
-						break varargs;
-					reach = 2;
-					for(int i = 0; i < args.size(); i++){
-						Value arg = args.get(i);
-						TypeReference checking;
-						if(i + 1 < parameters.size())
-							checking = parameters.get(i);
-						else{
-							checking = parameters.get(parameters.size() - 1);
-							if(checking instanceof ArrayTypeRef arr)
-								checking = arr.getComponent();
-							else
-								break varargs; // invalid varargs method
-						}
-						if(arg.type().isAssignableTo(checking))
-							continue;
-						if(arg.fit(checking) != null){
-							reach = 3;
-							continue;
-						}
-						break varargs;
-					}
-					targets.add(new Target(x, reach));
-				}
-				if(x.parameters().size() != args.size())
-					continue;
-				reach = 0;
-				for(int i = 0; i < parameters.size(); i++){
-					TypeReference pTarget = parameters.get(i);
-					Value arg = args.get(i);
-					if(arg.type() != null && arg.type().isAssignableTo(pTarget))
-						continue;
-					if(arg.fit(pTarget) != null){
-						reach = 1;
-						continue;
-					}
-					continue candidates;
-				}
-				targets.add(new Target(x, reach));
-			}
-		}
-		if(targets.size() == 0)
-			return null;
-		targets.sort(Comparator.comparingInt(Target::reach));
-		var bests = targets.stream()
-				.filter(x -> x.reach() == targets.get(0).reach())
+		
+		candidates = candidates.stream()
+				.filter(x -> Visibility.visibleFrom(x, from))
+				.filter(x -> x.name().equals(name))
 				.toList();
-		if(bests.size() > 1){ // TODO: ????????????????????????????????????????????? specificity
-			var error = "Ambiguous method call \"%s\" on value of type \"%s\" with arguments of types %s: candidates: %s".formatted(name, on != null ? on.type() : "", args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")), bests.stream().map(Target::ref).map(MethodReference::summary).toList());
-			System.err.println(error);
-		}
-		return bests.get(0).ref();
+		
+		return MethodResolver.best(candidates, args);
 	}
 	
 	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, CallableReference from){
-		CallableReference found = null;
-		candidates:
-		for(var x : of.constructors()){
-			if(!visibleFrom(x, from))
-				continue;
-			if(x.parameters().size() != args.size())
-				continue;
-			for(int i = 0; i < x.parameters().size(); i++)
-				if(args.get(i).fit(x.parameters().get(i)) == null)
-					continue candidates;
-			found = x;
-			break;
-		}
-		return found;
+		var candidates = of.constructors().stream()
+				.filter(x->Visibility.visibleFrom(x, from))
+				.toList();
+		
+		return MethodResolver.best(candidates, args);
 	}
 	
 	public static MethodReference resolveSingleMethod(String from, String name, boolean isStatic, String... args){
@@ -361,16 +291,5 @@ public final class Utils{
 				else if(child instanceof ParserRuleContext r)
 					ret.addAll(getAllTokens(r));
 		return ret;
-	}
-	
-	public static boolean visibleFrom(MemberReference member, @NotNull MemberReference from){
-		return switch(member.flags().visibility()){
-			case PUBLIC -> true;
-			case PACKAGE_PRIVATE -> member.in().packageName().equals(from.in().packageName());
-			case PROTECTED -> member.in().packageName().equals(from.in().packageName()) || from.in().isAssignableTo(member.in());
-			// TODO: some sort of nest system?
-			case PRIVATE -> member.in().equals(from.in());
-			case null -> false;
-		};
 	}
 }

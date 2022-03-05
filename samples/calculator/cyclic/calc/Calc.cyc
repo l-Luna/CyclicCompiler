@@ -25,7 +25,7 @@ class Calc{
         if(curToken.toString().trim().length() > 0)
             tokens.add(curToken.toString().trim());
 
-        Expr expr = Parse.parse(tokens);
+        val expr = tokens |> Parse.parse();
         print("= " + expr.eval());
     }
 

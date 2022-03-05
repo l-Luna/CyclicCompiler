@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class CallsTests{
 	
 	@Test
-	void testMethodCalls() throws IllegalAccessException, InvocationTargetException{
+	void testMethodCalls() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
 		assertEquals(5, compileSingleMethod("""
@@ -46,6 +46,29 @@ public class CallsTests{
 					static String test() -> new String("abcde".toCharArray());
 				}
 				""", lookup).invoke(null));
+		
+		var conflicted = compileClass("""
+				package cyclic.lang.compiler.samples;
+				import java.util.*;
+				class Holder{
+					static int len(Object x) -> -1;
+					static int len(String s) -> s.length();
+					static int len(CharSequence x) -> x.length() * 3;
+					
+					static List test() -> List.of(len(new Object()), len("abcd"), len(new StringBuilder("abcd")));
+					
+					static int lenNull(Object x) -> -1;
+					static int lenNull(String s) -> -2;
+					
+					static int test2() -> lenNull(null);
+				}
+				""", lookup);
+		
+		assertEquals(List.of(-1, 4, 12),
+				conflicted.getDeclaredMethod("test").invoke(null));
+		
+		assertEquals(-2,
+				conflicted.getDeclaredMethod("test2").invoke(null));
 	}
 	
 	@Test
@@ -102,8 +125,8 @@ public class CallsTests{
 							total += p;
 						return total;
 					}
-					static int count(String... in) -> in.length * 2;
 					static int count(Object... in) -> in.length;
+					static int count(String... in) -> in.length * 2;
 					
 					static int testNoSum() -> sumInt();
 					static int testSumInt() -> sumInt(1, 2, 3, 4);
@@ -158,5 +181,17 @@ public class CallsTests{
 					static List test() -> 2 |> (1 |> (0 |> List.of()));
 				}
 				""", lookup).invoke(null));
+		
+		assertEquals("abcde", compileSingleMethod("""
+				package cyclic.lang.compiler.samples;
+				class Holder{
+					static String test(String[] x){
+						var b = new StringBuilder();
+						for(String s : x)
+							b = s |> b.append();
+						return b.toString();
+					}
+				}
+				""", lookup).invoke(null, (Object)new String[]{"a", "b", "c", "d", "e"}));
 	}
 }

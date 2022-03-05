@@ -115,7 +115,7 @@ public abstract class Value{
 			case CyclicLangParser.ClassValueContext clss -> {
 				// TODO: generics
 				TypeReference target = TypeResolver.resolve(clss.id().getText(), type.imports, type.packageName());
-				if(!Utils.visibleFrom(target, method != null ? method : type))
+				if(!Visibility.visibleFrom(target, method != null ? method : type))
 					throw new CompileTimeException("Target type is not accessible from here");
 				yield new ClassValue(target);
 			}
@@ -429,7 +429,7 @@ public abstract class Value{
 			this.from = from;
 			ref = from.type().fields().stream()
 					.filter(x -> x.name().equals(fieldName))
-					.filter(x -> Utils.visibleFrom(x, method == null ? mIn : method))
+					.filter(x -> Visibility.visibleFrom(x, method == null ? mIn : method))
 					.findFirst()
 					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
 		}

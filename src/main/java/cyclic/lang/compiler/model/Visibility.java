@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.model;
 
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 
 /**
@@ -20,5 +21,16 @@ public enum Visibility{
 	
 	Visibility(int modifier){
 		this.modifier = modifier;
+	}
+	
+	public static boolean visibleFrom(MemberReference member, @NotNull MemberReference from){
+		return switch(member.flags().visibility()){
+			case PUBLIC -> true;
+			case PACKAGE_PRIVATE -> member.in().packageName().equals(from.in().packageName());
+			case PROTECTED -> member.in().packageName().equals(from.in().packageName()) || from.in().isAssignableTo(member.in());
+			// TODO: some sort of nest system?
+			case PRIVATE -> member.in().equals(from.in());
+			case null -> false;
+		};
 	}
 }

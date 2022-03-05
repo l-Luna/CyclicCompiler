@@ -18,9 +18,9 @@ public class JdkTypeRef implements TypeReference{
 	
 	public JdkTypeRef(Class<?> underlying){
 		this.underlying = underlying;
-		fields = Arrays.stream(underlying.getDeclaredFields()).map(k -> new JdkFieldRef(k, this)).collect(Collectors.toList());
-		methods = Arrays.stream(underlying.getDeclaredMethods()).map(JdkMethodRef::new).collect(Collectors.toList());
-		ctors = Arrays.stream(underlying.getDeclaredConstructors()).map(JdkCtorRef::new).collect(Collectors.toList());
+		fields = Arrays.stream(underlying.getFields()).map(k -> new JdkFieldRef(k, this)).collect(Collectors.toList());
+		methods = Arrays.stream(underlying.getMethods()).map(JdkMethodRef::new).collect(Collectors.toList());
+		ctors = Arrays.stream(underlying.getConstructors()).map(JdkCtorRef::new).collect(Collectors.toList());
 		if(underlying.isRecord())
 			components = Arrays.stream(underlying.getRecordComponents()).map(JdkRecordComponentRef::new).collect(Collectors.toList());
 		else components = List.of();
