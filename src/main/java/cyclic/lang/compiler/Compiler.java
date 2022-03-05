@@ -69,6 +69,7 @@ public final class Compiler{
 			project.outputPath = Path.of(args[1]);
 			if(args.length >= 3)
 				includeDebugInfo = Boolean.parseBoolean(args[2]);
+			project.include_cyclic_lib_refs = false;
 		}
 		
 		project.validate();
