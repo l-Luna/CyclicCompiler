@@ -124,7 +124,12 @@ public abstract class Value{
 				yield inst.EXCLAMATION() == null ? check : new Operations.BranchBoolBinaryOpValue(Opcodes.IFEQ, check, null);
 			}
 			case CyclicLangParser.CastValueContext castCtx -> {
+				String typeName = TypeResolver.getBaseName(castCtx.cast().type());
+				if(typeName.equals("var") || typeName.equals("val"))
+					throw new CompileTimeException("Cannot infer type of cast");
 				TypeReference target = TypeResolver.resolve(castCtx.cast().type(), type.imports, type.packageName());
+				if(!Visibility.visibleFrom(target, method != null ? method : type))
+					throw new CompileTimeException("Target of cast is not visible here");
 				Value casting = fromAst(castCtx.cast().value(), scope, type, method);
 				// if it fits, just pass it along
 				var fit = casting.fit(target);

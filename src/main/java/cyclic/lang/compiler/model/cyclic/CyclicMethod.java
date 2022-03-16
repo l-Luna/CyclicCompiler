@@ -81,6 +81,9 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 			paramNames.add(p.idPart().getText());
 			paramsAnnotationNames.add(Utils.getAnnotations(p.type()));
 			isVargs = p.ELIPSES() != null; // only the last assignment stays
+			var pTypeName = TypeResolver.getBaseName(p.type());
+			if(pTypeName.equals("var") || pTypeName.equals("val"))
+				throw new CompileTimeException(p, "Parameter types may not be inferred");
 		}
 		
 		Utils.checkDuplicates(parameterNames(), "parameter name in method " + name);
@@ -93,6 +96,10 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		
 		if(isA && (arrowStatement != null || arrowVal != null || blockStatement != null))
 			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");
+		
+		var typeName = TypeResolver.getBaseName(ctx.type());
+		if(typeName.equals("var") || typeName.equals("val"))
+			throw new CompileTimeException("Method types may not be inferred");
 	}
 	
 	public CyclicMethod(CyclicType in, String name, AccessFlags flags, TypeReference returns, List<TypeReference> parameters){
@@ -112,6 +119,14 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		parameters = paramTypeNames.stream()
 				.map(x -> TypeResolver.resolve(x, imports, in.packageName()))
 				.collect(Collectors.toList());
+		
+		if(!Visibility.visibleFrom(returns, this))
+			throw new CompileTimeException(retType, "Field type not visible here");
+		for(int i = 0; i < parameters.size(); i++){
+			TypeReference param = parameters.get(i);
+			if(!Visibility.visibleFrom(param, this))
+				throw new CompileTimeException(paramTypeNames.get(i), "Method parameter type not visible here");
+		}
 		
 		if(isVarargs())
 			parameters.set(parameters.size() - 1, new ArrayTypeRef(parameters.get(parameters.size() - 1)));

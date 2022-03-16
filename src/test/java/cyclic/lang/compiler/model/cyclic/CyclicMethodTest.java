@@ -23,6 +23,11 @@ class CyclicMethodTest{
 	
 	@Test
 	void testSignatureValidation(){
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ var V(){} }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ val V(){} }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(var x){} }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(val x){} }"));
+		
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(int x, int x){} }"));
 		
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ int I(){} }"));
@@ -40,5 +45,13 @@ class CyclicMethodTest{
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ int I(boolean b){ if(b) return 1; } }"));
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ int I(int i){ for(int t = 0; t < i; t += 1;) return 1; } }"));
 		assertDoesNotThrow(() -> Compiler.compileString("class T{ int I(boolean b){ if(b) return 1; return 2; } }"));
+	}
+	
+	@Test
+	void testVisibilityChecks(){
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(){ StringLatin1 sl; } }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(StringLatin1 sl){} }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(){ Object o = (StringLatin1)null; } }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(){ Class o = StringLatin1.class; } }"));
 	}
 }

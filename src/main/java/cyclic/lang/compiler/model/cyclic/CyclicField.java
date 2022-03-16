@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
@@ -13,8 +14,9 @@ public class CyclicField implements FieldReference, CyclicMember{
 	AccessFlags flags;
 	boolean isS, isV;
 	
-	String typeName;
+	CyclicLangParser.TypeContext typeName;
 	CyclicLangParser.ValueContext defaultVal;
+	CyclicLangParser.TypeContext typeCtx;
 	
 	TypeReference type;
 	
@@ -44,12 +46,22 @@ public class CyclicField implements FieldReference, CyclicMember{
 			flags = new AccessFlags(Visibility.PUBLIC, false, true);
 		}
 		
-		typeName = TypeResolver.getBaseName(ctx.type());
+		typeName = ctx.type();
+		typeCtx = ctx.type();
 		defaultVal = ctx.value();
 	}
 	
 	public void resolve(){
+		var typeText = TypeResolver.getBaseName(typeName).strip();
+		if(typeText.equals("var") || typeText.equals("val"))
+			throw new CompileTimeException(typeCtx, "Field types may not be inferred");
+		if(typeText.equals("void"))
+			throw new CompileTimeException(typeCtx, "Fields may not be void");
+		
 		type = TypeResolver.resolve(typeName, in.imports, in.packageName());
+		
+		if(!Visibility.visibleFrom(type, this))
+			throw new CompileTimeException(typeCtx, "Field type not visible here");
 	}
 	
 	public TypeReference in(){

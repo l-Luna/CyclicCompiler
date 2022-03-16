@@ -70,7 +70,10 @@ public abstract class Statement{
 			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, callable) : null;
 			if(infer && initial == null)
 				throw new CompileTimeException("Can't infer the type of a variable without an initial value.");
-			result = new VarStatement(in, ctx.varDecl().idPart().getText(), infer ? initial.type() : TypeResolver.resolve(ctx.varDecl().type(), imports, type.packageName()), initial, true, isFinal, callable);
+			TypeReference target = infer ? initial.type() : TypeResolver.resolve(ctx.varDecl().type(), imports, type.packageName());
+			if(!Visibility.visibleFrom(target, callable))
+				throw new CompileTimeException("Variable type not visible here");
+			result = new VarStatement(in, ctx.varDecl().idPart().getText(), target, initial, true, isFinal, callable);
 		}else if(ctx.varAssignment() != null){
 			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, callable);
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, callable);
