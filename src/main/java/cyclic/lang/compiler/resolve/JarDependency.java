@@ -34,6 +34,8 @@ public class JarDependency implements Dependency{
 				.filter(x -> x.length > 4 && (x[0] == (byte)0xCA && x[1] == (byte)0xFE && x[2] == (byte)0xBA && x[3] == (byte)0xBE))
 				.map(ClassfileTypeRef::new)
 				.collect(Collectors.toMap(TypeReference::fullyQualifiedName, Function.identity()));
+		
+		underlying.close();
 	}
 	
 	public void resolve(){
@@ -43,9 +45,5 @@ public class JarDependency implements Dependency{
 	
 	public Optional<TypeReference> find(String fullyQualifiedName){
 		return Optional.ofNullable(loaded.get(fullyQualifiedName));
-	}
-	
-	public void close() throws IOException{
-		underlying.close();
 	}
 }
