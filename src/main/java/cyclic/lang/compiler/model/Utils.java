@@ -19,6 +19,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Utility methods used within the compiler for parsing ASTs, text, and bitfields.
@@ -41,11 +42,16 @@ public final class Utils{
 	}
 	
 	public static <T> void checkDuplicates(List<T> in, String label){
-		Set<T> checked = new HashSet<>(in.size());
+		checkDuplicates(in, label, Object::toString, Object::toString);
+	}
+	
+	public static <T> void checkDuplicates(List<T> in, String label, Function<T, String> namer, Function<T, String> prettier){
+		Set<String> checked = new HashSet<>(in.size());
 		for(T t : in){
-			if(checked.contains(t))
-				throw new CompileTimeException(null, "Duplicate " + label + " \"" + t + "\"");
-			checked.add(t);
+			var name = namer.apply(t);
+			if(checked.contains(name))
+				throw new CompileTimeException(null, "Duplicate " + label + " \"" + prettier.apply(t) + "\"");
+			checked.add(name);
 		}
 	}
 	

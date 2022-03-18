@@ -23,7 +23,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	CyclicType in;
 	AccessFlags flags;
 	List<String> paramNames = new ArrayList<>();
-	boolean isN = false, isSyn = false, isSt = false, isVargs = false;
+	public boolean isN = false, isSyn = false, isSt = false, isVarargs = false;
 	
 	CyclicLangParser.TypeContext retType;
 	List<CyclicLangParser.TypeContext> paramTypeNames = new ArrayList<>();
@@ -31,6 +31,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	CyclicLangParser.BlockContext blockStatement;
 	CyclicLangParser.ValueContext arrowVal;
 	CyclicLangParser.StatementContext arrowStatement;
+	CyclicLangParser.FunctionContext text;
 	
 	TypeReference returns;
 	List<TypeReference> parameters;
@@ -47,6 +48,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	
 	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in, boolean abstractByDefault){
 		name = ctx.idPart().getText();
+		text = ctx;
 		this.in = in;
 		this.unresolvedAnnotations = ctx.annotation();
 		this.unresolvedTypeAnnotations = ctx.type().annotation();
@@ -80,7 +82,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 			paramTypeNames.add(p.type());
 			paramNames.add(p.idPart().getText());
 			paramsAnnotationNames.add(Utils.getAnnotations(p.type()));
-			isVargs = p.ELIPSES() != null; // only the last assignment stays
+			isVarargs = p.ELIPSES() != null; // only the last assignment stays
 			var pTypeName = TypeResolver.getBaseName(p.type());
 			if(pTypeName.equals("var") || pTypeName.equals("val"))
 				throw new CompileTimeException(p, "Parameter types may not be inferred");
@@ -194,7 +196,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	}
 	
 	public boolean isVarargs(){
-		return isVargs;
+		return isVarargs;
 	}
 	
 	public Object defaultValueForAnnotation(){

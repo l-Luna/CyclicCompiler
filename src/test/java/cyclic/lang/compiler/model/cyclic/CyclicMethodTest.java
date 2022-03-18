@@ -49,4 +49,10 @@ class CyclicMethodTest{
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(){ Object o = (StringLatin1)null; } }"));
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(){ Class o = StringLatin1.class; } }"));
 	}
+	
+	@Test
+	void testAllowed(){
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("record T(int i){ double i() -> 0.0; }"));
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum T{ static T valueOf(String s) -> null; }"));
+	}
 }

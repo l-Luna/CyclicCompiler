@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.cyclic;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.gen.EnumMethods;
 import cyclic.lang.compiler.gen.RecordMethods;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
@@ -250,6 +251,9 @@ public class CyclicType implements TypeReference{
 				if(explicitAccessor.isPresent())
 					accessor = explicitAccessor.get();
 				else{
+					Optional<CyclicMethod> fake = methods.stream().filter(x -> x.name.equals(name) && x.parameters.size() == 0).findFirst();
+					if(fake.isPresent())
+						throw new CompileTimeException(fake.get().text, "Record accessor must have type " + type.fullyQualifiedName());
 					accessor.body = new Statement.ReturnStatement(new Value.FieldValue(field), accessor.methodScope, type, accessor);
 					members.add(accessor);
 					methods.add(accessor);
@@ -263,6 +267,9 @@ public class CyclicType implements TypeReference{
 			addMember(RecordMethods.genToString(this));
 			addMember(RecordMethods.genHashCode(this));
 			addMember(RecordMethods.genCtor(this));
+		}
+		if(kind() == TypeKind.ENUM){
+			addMember(EnumMethods.genValueOf(this));
 		}
 	}
 	
@@ -291,10 +298,10 @@ public class CyclicType implements TypeReference{
 				throw new CompileTimeException(null, "Cannot implement non-interface type " + i.fullyQualifiedName());
 		
 		// don't include generated record ctors, since those are prepended to the explicit method if present
-		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).map(CyclicConstructor::summary).toList(), "constructor");
+		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).toList(), "constructor", CallableReference::descriptor, CallableReference::summary);
 		Utils.checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
 		Utils.checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
-		Utils.checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");
+		Utils.checkDuplicates(methods, "method", MethodReference::nameAndDescriptor, MethodReference::summary);
 		
 		for(CyclicMethod method : methods)
 			if(method.flags().isAbstract() && !flags().isAbstract())

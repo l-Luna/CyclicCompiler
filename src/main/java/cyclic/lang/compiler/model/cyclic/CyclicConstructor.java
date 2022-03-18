@@ -92,10 +92,10 @@ public class CyclicConstructor implements CyclicCallable{
 	
 	public void resolve(){
 		if(!isStatic() && in().kind() == TypeKind.ENUM){
-			parameters.add(PlatformDependency.INT);
-			paramNames.add("~enumOrdinal");
-			parameters.add(Utils.forAnyClass(String.class));
-			paramNames.add("~enumName");
+			parameters.add(0, PlatformDependency.INT);
+			paramNames.add(0, "~enumOrdinal");
+			parameters.add(1, Utils.forAnyClass(String.class));
+			paramNames.add(1, "~enumName");
 		}
 		
 		parameters.addAll(paramTypeNames.stream()
