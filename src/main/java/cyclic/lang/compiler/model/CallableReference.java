@@ -48,6 +48,19 @@ public interface CallableReference extends AnnotatableElement, MemberReference{
 	 */
 	boolean isVarargs();
 	
+	/**
+	 * Returns a string summarizing this callable's signature in a human-readable form for error messages.
+	 * such as {@code "new String(String)"}.
+	 * <p>The return value of this method should not be parsed and can change at any time.
+	 */
+	default String summary(){
+		// TODO: consider cases where multiple types have the same short name
+		//  and use summarized package names (e.g. j.u.List vs j.a.List) when that occurs
+		// TODO: exclude synthetic parameters
+		return "new %s(%s)".formatted(in().shortName(),
+				parameters().stream().map(TypeReference::shortName).collect(Collectors.joining(", ")));
+	}
+	
 	default String elementType(){
 		return ElementType.CONSTRUCTOR.name();
 	}

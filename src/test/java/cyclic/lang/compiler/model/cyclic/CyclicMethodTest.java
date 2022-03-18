@@ -23,11 +23,6 @@ class CyclicMethodTest{
 	
 	@Test
 	void testSignatureValidation(){
-		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ var V(){} }"));
-		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ val V(){} }"));
-		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(var x){} }"));
-		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(val x){} }"));
-		
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ void V(int x, int x){} }"));
 		
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ int I(){} }"));

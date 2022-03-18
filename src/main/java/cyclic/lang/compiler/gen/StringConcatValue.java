@@ -67,6 +67,8 @@ public final class StringConcatValue extends Value{
 	}
 	
 	public void simplify(Statement in){
+		if(simplified)
+			return;
 		// walk down initialLeft and initialRight and flatten all StringConcatValues
 		components = collect(this);
 		components.forEach(value -> value.simplify(in));

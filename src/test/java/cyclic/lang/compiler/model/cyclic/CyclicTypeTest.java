@@ -34,7 +34,16 @@ class CyclicTypeTest{
 				
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T(Object component);")),
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("record T(Object component) { Object field; }")),
-				() -> assertDoesNotThrow(() -> Compiler.compileString("record T(Object component) { static Object template; Object component() -> component; }"))
+				() -> assertDoesNotThrow(() -> Compiler.compileString("record T(Object component) { static Object template; Object component() -> component; }")),
+				
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class E{ val A; val B; val C; }")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class E{ int A(3); }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum E{ val A; val B; val C; }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum E{ val A(); }")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum E{ val A; static E X = new E(); }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("enum E{ val A(3); E(int i){  } }")),
+				
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ U(); }"))
 		);
 	}
 	
@@ -56,14 +65,9 @@ class CyclicTypeTest{
 				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T extends Object;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T extends Enum;")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("enum T implements java.io.Serializable;")),
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum T extends F { class F; }"))
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum T extends F { class F; }")),
 				
-				//() -> assertDoesNotThrow(() -> Compiler.compileString("record T extends Object;"))
+				() -> assertDoesNotThrow(() -> Compiler.compileString("record T extends Object;"))
 		);
-	}
-	
-	@Test
-	void testInheritanceValidation(){
-	
 	}
 }

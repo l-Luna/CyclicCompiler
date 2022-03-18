@@ -98,7 +98,11 @@ public abstract class Value{
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
-				yield new InitializationValue(args, Utils.resolveConstructor(of, args, method), of, method);
+				CallableReference target = Utils.resolveConstructor(of, args, method);
+				if(target != null && target.in().kind() == TypeKind.ENUM)
+					// pass expressions won't save you here, safe to eagerly throw
+					throw new CompileTimeException("Can't manually call enum constructors");
+				yield new InitializationValue(args, target, of, method);
 			}
 			case CyclicLangParser.BinaryOpValueContext bin -> {
 				Value left = Value.fromAst(bin.left, scope, type, method);
@@ -689,8 +693,11 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
-			if(ctor == null)
-				throw new CompileTimeException(text, "Could not find constructor for type " + of.fullyQualifiedName() + " given candidates [" + of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", ")) + "] for args of types [" + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ")) + "]");
+			if(ctor == null){
+				String candidates = of.constructors().stream().map(CallableReference::summary).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", "));
+				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
+			}
 			args.forEach(value -> value.simplify(in));
 		}
 		

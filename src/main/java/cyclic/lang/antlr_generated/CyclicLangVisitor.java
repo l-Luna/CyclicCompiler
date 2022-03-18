@@ -160,6 +160,12 @@ public interface CyclicLangVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAnnotationArg(CyclicLangParser.AnnotationArgContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link CyclicLangParser#typeOrInferred}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypeOrInferred(CyclicLangParser.TypeOrInferredContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link CyclicLangParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

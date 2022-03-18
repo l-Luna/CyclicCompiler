@@ -65,7 +65,7 @@ public final class CyclicMethodWriter{
 	public static void writeCtor(MethodVisitor mv, CyclicConstructor ctor){
 		if(Compiler.includeDebugInfo && (!ctor.isCanonRecordCtor || ctor.isGeneratedRecordCtor))
 			for(String paramName : ctor.parameterNames())
-				mv.visitParameter(paramName, 0);
+				mv.visitParameter(paramName, paramName.startsWith("~") ? Opcodes.ACC_SYNTHETIC : 0);
 		
 		mv.visitCode();
 		if(ctor.body != null){

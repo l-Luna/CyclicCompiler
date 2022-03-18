@@ -104,12 +104,24 @@ public class CyclicType implements TypeReference{
 		methodsAndInherited.addAll(methods);
 		fieldsAndInherited.addAll(fields);
 		
-		// implicit constructor if none is present - ensures that init blocks and static field inits are written
+		// implicit constructor if none is present, ensures that init blocks are written
 		if(constructors.size() == 0 && kind() != TypeKind.INTERFACE && kind() != TypeKind.ANNOTATION && kind() != TypeKind.RECORD)
-			constructors.add(new CyclicConstructor(false, this));
+			addMember(new CyclicConstructor(false, this));
 		
-		if(initBlocks.stream().noneMatch(k -> k.isS))
-			initBlocks.add(new CyclicConstructor(true, this));
+		// ensure static field inits are written
+		if(initBlocks.stream().noneMatch(k -> k.isS)){
+			CyclicConstructor st = new CyclicConstructor(true, this);
+			st.isInitBlock = true;
+			initBlocks.add(st);
+			members.add(st);
+		}
+		
+		if(kind() == TypeKind.ENUM)
+			for(var constructor : constructors){
+				if(constructor.flags.visibility() == Visibility.PUBLIC || constructor.flags.visibility() == Visibility.PROTECTED)
+					throw new CompileTimeException(constructor.text, "Enum constructors must declared as private or package-private");
+				constructor.flags = new AccessFlags(Visibility.PRIVATE, false, false);
+			}
 	}
 	
 	public String shortName(){
@@ -279,7 +291,7 @@ public class CyclicType implements TypeReference{
 				throw new CompileTimeException(null, "Cannot implement non-interface type " + i.fullyQualifiedName());
 		
 		// don't include generated record ctors, since those are prepended to the explicit method if present
-		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).map(CyclicConstructor::descriptor).toList(), "constructor with descriptor");
+		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).map(CyclicConstructor::summary).toList(), "constructor");
 		Utils.checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
 		Utils.checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
 		Utils.checkDuplicates(methods.stream().map(CyclicMethod::nameAndDescriptor).toList(), "method");

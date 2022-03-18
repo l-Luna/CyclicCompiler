@@ -64,16 +64,19 @@ public abstract class Statement{
 			statement.contains = ctx.block().statement().stream().map(k -> fromAst(k, statement.blockScope, type, callable)).collect(Collectors.toList());
 			result = statement;
 		}else if(ctx.varDecl() != null){
-			String typeName = ctx.varDecl().type().getText();
-			boolean isFinal = ctx.varDecl().modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || typeName.equals("val");
+			CyclicLangParser.VarDeclContext decl = ctx.varDecl();
+			if(decl.arguments() != null)
+				throw new CompileTimeException("Arguments not allowed here");
+			String typeName = decl.typeOrInferred().getText();
+			boolean isFinal = decl.modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || typeName.equals("val");
 			boolean infer = typeName.equals("var") || typeName.equals("val");
-			Value initial = ctx.varDecl().value() != null ? Value.fromAst(ctx.varDecl().value(), in, type, callable) : null;
+			Value initial = decl.value() != null ? Value.fromAst(decl.value(), in, type, callable) : null;
 			if(infer && initial == null)
 				throw new CompileTimeException("Can't infer the type of a variable without an initial value.");
-			TypeReference target = infer ? initial.type() : TypeResolver.resolve(ctx.varDecl().type(), imports, type.packageName());
+			TypeReference target = infer ? initial.type() : TypeResolver.resolve(decl.typeOrInferred().type(), imports, type.packageName());
 			if(!Visibility.visibleFrom(target, callable))
 				throw new CompileTimeException("Variable type not visible here");
-			result = new VarStatement(in, ctx.varDecl().idPart().getText(), target, initial, true, isFinal, callable);
+			result = new VarStatement(in, decl.idPart().getText(), target, initial, true, isFinal, callable);
 		}else if(ctx.varAssignment() != null){
 			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, callable);
 			Value right = Value.fromAst(ctx.varAssignment().value(1), in, type, callable);
@@ -84,7 +87,8 @@ public abstract class Statement{
 			Value on = ctx.value() != null ? Value.fromAst(ctx.value(), in, type, callable) : null;
 			boolean isSuperCall = ctx.SUPER() != null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
-			result = new CallStatement(in, on, Utils.resolveMethod(ctx.call().idPart().getText(), on, args, callable, isSuperCall), args, isSuperCall, callable);
+			String name = ctx.call().idPart().getText();
+			result = new CallStatement(in, on, name, Utils.resolveMethod(name, on, args, callable, isSuperCall), args, isSuperCall, callable);
 		}else if(ctx.ifStatement() != null){
 			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
@@ -158,7 +162,8 @@ public abstract class Statement{
 			List<Value> args = ctx.ctorCall().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
 			boolean isSuperCall = ctx.ctorCall().SUPER() != null;
 			var t = callable.in();
-			result = new CtorCallStatement(in, Utils.resolveConstructor(isSuperCall ? t.superClass() : t, args, callable), args, callable);
+			TypeReference of = isSuperCall ? t.superClass() : t;
+			result = new CtorCallStatement(in, of, Utils.resolveConstructor(of, args, callable), args, callable);
 		}else if(ctx.varIncrement() != null){
 			Value toAssign = Value.fromAst(ctx.varIncrement().value(), in, type, callable);
 			String symbol = ctx.varIncrement().PLUSPLUS() != null ? "++" : "--";
@@ -297,6 +302,7 @@ public abstract class Statement{
 			this.value = value;
 		}
 		
+		// used by ForEachStyle
 		public VarStatement(Scope in, Variable v, Value value, CyclicCallable from){
 			super(in, from);
 			this.v = v;
@@ -327,7 +333,9 @@ public abstract class Statement{
 		List<Value> args;
 		MethodReference target;
 		boolean isSuperCall; // to use invokespecial instead
+		String name;
 		
+		// used by ForEachStyle
 		public CallStatement(Scope in, Value on, MethodReference target, List<Value> args, CyclicCallable from){
 			super(in, from);
 			this.on = on;
@@ -335,12 +343,13 @@ public abstract class Statement{
 			this.args = args;
 		}
 		
-		public CallStatement(Scope in, Value on, MethodReference target, List<Value> args, boolean isSuperCall, CyclicCallable from){
+		public CallStatement(Scope in, Value on, String name, MethodReference target, List<Value> args, boolean isSuperCall, CyclicCallable from){
 			super(in, from);
 			this.on = on;
 			this.args = args;
 			this.target = target;
 			this.isSuperCall = isSuperCall;
+			this.name = name;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -364,6 +373,8 @@ public abstract class Statement{
 		}
 		
 		public void simplify(){
+			if(target == null)
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(this);
 			args.forEach(value -> value.simplify(this));
@@ -373,11 +384,13 @@ public abstract class Statement{
 	public static class CtorCallStatement extends Statement{
 		public CallableReference target;
 		List<Value> args;
+		TypeReference of;
 		
-		public CtorCallStatement(Scope in, CallableReference target, List<Value> args, CyclicCallable from){
+		public CtorCallStatement(Scope in, TypeReference of, CallableReference target, List<Value> args, CyclicCallable from){
 			super(in, from);
 			this.target = target;
 			this.args = args;
+			this.of = of;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -391,6 +404,11 @@ public abstract class Statement{
 		}
 		
 		public void simplify(){
+			if(target == null){
+				String candidates = of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", "));
+				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
+			}
 			args.forEach(value -> value.simplify(this));
 		}
 	}

@@ -91,8 +91,12 @@ public interface MethodReference extends CallableReference{
 	 * <p>The return value of this method should not be parsed and can change at any time.
 	 */
 	default String summary(){
-		// TODO: consider cases where multiple types have the same short name, and use summarized package names (e.g. j.u.List vs j.a.List) when that occurs
-		return "%s %s(%s)".formatted(returns().shortName(), name(), parameters().stream().map(TypeReference::shortName).collect(Collectors.joining(", ")));
+		// TODO: consider cases where multiple types have the same short name
+		//  and use summarized package names (e.g. j.u.List vs j.a.List) when that occurs
+		return "%s %s(%s)".formatted(
+				returns().shortName(),
+				name(),
+				parameters().stream().map(TypeReference::shortName).collect(Collectors.joining(", ")));
 	}
 	
 	/**

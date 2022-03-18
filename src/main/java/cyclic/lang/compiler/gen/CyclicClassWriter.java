@@ -49,9 +49,14 @@ public final class CyclicClassWriter{
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
 			
 			// implicit "super();" if not present in text
-			if(!cyc.hasExplicitCtorCall()){
+			if(cyc.explicitCtorCall().isEmpty()){
+				boolean isEnum = type.kind() == TypeKind.ENUM;
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
-				mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", "()V", false);
+				if(isEnum){
+					mv.visitVarInsn(Opcodes.ILOAD, 1);
+					mv.visitVarInsn(Opcodes.ALOAD, 2);
+				}
+				mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", isEnum ? "(ILjava/lang/String;)V" : "()V", false);
 			}
 			
 			for(var init : type.initBlocks) // init blocks go first so that field values can be setup for use
@@ -158,7 +163,8 @@ public final class CyclicClassWriter{
 	public static int getFieldAccessFlags(FieldReference field){
 		return getAccessFlags(field.flags()) |
 				(field.isVolatile() ? Opcodes.ACC_VOLATILE : 0) |
-				(field.isStatic() ? Opcodes.ACC_STATIC : 0);
+				(field.isStatic() ? Opcodes.ACC_STATIC : 0) |
+				(field.isEnumDefinition() ? Opcodes.ACC_ENUM : 0);
 	}
 	
 	public static int getAccessFlags(AccessFlags flags){

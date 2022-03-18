@@ -14,7 +14,7 @@ objectImplements: IMPLEMENTS type (COMMA type)*;
 objectPermits: PERMITS type (COMMA type)*;
 
 genericTypeDefs: LESSER genericTypeDef (COMMA genericTypeDef)* GREATER;
-genericTypeDef: (IN | OUT)? CLASS? type (EXTENDS type)?;
+genericTypeDef: (IN | OUT)? CLASS? idPart (EXTENDS type)?;
 
 objectType
     : CLASS
@@ -37,7 +37,7 @@ member
     | SEMICOLON
     ;
 
-constructor: annotation* modifiers type LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
+constructor: annotation* modifiers idPart LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
 init: STATIC? block;
 
 function: annotation* modifiers genericTypeDefs? type idPart LPAREN parameters RPAREN (functionBlock | functionArrow);
@@ -45,7 +45,7 @@ function: annotation* modifiers genericTypeDefs? type idPart LPAREN parameters R
 functionBlock: (block | SEMICOLON);
 functionArrow: DASHARROW (value SEMICOLON | statement);
 
-varDecl: annotation* modifiers type idPart (ASSIGN value)?;
+varDecl: annotation* modifiers typeOrInferred idPart (ASSIGN value | LPAREN arguments RPAREN)?;
 parameter: FINAL? type ELIPSES? idPart (ASSIGN value)?;
 parameters: (parameter (COMMA parameter)*)?;
 
@@ -75,9 +75,10 @@ statement
 annotation: AT id (LPAREN (annotationArg (COMMA annotationArg)* | value)? RPAREN)?;
 annotationArg: idPart ASSIGN value;
 
+typeOrInferred: type | inferType;
+
 type
     : annotation* rawType (genericTypeUses)?
-    // e.g. @NonNull Integer @Nullable [] for a nullable array of nonnull integers
     | type annotation* LSQUAR RSQUAR
     ;
 
@@ -86,7 +87,6 @@ genericTypeUse: (QUESTION (EXTENDS | SUPER))? type;
 
 rawType
     : primitiveType
-    | inferType
     | id
     ;
 

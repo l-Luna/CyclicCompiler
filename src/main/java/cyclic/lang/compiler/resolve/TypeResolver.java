@@ -148,7 +148,12 @@ public final class TypeResolver{
 	public static String getBaseName(CyclicLangParser.TypeContext name){
 		if(name.LSQUAR() != null)
 			return getBaseName(name.type()) + "[]";
-		else
-			return name.rawType().getText();
+		return name.rawType().getText();
+	}
+	
+	public static String getBaseName(CyclicLangParser.TypeOrInferredContext name){
+		if(name.inferType() != null)
+			return name.inferType().getText();
+		return getBaseName(name.type());
 	}
 }
