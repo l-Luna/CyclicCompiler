@@ -3,7 +3,7 @@ package cyclic.lang.compiler.model.cyclic;
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
-import cyclic.lang.compiler.gen.EnumMethods;
+import cyclic.lang.compiler.gen.EnumMembers;
 import cyclic.lang.compiler.gen.RecordMethods;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
@@ -47,6 +47,7 @@ public class CyclicType implements TypeReference{
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
 	public List<String> imports;
+	public int enumConstIdx = 0;
 	
 	public CyclicType(CyclicLangParser.ClassDeclContext ast, String packageName, List<String> imports){
 		this.name = ast.idPart().getText();
@@ -269,7 +270,9 @@ public class CyclicType implements TypeReference{
 			addMember(RecordMethods.genCtor(this));
 		}
 		if(kind() == TypeKind.ENUM){
-			addMember(EnumMethods.genValueOf(this));
+			addMember(EnumMembers.genValuesField(this));
+			addMember(EnumMembers.genValues(this));
+			addMember(EnumMembers.genValueOf(this));
 		}
 	}
 	

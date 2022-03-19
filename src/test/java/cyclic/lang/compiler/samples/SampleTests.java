@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class SampleTests{
 	
@@ -311,9 +312,36 @@ public class SampleTests{
 					@Deprecated(since = "3", forRemoval = false)
 					@SuppressWarnings(new String[] {"unchecked"})
 					@Retention(RetentionPolicy.RUNTIME)
-					static void test() -> System.out.println("Hello from Cyclic! (1/2)");
+					static void test() -> System.out.println("Hello from Cyclic! (Annotations)");
 				}
 				""");
+	}
+	
+	@Test
+	void testGeneratedMethods() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException{
+		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
+		// Must use `defineClass` instead of normal hidden classes to avoid NoClassDefFoundError
+		Class<?> holderEnum = lookup.defineClass(Compiler.compileSingleClass("""
+				package cyclic.lang.compiler.samples;
+				enum EnumHolder0{
+					val A; val B; val C;
+				}
+				"""));
+		var values = (Object[])holderEnum.getDeclaredMethod("values").invoke(null);
+		Assertions.assertEquals(values.length, 3);
+		var moreValues = (Object[])holderEnum.getDeclaredMethod("values").invoke(null);
+		Assertions.assertNotEquals(values, moreValues);
+		Method valOfMethod = holderEnum.getDeclaredMethod("valueOf", String.class);
+		var valA = valOfMethod.invoke(null, "A");
+		Assertions.assertNotNull(valA);
+		Assertions.assertTrue(Arrays.asList(values).contains(valA));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> {
+			try{
+				valOfMethod.invoke(null, "Fake");
+			}catch(InvocationTargetException ite){
+				throw ite.getCause();
+			}
+		});
 	}
 }

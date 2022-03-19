@@ -21,15 +21,17 @@ public final class CyclicClassWriter{
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, type.superClass().internalName(), type.superInterfaces().stream().map(TypeReference::internalName).toArray(String[]::new));
 		
 		// class init
-		MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
-		for(var init : type.initBlocks)
-			if(init.isStatic()){
-				currentMethod = init;
-				CyclicMethodWriter.writeCtor(smv, init);
-			}
-		smv.visitInsn(Opcodes.RETURN);
-		smv.visitMaxs(0, 0);
-		smv.visitEnd();
+		{
+			MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+			for(var init : type.initBlocks)
+				if(init.isStatic()){
+					currentMethod = init;
+					CyclicMethodWriter.writeCtor(smv, init);
+				}
+			smv.visitInsn(Opcodes.RETURN);
+			smv.visitMaxs(0, 0);
+			smv.visitEnd();
+		}
 		
 		for(var component : type.recordComponents())
 			writer.visitRecordComponent(component.name(), component.type().descriptor(), null);
@@ -53,10 +55,10 @@ public final class CyclicClassWriter{
 				boolean isEnum = type.kind() == TypeKind.ENUM;
 				mv.visitVarInsn(Opcodes.ALOAD, 0);
 				if(isEnum){
-					mv.visitVarInsn(Opcodes.ILOAD, 1);
-					mv.visitVarInsn(Opcodes.ALOAD, 2);
+					mv.visitVarInsn(Opcodes.ALOAD, 1);
+					mv.visitVarInsn(Opcodes.ILOAD, 2);
 				}
-				mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", isEnum ? "(ILjava/lang/String;)V" : "()V", false);
+				mv.visitMethodInsn(Opcodes.INVOKESPECIAL, type.superClass().internalName(), "<init>", isEnum ? "(Ljava/lang/String;I)V" : "()V", false);
 			}
 			
 			for(var init : type.initBlocks) // init blocks go first so that field values can be setup for use
@@ -164,7 +166,8 @@ public final class CyclicClassWriter{
 		return getAccessFlags(field.flags()) |
 				(field.isVolatile() ? Opcodes.ACC_VOLATILE : 0) |
 				(field.isStatic() ? Opcodes.ACC_STATIC : 0) |
-				(field.isEnumDefinition() ? Opcodes.ACC_ENUM : 0);
+				(field.isEnumDefinition() ? Opcodes.ACC_ENUM : 0) |
+				(field.name().startsWith("~") ? Opcodes.ACC_SYNTHETIC : 0);
 	}
 	
 	public static int getAccessFlags(AccessFlags flags){

@@ -18,13 +18,15 @@ public class CyclicField implements FieldReference, CyclicMember{
 	boolean isS, isV;
 	
 	CyclicLangParser.TypeOrInferredContext typeName;
-	CyclicLangParser.ValueContext defaultVal;
+	CyclicLangParser.ValueContext defaultValText;
 	CyclicLangParser.VarDeclContext text;
 	CyclicLangParser.ArgumentsContext enumConstantArgs;
 	
 	TypeReference type;
 	
 	boolean isEnumConstant = false;
+	
+	public Value defaultVal;
 	
 	// used by record components
 	public CyclicField(CyclicType in, String name, AccessFlags flags, TypeReference type){
@@ -56,7 +58,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 		}
 		
 		typeName = ctx.typeOrInferred();
-		defaultVal = ctx.value();
+		defaultValText = ctx.value();
 		enumConstantArgs = ctx.arguments();
 	}
 	
@@ -81,7 +83,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 		
 		if(in.kind() != TypeKind.ENUM && enumConstantArgs != null)
 			throw new CompileTimeException(enumConstantArgs, "Enum constant arguments not allowed here");
-		if(enumConstantArgs != null && defaultVal != null)
+		if(enumConstantArgs != null && defaultValText != null)
 			throw new CompileTimeException(text, "Cannot have constant arguments and a field initializer");
 	}
 	
@@ -114,13 +116,13 @@ public class CyclicField implements FieldReference, CyclicMember{
 	}
 	
 	public CyclicConstructor assign(){
-		if(defaultVal != null){
+		if(defaultValText != null || defaultVal != null){
 			CyclicConstructor ret = new CyclicConstructor(isStatic(), in);
 			ret.body = new Statement.AssignFieldStatement(
 					ret.scope,
 					this,
 					isStatic() ? null : new Value.ThisValue(in),
-					Value.fromAst(defaultVal, ret.scope, in, ret),
+					defaultVal != null ? defaultVal : Value.fromAst(defaultValText, ret.scope, in, ret),
 					ret);
 			return ret;
 		}
@@ -130,13 +132,14 @@ public class CyclicField implements FieldReference, CyclicMember{
 					.map(x -> Value.fromAst(x, ret.scope, in, ret))
 					.collect(Collectors.toCollection(ArrayList::new)) : new ArrayList<>();
 			args.add(0, new Value.StringLiteralValue(name()));
-			args.add(0, new Value.IntLiteralValue(0));
+			args.add(1, new Value.IntLiteralValue(in.enumConstIdx));
 			ret.body = new Statement.AssignFieldStatement(
 					ret.scope,
 					this,
 					isStatic() ? null : new Value.ThisValue(in),
 					new Value.InitializationValue(args, Utils.resolveConstructor(in(), args, ret), in(), ret),
 					ret);
+			in.enumConstIdx++;
 			return ret;
 		}
 		return null;

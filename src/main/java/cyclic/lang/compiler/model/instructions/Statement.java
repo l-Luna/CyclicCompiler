@@ -250,9 +250,10 @@ public abstract class Statement{
 				return;
 			}
 			
+			// TODO: just use from.returns()
 			var adjusted = returnValue.fit(toReturn);
 			if(adjusted == null)
-				throw new CompileTimeException(text, "Value of type \"" + returnValue.type().fullyQualifiedName() + "\" cannot be returned from method \"" + ((MethodReference)from).summary() + "\"");
+				throw new CompileTimeException(text, "Value of type \"" + returnValue.type().fullyQualifiedName() + "\" cannot be returned from method \"" + from.summary() + "\"");
 			
 			adjusted.write(mv);
 			mv.visitInsn(adjusted.type().returnOpcode());
