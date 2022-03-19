@@ -230,7 +230,7 @@ public final class Utils{
 			if((c.isStatic() == isStatic) && c.name().equals(name) && c.parameters().size() == args.length){
 				for(int i = 0; i < c.parameters().size(); i++){
 					TypeReference p = c.parameters().get(i);
-					if(!args[i].isAssignableTo(p))
+					if(!args[i].equals(p))
 						continue candidates;
 				}
 				return c;

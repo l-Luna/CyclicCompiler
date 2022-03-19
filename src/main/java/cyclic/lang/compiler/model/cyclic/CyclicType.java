@@ -273,6 +273,8 @@ public class CyclicType implements TypeReference{
 			addMember(EnumMembers.genValuesField(this));
 			addMember(EnumMembers.genValues(this));
 			addMember(EnumMembers.genValueOf(this));
+			addMember(EnumMembers.genEntriesField(this));
+			addMember(EnumMembers.genEntries(this));
 		}
 	}
 	

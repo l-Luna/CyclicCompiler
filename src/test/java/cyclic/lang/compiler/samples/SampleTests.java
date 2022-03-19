@@ -8,6 +8,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 
 public class SampleTests{
 	
@@ -328,10 +329,13 @@ public class SampleTests{
 					val A; val B; val C;
 				}
 				"""));
-		var values = (Object[])holderEnum.getDeclaredMethod("values").invoke(null);
+		Method valuesMethod = holderEnum.getDeclaredMethod("values");
+		var values = (Object[])valuesMethod.invoke(null);
+		var moreValues = (Object[])valuesMethod.invoke(null);
+		Assertions.assertNotNull(values);
 		Assertions.assertEquals(values.length, 3);
-		var moreValues = (Object[])holderEnum.getDeclaredMethod("values").invoke(null);
 		Assertions.assertNotEquals(values, moreValues);
+		
 		Method valOfMethod = holderEnum.getDeclaredMethod("valueOf", String.class);
 		var valA = valOfMethod.invoke(null, "A");
 		Assertions.assertNotNull(valA);
@@ -343,5 +347,13 @@ public class SampleTests{
 				throw ite.getCause();
 			}
 		});
+		
+		Method entriesMethod = holderEnum.getDeclaredMethod("entries");
+		var entries = entriesMethod.invoke(null);
+		var entriesAgain = entriesMethod.invoke(null);
+		Assertions.assertNotNull(entries);
+		Assertions.assertTrue(entries instanceof List<?>);
+		Assertions.assertEquals(3, ((List<?>)entries).size());
+		Assertions.assertSame(entries, entriesAgain);
 	}
 }

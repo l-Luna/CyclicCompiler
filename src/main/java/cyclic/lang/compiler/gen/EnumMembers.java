@@ -44,7 +44,7 @@ public final class EnumMembers{
 		MethodReference clone = Utils.resolveSingleMethod("java.lang.Object", "clone", false);
 		var expr = new ClassCastValue(
 				new CallValue(
-						new FieldValue(of.fields().stream().filter(x->x.name().equals("~values")).findFirst().orElseThrow()),
+						new FieldValue(of.fields().stream().filter(x -> x.name().equals("~values")).findFirst().orElseThrow()),
 						List.of(),
 						clone),
 				retType);
@@ -69,6 +69,36 @@ public final class EnumMembers{
 						valOf),
 				of);
 		method.body = new Statement.ReturnStatement(expr, method.methodScope, of, method);
+		return method;
+	}
+	
+	public static CyclicField genEntriesField(CyclicType of){
+		TypeReference listType = Utils.forAnyClass(List.class);
+		// List ~entries = List.of(~values);
+		var ret = new CyclicField(of,
+				"~entries",
+				new AccessFlags(Visibility.PRIVATE, false, true),
+				true,
+				false,
+				listType);
+		MethodReference asList = Utils.resolveSingleMethod("java.util.List", "of", true, "java.lang.Object[]");
+		ret.defaultVal = new CallValue(
+				null,
+				List.of(new FieldValue(of.fields().stream().filter(x -> x.name().equals("~values")).findFirst().orElseThrow())),
+				asList);
+		return ret;
+	}
+	
+	public static CyclicMethod genEntries(CyclicType of){
+		TypeReference listType = Utils.forAnyClass(List.class);
+		CyclicMethod method = new CyclicMethod(of,
+				"entries",
+				new AccessFlags(Visibility.PUBLIC, false, false),
+				listType,
+				List.of());
+		method.isSt = true;
+		var expr = new FieldValue(of.fields().stream().filter(x -> x.name().equals("~entries")).findFirst().orElseThrow());
+		method.body = new Statement.ReturnStatement(expr, method.methodScope, listType, method);
 		return method;
 	}
 }
