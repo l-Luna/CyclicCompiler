@@ -4281,8 +4281,8 @@ public class CyclicLangParser extends Parser {
 	public static class ForeachStatementContext extends ParserRuleContext {
 		public TerminalNode FOR() { return getToken(CyclicLangParser.FOR, 0); }
 		public TerminalNode LPAREN() { return getToken(CyclicLangParser.LPAREN, 0); }
-		public TypeContext type() {
-			return getRuleContext(TypeContext.class,0);
+		public TypeOrInferredContext typeOrInferred() {
+			return getRuleContext(TypeOrInferredContext.class,0);
 		}
 		public IdPartContext idPart() {
 			return getRuleContext(IdPartContext.class,0);
@@ -4329,7 +4329,7 @@ public class CyclicLangParser extends Parser {
 			}
 
 			setState(675);
-			type(0);
+			typeOrInferred();
 			setState(676);
 			idPart();
 			setState(677);
@@ -5324,7 +5324,7 @@ public class CyclicLangParser extends Parser {
 		"\5.\30\2\u029b\u029a\3\2\2\2\u029b\u029c\3\2\2\2\u029c\u029d\3\2\2\2\u029d"+
 		"\u029e\7M\2\2\u029e\u029f\5.\30\2\u029fc\3\2\2\2\u02a0\u02a1\7)\2\2\u02a1"+
 		"\u02a3\7L\2\2\u02a2\u02a4\7\n\2\2\u02a3\u02a2\3\2\2\2\u02a3\u02a4\3\2"+
-		"\2\2\u02a4\u02a5\3\2\2\2\u02a5\u02a6\5\66\34\2\u02a6\u02a7\5z>\2\u02a7"+
+		"\2\2\u02a4\u02a5\3\2\2\2\u02a5\u02a6\5\64\33\2\u02a6\u02a7\5z>\2\u02a7"+
 		"\u02a8\7P\2\2\u02a8\u02a9\5D#\2\u02a9\u02aa\7M\2\2\u02aa\u02ab\5.\30\2"+
 		"\u02abe\3\2\2\2\u02ac\u02ad\7*\2\2\u02ad\u02ae\5.\30\2\u02ae\u02af\7%"+
 		"\2\2\u02af\u02b0\7L\2\2\u02b0\u02b1\5D#\2\u02b1\u02b2\7M\2\2\u02b2\u02b3"+

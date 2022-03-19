@@ -128,12 +128,12 @@ public abstract class Statement{
 			var fe = ctx.foreachStatement();
 			Value iterating = Value.fromAst(fe.value(), in, type, callable);
 			String varName = fe.idPart().getText();
-			String varTypeName = TypeResolver.getBaseName(fe.type());
-			TypeReference varType = varTypeName.equals("var") || varTypeName.equals("val") ? null : TypeResolver.resolve(varTypeName, imports, type.packageName());
+			String varTypeName = TypeResolver.getBaseName(fe.typeOrInferred());
+			TypeReference varType = varTypeName.equals("var") || varTypeName.equals("val") ? null : TypeResolver.resolve(fe.typeOrInferred().type(), imports, type.packageName());
 			boolean isFinal = varTypeName.equals("val") || fe.FINAL() != null;
 			result = null;
 			for(ForEachStyle style : ForEachStyle.STYLES)
-				if(style.appliesTo(iterating.type())){
+				if(style.appliesTo(iterating)){
 					result = style.forEachStatement(iterating, varName, varType, isFinal, in, scope -> Statement.fromAst(fe.statement(), scope, type, callable), callable);
 					break;
 				}

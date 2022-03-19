@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.samples;
 
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -327,6 +328,17 @@ public class SampleTests{
 				package cyclic.lang.compiler.samples;
 				enum EnumHolder0{
 					val A; val B; val C;
+					
+					static String all(){
+						val builder = new StringBuilder();
+						for(EnumHolder0 e : EnumHolder0){
+							builder.append(e.name());
+						}
+						for(var e : EnumHolder0){
+							builder.append(e.ordinal());
+						}
+						return builder.toString();
+					}
 				}
 				"""));
 		Method valuesMethod = holderEnum.getDeclaredMethod("values");
@@ -355,5 +367,28 @@ public class SampleTests{
 		Assertions.assertTrue(entries instanceof List<?>);
 		Assertions.assertEquals(3, ((List<?>)entries).size());
 		Assertions.assertSame(entries, entriesAgain);
+		
+		Method iterTestMethod = holderEnum.getDeclaredMethod("all");
+		Assertions.assertEquals(iterTestMethod.invoke(null), "ABC012");
+		
+		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileSingleClass("""
+				package cyclic.lang.compiler.samples;
+				enum EnumHolder1{
+					static void all(){
+						for(String e : EnumHolder1)
+							;
+					}
+				}
+				"""));
+		
+		Assertions.assertDoesNotThrow(() -> Compiler.compileSingleClass("""
+				package cyclic.lang.compiler.samples;
+				enum EnumHolder1{
+					static void all(){
+						for(Object e : EnumHolder1)
+							;
+					}
+				}
+				"""));
 	}
 }

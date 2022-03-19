@@ -155,7 +155,7 @@ elseStatement: ELSE statement;
 
 whileStatement: WHILE LPAREN value RPAREN statement;
 forStatement: FOR LPAREN start=statement? cond=value SEMICOLON end=statement? RPAREN action=statement;
-foreachStatement: FOR LPAREN FINAL? type idPart COLON value RPAREN statement;
+foreachStatement: FOR LPAREN FINAL? typeOrInferred idPart COLON value RPAREN statement;
 doWhile: DO statement WHILE LPAREN value RPAREN SEMICOLON;
 
 switchStatement: SWITCH LPAREN value RPAREN LBRACE caseClause* defaultClause? RBRACE;

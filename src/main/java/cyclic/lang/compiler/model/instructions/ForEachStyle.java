@@ -7,6 +7,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicCallable;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
@@ -20,7 +21,11 @@ import static cyclic.lang.compiler.model.instructions.Value.*;
 
 public interface ForEachStyle{
 	
-	List<ForEachStyle> STYLES = List.of(new IteratorForEach(), new ArrayForEach());
+	List<ForEachStyle> STYLES = List.of(new IteratorForEach(), new ArrayForEach(), new EnumForEach());
+	
+	default boolean appliesTo(Value value){
+		return appliesTo(value.type());
+	}
 	
 	boolean appliesTo(TypeReference iteratorType);
 	
@@ -37,6 +42,11 @@ public interface ForEachStyle{
 			// TODO: check T against the iterator's generic type
 			if(varType != null && !varType.fullyQualifiedName().equals(OBJECT))
 				throw new CompileTimeException("Variable type of an iterator for-each loop must be Object or var");
+			return forEachStatementWithType(iterating, varName, varType, finalVar, in, body, c);
+		}
+		
+		@NotNull
+		protected static BlockStatement forEachStatementWithType(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
 			/*    for(T t : x)
 			 *         act;
 			 *  becomes
@@ -49,14 +59,15 @@ public interface ForEachStyle{
 			BlockStatement container = new BlockStatement(in, c);
 			var iteratorType = TypeResolver.resolveFq(ITERATOR);
 			Variable iterator = new Variable("~iterator", iteratorType, container.blockScope, null);
-			Variable iterationVar = new Variable(varName, varType != null ? varType : TypeResolver.resolveFq(OBJECT), container.blockScope, container);
+			TypeReference iterVarType = varType != null ? varType : TypeResolver.resolveFq(OBJECT);
+			Variable iterationVar = new Variable(varName, iterVarType, container.blockScope, container);
 			iterationVar.isFinal = finalVar;
 			Statement action = body.apply(container.blockScope);
 			container.contains = List.of(
 					new CallStatement(container.blockScope, null, Utils.resolveSingleMethod(OBJECTS, OBJECTS_REQUIRE_NONNULL, true, OBJECT, STRING), List.of(iterating, new StringLiteralValue("Iteration variable was null.")), c),
 					new VarStatement(container.blockScope, iterator, new CallValue(iterating, List.of(), Utils.resolveSingleMethod(ITERABLE, ITERABLE_ITERATOR, false)), c),
 					new WhileStatement(container.blockScope,
-							List.of(new VarStatement(container.blockScope, iterationVar, new CallValue(new LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_NEXT, false)), c),
+							List.of(new VarStatement(container.blockScope, iterationVar, new ClassCastValue(new CallValue(new LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_NEXT, false)), iterVarType), c),
 									action),
 							new CallValue(new LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_HAS_NEXT, false)), c)
 			);
@@ -97,6 +108,33 @@ public interface ForEachStyle{
 							c)
 			);
 			return container;
+		}
+	}
+	
+	class EnumForEach implements ForEachStyle{
+		
+		public boolean appliesTo(TypeReference iteratorType){
+			return iteratorType.isAssignableTo(Utils.forAnyClass(Enum.class));
+		}
+		
+		public boolean appliesTo(Value value){
+			return ForEachStyle.super.appliesTo(value) && value instanceof TypeValue;
+		}
+		
+		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable from){
+			/*
+			*     for(T t : T)
+			*         act;
+			*  becomes
+			*     for(T t : T.entries())
+			*         act;
+			*  where T extends Enum
+			*/
+			TypeReference type = iterating.type();
+			if(varType != null && !type.isAssignableTo(varType))
+				throw new CompileTimeException("Variable type of an enum for-each loop must be the enum type");
+			var entriesExpr = new CallValue(null, List.of(), Utils.resolveSingleMethod(type, "entries", true));
+			return IteratorForEach.forEachStatementWithType(entriesExpr, varName, type, finalVar, in, body, from);
 		}
 	}
 }
