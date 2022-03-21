@@ -67,7 +67,7 @@ public interface ForEachStyle{
 					new CallStatement(container.blockScope, null, Utils.resolveSingleMethod(OBJECTS, OBJECTS_REQUIRE_NONNULL, true, OBJECT, STRING), List.of(iterating, new StringLiteralValue("Iteration variable was null.")), c),
 					new VarStatement(container.blockScope, iterator, new CallValue(iterating, List.of(), Utils.resolveSingleMethod(ITERABLE, ITERABLE_ITERATOR, false)), c),
 					new WhileStatement(container.blockScope,
-							List.of(new VarStatement(container.blockScope, iterationVar, new ClassCastValue(new CallValue(new LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_NEXT, false)), iterVarType), c),
+							List.of(new VarStatement(container.blockScope, iterationVar, true, new ClassCastValue(new CallValue(new LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_NEXT, false)), iterVarType), c),
 									action),
 							new CallValue(new LocalVarValue(iterator), List.of(), Utils.resolveSingleMethod(ITERATOR, ITERATOR_HAS_NEXT, false)), c)
 			);
@@ -101,11 +101,11 @@ public interface ForEachStyle{
 			container.contains = List.of(
 					new VarStatement(container.blockScope, array, iterating, c),
 					new ForStatement(container.blockScope,
-							new BlockStatement(scope -> List.of(new VarStatement(scope, iterationVar, new ArrayIndexValue(new LocalVarValue(array), new LocalVarValue(index)), c), action), container.blockScope, c),
+							new BlockStatement(scope -> List.of(new VarStatement(scope, iterationVar, true, new ArrayIndexValue(new LocalVarValue(array), new LocalVarValue(index)), c), action), container.blockScope, c),
 							new VarStatement(container.blockScope, index, new IntLiteralValue(0), c),
 							new VarStatement(container.blockScope, index, new BinaryOpValue(PlatformDependency.INT, Opcodes.IADD, new LocalVarValue(index), new IntLiteralValue(1)), c),
 							new BranchBoolBinaryOpValue(Opcodes.IF_ICMPLT, new LocalVarValue(index), new FieldValue(Utils.getField(iterating.type(), "length"), new LocalVarValue(array))),
-							c)
+							c, false)
 			);
 			return container;
 		}

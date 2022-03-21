@@ -13,6 +13,8 @@ public class Variable{
 	public boolean isFinal = false;
 	private int index;
 	
+	// we track variable end labels for plugins (eventually)
+	// scope end label is preferred by LVT to stop variables being dropped after use while still in scope
 	public Label start = null, end = null;
 	
 	public Variable(String name, TypeReference type, Scope in, Statement owner){

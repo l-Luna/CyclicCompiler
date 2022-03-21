@@ -115,7 +115,7 @@ public abstract class Statement{
 				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(f.action, forScope, type, callable);
 			// could just implement it as synthetic block statements
-			result = new ForStatement(forScope, success, setup, increment, cond, callable);
+			result = new ForStatement(forScope, success, setup, increment, cond, callable, true);
 		}else if(ctx.doWhile() != null){
 			Scope doScope = new Scope(in);
 			Value c = Value.fromAst(ctx.doWhile().value(), in, type, callable);
@@ -123,7 +123,7 @@ public abstract class Statement{
 			if(cond == null)
 				throw new CompileTimeException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
 			Statement success = fromAst(ctx.doWhile().statement(), doScope, type, callable);
-			result = new DoWhileStatement(doScope, success, cond, callable);
+			result = new DoWhileStatement(doScope, success, cond, callable, true);
 		}else if(ctx.foreachStatement() != null){
 			var fe = ctx.foreachStatement();
 			Value iterating = Value.fromAst(fe.value(), in, type, callable);
@@ -226,6 +226,9 @@ public abstract class Statement{
 			super.write(mv);
 			for(Statement s : contains)
 				s.write(mv);
+			Label endLabel = new Label();
+			blockScope.end = endLabel;
+			mv.visitLabel(endLabel);
 		}
 		
 		public void simplify(){
@@ -292,7 +295,7 @@ public abstract class Statement{
 	public static class VarStatement extends Statement{
 		public Variable v;
 		public Value value;
-		public boolean declare = false;
+		public boolean declare;
 		
 		public VarStatement(Scope in, String varName, TypeReference varType, Value value, boolean declare, boolean isFinal, CyclicCallable from){
 			super(in, from);
@@ -307,9 +310,15 @@ public abstract class Statement{
 		
 		// used by ForEachStyle
 		public VarStatement(Scope in, Variable v, Value value, CyclicCallable from){
+			this(in, v, false, value, from);
+		}
+		
+		// used by ForEachStyle
+		public VarStatement(Scope in, Variable v, boolean declare, Value value, CyclicCallable from){
 			super(in, from);
 			this.v = v;
 			this.value = value;
+			this.declare = declare;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -552,13 +561,15 @@ public abstract class Statement{
 	public static class ForStatement extends Statement{
 		public Statement success, start, increment;
 		Value condition;
+		private boolean ownsScope;
 		
-		public ForStatement(Scope in, Statement success, Statement start, Statement increment, Value condition, CyclicCallable from){
+		public ForStatement(Scope in, Statement success, Statement start, Statement increment, Value condition, CyclicCallable from, boolean ownsScope){
 			super(in, from);
 			this.success = success;
 			this.start = start;
 			this.increment = increment;
 			this.condition = condition;
+			this.ownsScope = ownsScope;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -572,6 +583,11 @@ public abstract class Statement{
 			increment.write(mv);
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
+			if(ownsScope){
+				Label endLabel = new Label();
+				in.end = endLabel;
+				mv.visitLabel(endLabel);
+			}
 		}
 		
 		public void simplify(){
@@ -585,11 +601,13 @@ public abstract class Statement{
 	public static class DoWhileStatement extends Statement{
 		public Statement success;
 		Value condition;
+		private boolean ownsScope;
 		
-		public DoWhileStatement(Scope in, Statement success, Value condition, CyclicCallable from){
+		public DoWhileStatement(Scope in, Statement success, Value condition, CyclicCallable from, boolean ownsScope){
 			super(in, from);
 			this.success = success;
 			this.condition = condition;
+			this.ownsScope = ownsScope;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -599,6 +617,11 @@ public abstract class Statement{
 			success.write(mv);
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
+			if(ownsScope){
+				Label endLabel = new Label();
+				in.end = endLabel;
+				mv.visitLabel(endLabel);
+			}
 		}
 		
 		public void simplify(){

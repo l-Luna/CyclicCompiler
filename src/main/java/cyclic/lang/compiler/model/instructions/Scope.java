@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.CompileTimeException;
+import org.objectweb.asm.Label;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,8 @@ public class Scope{
 	Scope parent;
 	List<Variable> variables = new ArrayList<>();
 	List<Variable> vIndexList = new ArrayList<>();
+	
+	public Label end;
 	
 	public Scope(){
 		this(null);

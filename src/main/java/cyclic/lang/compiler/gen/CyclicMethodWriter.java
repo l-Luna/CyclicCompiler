@@ -34,8 +34,10 @@ public final class CyclicMethodWriter{
 			method.body.write(mv);
 			if(method.returns().fullyQualifiedName().equals("void"))
 				mv.visitInsn(Opcodes.RETURN);
-			if(debug)
+			if(debug){
 				mv.visitLabel(last);
+				method.methodScope.end = last;
+			}
 		}
 		
 		if(debug)
@@ -91,8 +93,10 @@ public final class CyclicMethodWriter{
 				mv.visitLabel(first);
 			ctor.body.simplify();
 			ctor.body.write(mv);
-			if(debug)
+			if(debug){
 				mv.visitLabel(last);
+				ctor.scope.end = last;
+			}
 		}
 		
 		if(debug)
@@ -107,7 +111,7 @@ public final class CyclicMethodWriter{
 				variable.type().descriptor(),
 				null,
 				variable.start == null ? first : variable.start,
-				variable.end == null ? last : variable.end,
+				variable.in().end == null ? variable.end == null ? last : variable.end : variable.in().end,
 				variable.getAdjIndex());
 	}
 }
