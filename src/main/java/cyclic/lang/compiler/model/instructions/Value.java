@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.TypeReference;
@@ -476,12 +477,17 @@ public abstract class Value{
 		int localIdx;
 		TypeReference type;
 		
+		// for computing range of local variable
+		Variable variable;
+		
 		public LocalVarValue(Variable local){
 			localName = local.name;
 			localIdx = local.getAdjIndex();
 			type = local.type;
+			variable = local;
 		}
 		
+		// for some generated members
 		public LocalVarValue(TypeReference type, int localIdx){
 			this.localIdx = localIdx;
 			this.type = type;
@@ -489,6 +495,14 @@ public abstract class Value{
 		
 		public void write(MethodVisitor mv){
 			mv.visitVarInsn(type().localLoadOpcode(), localIdx);
+			
+			// end range is exclusive, so attach to next instruction
+			if(Compiler.project.include_cyclic_lib_refs && variable != null){
+				Label label = new Label();
+				mv.visitLabel(label);
+				if(variable.end == null || variable.end.getOffset() < label.getOffset())
+					variable.end = label;
+			}
 		}
 		
 		public TypeReference type(){
@@ -957,21 +971,34 @@ public abstract class Value{
 		public boolean returnPreAssign = false;
 		public Value target;
 		
+		// for computing range of local variable
+		private Variable[] uses;
+		
 		public InlineAssignValue(Value newValue, int varIdx){
 			this.newValue = newValue;
 			localIdx = varIdx;
+			uses = new Variable[]{newValue instanceof LocalVarValue local ? local.variable : null};
 		}
 		
 		public InlineAssignValue(Value newValue, Value on, FieldReference target){
 			this.newValue = newValue;
 			fieldOf = on;
 			field = target;
+			uses = new Variable[]{
+					newValue instanceof LocalVarValue nLocal ? nLocal.variable : null,
+					on instanceof LocalVarValue onLocal ? onLocal.variable : null
+			};
 		}
 		
 		public InlineAssignValue(Value newValue, Value array, Value index){
 			this.newValue = newValue;
 			this.array = array;
 			this.arrayIndex = index;
+			uses = new Variable[]{
+					newValue instanceof LocalVarValue nLocal ? nLocal.variable : null,
+					array instanceof LocalVarValue arrLocal ? arrLocal.variable : null,
+					index instanceof LocalVarValue idxLocal ? idxLocal.variable : null
+			};
 		}
 		
 		public void write(MethodVisitor mv){
@@ -1012,6 +1039,16 @@ public abstract class Value{
 				mv.visitInsn(((ArrayTypeRef)array.type()).getComponent().arrayStoreOpcode());
 			}else
 				throw new IllegalStateException();
+			
+			// end range is exclusive, so attach to next instruction
+			if(Compiler.project.include_cyclic_lib_refs){
+				Label label = new Label();
+				mv.visitLabel(label);
+				for(Variable use : uses)
+					if(use != null)
+						if(use.end == null || use.end.getOffset() < label.getOffset())
+							use.end = label;
+			}
 		}
 		
 		public TypeReference type(){

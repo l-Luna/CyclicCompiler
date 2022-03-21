@@ -292,6 +292,7 @@ public abstract class Statement{
 	public static class VarStatement extends Statement{
 		public Variable v;
 		public Value value;
+		public boolean declare = false;
 		
 		public VarStatement(Scope in, String varName, TypeReference varType, Value value, boolean declare, boolean isFinal, CyclicCallable from){
 			super(in, from);
@@ -301,6 +302,7 @@ public abstract class Statement{
 				v = in.get(varName);
 			v.isFinal |= isFinal;
 			this.value = value;
+			this.declare = declare;
 		}
 		
 		// used by ForEachStyle
@@ -319,6 +321,14 @@ public abstract class Statement{
 				if(adjusted == null)
 					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
 				adjusted.write(mv);
+				if(Compiler.project.include_debug){
+					Label label = new Label();
+					mv.visitLabel(label);
+					if(declare)
+						v.start = v.end = label;
+					else if(v.end == null || v.end.getOffset() < label.getOffset())
+						v.end = label;
+				}
 				mv.visitVarInsn(v.type.localStoreOpcode(), v.getAdjIndex());
 			}
 		}

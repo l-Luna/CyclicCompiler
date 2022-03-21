@@ -41,7 +41,7 @@ public final class CyclicMethodWriter{
 		if(debug)
 			for(Variable variable : method.methodScope.getIndexList())
 				if(!variable.name().equals("this") && !variable.name().startsWith("~"))
-					mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
+					writeVarInfo(mv, variable, first, last);
 		
 		if(method.constantAnnotationComponentValue != null){
 			AnnotationVisitor av = mv.visitAnnotationDefault();
@@ -98,6 +98,16 @@ public final class CyclicMethodWriter{
 		if(debug)
 			for(Variable variable : ctor.scope.getIndexList())
 				if(!variable.name().equals("this") && !variable.name().startsWith("~"))
-					mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
+					writeVarInfo(mv, variable, first, last);
+	}
+	
+	private static void writeVarInfo(MethodVisitor mv, Variable variable, Label first, Label last){
+		mv.visitLocalVariable(
+				variable.name(),
+				variable.type().descriptor(),
+				null,
+				variable.start == null ? first : variable.start,
+				variable.end == null ? last : variable.end,
+				variable.getAdjIndex());
 	}
 }
