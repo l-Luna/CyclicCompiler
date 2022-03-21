@@ -34,15 +34,14 @@ public final class CyclicMethodWriter{
 			method.body.write(mv);
 			if(method.returns().fullyQualifiedName().equals("void"))
 				mv.visitInsn(Opcodes.RETURN);
-			if(debug){
+			if(debug)
 				mv.visitLabel(last);
-				mv.visitInsn(Opcodes.NOP);
-			}
 		}
 		
 		if(debug)
 			for(Variable variable : method.methodScope.getIndexList())
-				mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
+				if(!variable.name().equals("this") && !variable.name().startsWith("~"))
+					mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
 		
 		if(method.constantAnnotationComponentValue != null){
 			AnnotationVisitor av = mv.visitAnnotationDefault();
@@ -92,14 +91,13 @@ public final class CyclicMethodWriter{
 				mv.visitLabel(first);
 			ctor.body.simplify();
 			ctor.body.write(mv);
-			if(debug){
+			if(debug)
 				mv.visitLabel(last);
-				mv.visitInsn(Opcodes.NOP);
-			}
 		}
 		
 		if(debug)
 			for(Variable variable : ctor.scope.getIndexList())
-				mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
+				if(!variable.name().equals("this") && !variable.name().startsWith("~"))
+					mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
 	}
 }
