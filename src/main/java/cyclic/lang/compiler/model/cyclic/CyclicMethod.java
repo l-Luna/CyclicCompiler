@@ -147,10 +147,19 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		for(int i = 0; i < parameters.size(); i++)
 			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
 		
-		if(body == null)
-			body =  (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope, this) :
-					(arrowStatement != null) ? Statement.fromAst(arrowStatement, methodScope, in, this) :
-					new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns, this);
+		if(body == null){
+			if(blockStatement != null){
+				body = new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope, this);
+				body.text = blockStatement;
+			}else{
+				if(arrowStatement != null)
+					body = Statement.fromAst(arrowStatement, methodScope, in, this);
+				else{
+					body = new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns, this);
+					body.text = arrowVal;
+				}
+			}
+		}
 		
 		body.from = this;
 		

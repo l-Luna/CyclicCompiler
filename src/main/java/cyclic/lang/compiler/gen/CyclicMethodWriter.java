@@ -4,10 +4,8 @@ import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.model.AnnotationTag;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.TypeReference;
+import cyclic.lang.compiler.model.instructions.Variable;
+import org.objectweb.asm.*;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
@@ -19,17 +17,32 @@ import static cyclic.lang.compiler.gen.CyclicClassWriter.writeAnnotation;
 public final class CyclicMethodWriter{
 	
 	public static void writeMethod(MethodVisitor mv, CyclicMethod method){
-		if(Compiler.includeDebugInfo)
+		boolean debug = Compiler.includeDebugInfo;
+		Label first = null, last = null;
+		if(debug){
 			for(String paramName : method.parameterNames())
 				mv.visitParameter(paramName, 0);
+			first = new Label();
+			last = new Label();
+		}
 		
 		if(!(method.flags().isAbstract() || method.isNative())){
 			mv.visitCode();
+			if(debug)
+				mv.visitLabel(first);
 			method.body.simplify();
 			method.body.write(mv);
 			if(method.returns().fullyQualifiedName().equals("void"))
 				mv.visitInsn(Opcodes.RETURN);
+			if(debug){
+				mv.visitLabel(last);
+				mv.visitInsn(Opcodes.NOP);
+			}
 		}
+		
+		if(debug)
+			for(Variable variable : method.methodScope.getIndexList())
+				mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
 		
 		if(method.constantAnnotationComponentValue != null){
 			AnnotationVisitor av = mv.visitAnnotationDefault();
@@ -63,14 +76,30 @@ public final class CyclicMethodWriter{
 	}
 	
 	public static void writeCtor(MethodVisitor mv, CyclicConstructor ctor){
-		if(Compiler.includeDebugInfo && (!ctor.isCanonRecordCtor || ctor.isGeneratedRecordCtor))
-			for(String paramName : ctor.parameterNames())
-				mv.visitParameter(paramName, paramName.startsWith("~") ? Opcodes.ACC_SYNTHETIC : 0);
+		boolean debug = Compiler.includeDebugInfo;
+		Label first = null, last = null;
+		if(debug){
+			if(!ctor.isCanonRecordCtor || ctor.isGeneratedRecordCtor)
+				for(String paramName : ctor.parameterNames())
+					mv.visitParameter(paramName, paramName.startsWith("~") ? Opcodes.ACC_SYNTHETIC : 0);
+			first = new Label();
+			last = new Label();
+		}
 		
 		mv.visitCode();
 		if(ctor.body != null){
+			if(debug)
+				mv.visitLabel(first);
 			ctor.body.simplify();
 			ctor.body.write(mv);
+			if(debug){
+				mv.visitLabel(last);
+				mv.visitInsn(Opcodes.NOP);
+			}
 		}
+		
+		if(debug)
+			for(Variable variable : ctor.scope.getIndexList())
+				mv.visitLocalVariable(variable.name(), variable.type().descriptor(), null, first, last, variable.getAdjIndex());
 	}
 }
