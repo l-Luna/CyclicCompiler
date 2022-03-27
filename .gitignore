@@ -6,3 +6,4 @@
 /build/
 /run/
 /samples/*/out/
+/src/main/java/cyclic/lang/antlr_generated/
