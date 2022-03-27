@@ -2,7 +2,7 @@ package calc;
 
 import java.util.*;
 
-class Calc{
+public class Calc{
 
     private static List symbols = List.of("(", ")", "+", "-", "*", "/", "^", "%");
 

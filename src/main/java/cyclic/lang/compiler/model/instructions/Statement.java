@@ -19,6 +19,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -60,9 +61,7 @@ public abstract class Statement{
 		
 		var imports = type.imports;
 		if(ctx.block() != null){
-			BlockStatement statement = new BlockStatement(in, callable);
-			statement.contains = ctx.block().statement().stream().map(k -> fromAst(k, statement.blockScope, type, callable)).collect(Collectors.toList());
-			result = statement;
+			result = fromBlockAst(ctx.block(), in, type, callable);
 		}else if(ctx.varDecl() != null){
 			CyclicLangParser.VarDeclContext decl = ctx.varDecl();
 			if(decl.arguments() != null)
@@ -116,13 +115,13 @@ public abstract class Statement{
 			Statement success = fromAst(f.action, forScope, type, callable);
 			// could just implement it as synthetic block statements
 			result = new ForStatement(forScope, success, setup, increment, cond, callable, true);
-		}else if(ctx.doWhile() != null){
+		}else if(ctx.doWhileStatement() != null){
 			Scope doScope = new Scope(in);
-			Value c = Value.fromAst(ctx.doWhile().value(), in, type, callable);
+			Value c = Value.fromAst(ctx.doWhileStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
-				throw new CompileTimeException("Expression " + ctx.doWhile().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
-			Statement success = fromAst(ctx.doWhile().statement(), doScope, type, callable);
+				throw new CompileTimeException("Expression " + ctx.doWhileStatement().value().getText() + " cannot be converted to boolean - it is " + c.type().fullyQualifiedName());
+			Statement success = fromAst(ctx.doWhileStatement().statement(), doScope, type, callable);
 			result = new DoWhileStatement(doScope, success, cond, callable, true);
 		}else if(ctx.foreachStatement() != null){
 			var fe = ctx.foreachStatement();
@@ -168,12 +167,33 @@ public abstract class Statement{
 			Value toAssign = Value.fromAst(ctx.varIncrement().value(), in, type, callable);
 			String symbol = ctx.varIncrement().PLUSPLUS() != null ? "++" : "--";
 			result = new ValueStatement(in, callable, Operations.resolvePostfix(symbol, toAssign));
+		}else if(ctx.tryStatement() != null){
+			var ts = ctx.tryStatement();
+			List<TryCatchStatement.CatchStatement> catches = ts.catchBlock().stream().map(aCatch -> {
+				Scope catchScope = new Scope(in);
+				TypeReference catchType = TypeResolver.resolve(aCatch.type(), imports, type.packageName());
+				String varName = aCatch.idPart().getText();
+				Statement catchBody = fromBlockAst(aCatch.block(), catchScope, type, callable);
+				return new TryCatchStatement.CatchStatement(catchType, varName, catchBody, catchScope);
+			}).toList();
+			Statement finallyBlock = ts.finallyBlock() == null ? null : fromBlockAst(ts.finallyBlock().block(), in, type, callable);
+			Statement tryBody = fromBlockAst(ts.block(), in, type, callable);
+			result = new TryCatchStatement(in, tryBody, catches, finallyBlock, callable);
 		}else
 			result = new NoopStatement(in, callable);
 		
 		CompileTimeException.popContext();
 		result.text = ctx;
 		result.from = callable;
+		return result;
+	}
+	
+	@NotNull
+	private static Statement fromBlockAst(CyclicLangParser.BlockContext ctx, Scope in, CyclicType type, CyclicCallable callable){
+		Statement result;
+		BlockStatement statement = new BlockStatement(in, callable);
+		statement.contains = ctx.statement().stream().map(k -> fromAst(k, statement.blockScope, type, callable)).collect(Collectors.toList());
+		result = statement;
 		return result;
 	}
 	
@@ -338,7 +358,7 @@ public abstract class Statement{
 					else if(v.end == null || v.end.getOffset() < label.getOffset())
 						v.end = label;
 				}
-				mv.visitVarInsn(v.type.localStoreOpcode(), v.getAdjIndex());
+				v.writeStore(mv);
 			}
 		}
 		
@@ -647,6 +667,88 @@ public abstract class Statement{
 		
 		public void simplify(){
 			value.simplify(this);
+		}
+	}
+	
+	public static class TryCatchStatement extends Statement{
+		public record CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope, Variable catchVariable){
+			public CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope){
+				this(type, name, onCatch, ownScope, new Variable(name, type, ownScope, onCatch));
+			}
+		}
+		
+		public Statement tryStatement;
+		public List<CatchStatement> catchStatements;
+		public Statement finallyStatement;
+		
+		public TryCatchStatement(Scope in, Statement tryStatement, List<CatchStatement> catchStatements, Statement finallyStatement, CyclicCallable from){
+			super(in, from);
+			this.tryStatement = tryStatement;
+			this.catchStatements = catchStatements;
+			this.finallyStatement = finallyStatement;
+			for(CatchStatement c : catchStatements)
+				c.catchVariable().owner = this;
+		}
+		
+		public void write(MethodVisitor mv){
+			super.write(mv);
+			Label blockStart = new Label(),
+					blockEnd = new Label(),
+					tryEnd = new Label(),
+					finallyStart = new Label(),
+					finallyEnd = new Label();
+			Map<CatchStatement, Label> handlerStarts = catchStatements.stream()
+					.collect(Collectors.toMap(x -> x, x -> new Label()));
+			Map<CatchStatement, Label> handlerEnds = catchStatements.stream()
+					.collect(Collectors.toMap(x -> x, x -> new Label()));
+			
+			for(var c : catchStatements)
+				mv.visitTryCatchBlock(blockStart, blockEnd, handlerStarts.get(c), c.type().internalName());
+			if(finallyStatement != null){
+				mv.visitTryCatchBlock(blockStart, blockEnd, finallyStart, null);
+				for(var c : catchStatements)
+					mv.visitTryCatchBlock(handlerStarts.get(c), handlerEnds.get(c), finallyStart, null);
+			}
+			
+			mv.visitLabel(blockStart);
+			tryStatement.write(mv);
+			mv.visitLabel(blockEnd);
+			if(finallyStatement != null) // non-rethrowing version
+				finallyStatement.write(mv);
+			mv.visitJumpInsn(Opcodes.GOTO, finallyEnd);
+			
+			for(var c : catchStatements){
+				Label start = handlerStarts.get(c);
+				Label end = handlerEnds.get(c);
+				mv.visitLabel(start);
+				c.catchVariable().writeStore(mv);
+				c.onCatch().write(mv);
+				mv.visitLabel(end);
+				// non-rethrowing version
+				if(finallyStatement != null)
+					finallyStatement.write(mv);
+				c.ownScope().end = end;
+				mv.visitJumpInsn(Opcodes.GOTO, finallyEnd);
+			}
+			mv.visitLabel(tryEnd);
+			
+			if(finallyStatement != null){ // rethrowing version
+				mv.visitLabel(finallyStart);
+				Variable toRethrow = new Variable("~exception", Utils.forAnyClass(Throwable.class), in, this);
+				toRethrow.writeStore(mv);
+				finallyStatement.write(mv);
+				toRethrow.writeLoad(mv);
+				mv.visitInsn(Opcodes.ATHROW);
+			}
+			mv.visitLabel(finallyEnd);
+		}
+		
+		public void simplify(){
+			tryStatement.simplify();
+			for(var c : catchStatements)
+				c.onCatch().simplify();
+			if(finallyStatement != null)
+				finallyStatement.simplify();
 		}
 	}
 }

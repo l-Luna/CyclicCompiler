@@ -3,7 +3,7 @@ package calc;
 import java.util.*;
 import calc.exprs.*;
 
-class Parse{
+public class Parse{
 
     private static int tokenPtr = 0;
     private static List curTokens = null;

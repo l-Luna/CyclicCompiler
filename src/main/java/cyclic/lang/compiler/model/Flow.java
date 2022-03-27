@@ -8,6 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static cyclic.lang.compiler.model.instructions.Statement.*;
+import static cyclic.lang.compiler.model.instructions.Value.*;
+
 /**
  * Contains utility methods for checking constant conditions of code.
  */
@@ -33,15 +36,15 @@ public final class Flow{
 	public static Optional<?> constantValue(Value v){
 		return switch(v){
 			case null, default -> Optional.empty();
-			case Value.NullLiteralValue ignored -> Optional.of(NULL_MARKER);
-			case Value.FloatLiteralValue f -> Optional.of(f.value);
-			case Value.DoubleLiteralValue d -> Optional.of(d.value);
-			case Value.IntLiteralValue i -> i.isBool ? Optional.of(i.value == 1) : Optional.of(i.value);
-			case Value.LongLiteralValue l -> Optional.of(l.value);
-			case Value.StringLiteralValue str -> Optional.of(str.value);
+			case NullLiteralValue ignored -> Optional.of(NULL_MARKER);
+			case FloatLiteralValue f -> Optional.of(f.value);
+			case DoubleLiteralValue d -> Optional.of(d.value);
+			case IntLiteralValue i -> i.isBool ? Optional.of(i.value == 1) : Optional.of(i.value);
+			case LongLiteralValue l -> Optional.of(l.value);
+			case StringLiteralValue str -> Optional.of(str.value);
 			case Value.ClassValue l -> Optional.of(l.of);
-			case Value.FieldValue f -> f.ref.isEnumDefinition() ? Optional.of(new EnumConstant(f.ref)) : Optional.empty();
-			case Value.NewListedArrayValue n -> {
+			case FieldValue f -> f.ref.isEnumDefinition() ? Optional.of(new EnumConstant(f.ref)) : Optional.empty();
+			case NewListedArrayValue n -> {
 				var opts = n.entries.stream().map(Flow::constantValue).toList();
 				if(opts.stream().anyMatch(Optional::isEmpty))
 					yield Optional.empty();
@@ -69,16 +72,16 @@ public final class Flow{
 			return Optional.of(body);
 		return switch(body){
 			case null, default -> Optional.empty();
-			case Statement.WhileStatement s -> firstMatching(s.success, condition);
-			case Statement.DoWhileStatement s -> firstMatching(s.success, condition);
-			case Statement.BlockStatement s -> s.contains.stream()
+			case WhileStatement s -> firstMatching(s.success, condition);
+			case DoWhileStatement s -> firstMatching(s.success, condition);
+			case BlockStatement s -> s.contains.stream()
 					.map(k -> firstMatching(k, condition))
 					.filter(Optional::isPresent)
 					.map(Optional::get)
 					.findFirst();
-			case Statement.IfStatement s -> firstMatching(s.success, condition)
+			case IfStatement s -> firstMatching(s.success, condition)
 					.or(() -> firstMatching(s.fail, condition));
-			case Statement.ForStatement s -> firstMatching(s.start, condition)
+			case ForStatement s -> firstMatching(s.start, condition)
 					.or(() -> firstMatching(s.success, condition))
 					.or(() -> firstMatching(s.increment, condition));
 		};
@@ -99,14 +102,17 @@ public final class Flow{
 		return switch(body){
 			case default -> condition.test(body);
 			case null -> false;
-			case Statement.BlockStatement s -> s.contains.stream()
-					.map(k -> guaranteedToRun(k, condition))
-					.reduce(false, (x, y) -> x || y);
-			case Statement.WhileStatement ignored -> false; // a while/for body is never guaranteed to run
-			case Statement.ForStatement ignored -> false;
-			case Statement.DoWhileStatement s -> guaranteedToRun(s.success, condition); // guaranteed to run at least once
+			case BlockStatement s -> s.contains.stream().anyMatch(k -> guaranteedToRun(k, condition));
+			case WhileStatement ignored -> false; // a while/for body is never guaranteed to run
+			case ForStatement ignored -> false;
+			case DoWhileStatement s -> guaranteedToRun(s.success, condition); // guaranteed to run at least once
 			// only guaranteed if guaranteed on both branches
-			case Statement.IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
+			case IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
+			// only guaranteed if guaranteed in try block and all catch blocks OR in finally block
+			case TryCatchStatement s ->
+					(guaranteedToRun(s.tryStatement, condition) && s.catchStatements.stream()
+							.allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
+					|| guaranteedToRun(s.finallyStatement, condition);
 		};
 	}
 	
@@ -114,17 +120,17 @@ public final class Flow{
 		return switch(body){
 			case default -> body != before && condition.test(body) ? 1 : 0;
 			case null -> 0;
-			case Statement.BlockStatement s -> {
+			case BlockStatement s -> {
 				var cont = new AtomicBoolean(true);
 				yield s.contains.stream()
 						.takeWhile(x -> cont.get() && (firstMatching(x, y -> y == before).isEmpty() || cont.getAndSet(false)))
 						.mapToInt(k -> minOccurrencesBefore(k, before, condition, !cont.get()))
 						.sum();
 			}
-			case Statement.WhileStatement s -> forceEnter ? minOccurrencesBefore(s.success, before, condition, false) : 0;
-			case Statement.ForStatement s -> minOccurrencesBefore(s.start, before, condition, false) + (forceEnter ? minOccurrencesBefore(s.success, before, condition, false) + minOccurrencesBefore(s.increment, before, condition, false) : 0);
-			case Statement.DoWhileStatement s -> minOccurrencesBefore(s.success, before, condition, false); // guaranteed to run at least once
-			case Statement.IfStatement s -> {
+			case WhileStatement s -> forceEnter ? minOccurrencesBefore(s.success, before, condition, false) : 0;
+			case ForStatement s -> minOccurrencesBefore(s.start, before, condition, false) + (forceEnter ? minOccurrencesBefore(s.success, before, condition, false) + minOccurrencesBefore(s.increment, before, condition, false) : 0);
+			case DoWhileStatement s -> minOccurrencesBefore(s.success, before, condition, false); // guaranteed to run at least once
+			case IfStatement s -> {
 				if(forceEnter){
 					if(s.fail == null)
 						yield minOccurrencesBefore(s.success, before, condition, false);
@@ -147,7 +153,7 @@ public final class Flow{
 	 * @return Whether the statement will always explicitly exit.
 	 */
 	public static boolean guaranteedToExit(Statement body){
-		return guaranteedToRun(body, x -> x instanceof Statement.ReturnStatement || x instanceof Statement.ThrowStatement);
+		return guaranteedToRun(body, x -> x instanceof ReturnStatement || x instanceof ThrowStatement);
 	}
 	
 	/**
@@ -168,14 +174,14 @@ public final class Flow{
 		switch(body){
 			case default -> visitor.accept(body);
 			case null -> {}
-			case Statement.WhileStatement s -> visitTerminals(s.success, visitor);
-			case Statement.DoWhileStatement s -> visitTerminals(s.success, visitor);
-			case Statement.BlockStatement s -> s.contains.forEach(k -> visitTerminals(k, visitor));
-			case Statement.IfStatement s -> {
+			case WhileStatement s -> visitTerminals(s.success, visitor);
+			case DoWhileStatement s -> visitTerminals(s.success, visitor);
+			case BlockStatement s -> s.contains.forEach(k -> visitTerminals(k, visitor));
+			case IfStatement s -> {
 				visitTerminals(s.success, visitor);
 				visitTerminals(s.fail, visitor);
 			}
-			case Statement.ForStatement s -> {
+			case ForStatement s -> {
 				visitTerminals(s.start, visitor);
 				visitTerminals(s.success, visitor);
 				visitTerminals(s.increment, visitor);

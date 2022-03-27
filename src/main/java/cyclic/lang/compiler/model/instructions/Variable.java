@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.instructions;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
 
 public class Variable{
 	
@@ -44,5 +45,13 @@ public class Variable{
 	
 	public String name(){
 		return name;
+	}
+	
+	public void writeStore(MethodVisitor mv){
+		mv.visitVarInsn(type.localStoreOpcode(), getAdjIndex());
+	}
+	
+	public void writeLoad(MethodVisitor mv){
+		mv.visitVarInsn(type.localLoadOpcode(), getAdjIndex());
 	}
 }
