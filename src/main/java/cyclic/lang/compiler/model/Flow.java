@@ -1,8 +1,11 @@
 package cyclic.lang.compiler.model;
 
 import cyclic.lang.compiler.model.instructions.Statement;
+import cyclic.lang.compiler.model.instructions.Statement.TryCatchStatement.CatchStatement;
 import cyclic.lang.compiler.model.instructions.Value;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -84,6 +87,13 @@ public final class Flow{
 			case ForStatement s -> firstMatching(s.start, condition)
 					.or(() -> firstMatching(s.success, condition))
 					.or(() -> firstMatching(s.increment, condition));
+			case TryCatchStatement s -> firstMatching(s.tryStatement, condition)
+					.or(() -> s.catchStatements.stream()
+							.map(k -> firstMatching(k.onCatch(), condition))
+							.filter(Optional::isPresent)
+							.map(Optional::get)
+							.findFirst())
+					.or(() -> s.finallyStatement != null ? firstMatching(s.finallyStatement, condition) : Optional.empty());
 		};
 	}
 	
@@ -109,10 +119,9 @@ public final class Flow{
 			// only guaranteed if guaranteed on both branches
 			case IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
 			// only guaranteed if guaranteed in try block and all catch blocks OR in finally block
-			case TryCatchStatement s ->
-					(guaranteedToRun(s.tryStatement, condition) && s.catchStatements.stream()
-							.allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
-					|| guaranteedToRun(s.finallyStatement, condition);
+			case TryCatchStatement s -> (guaranteedToRun(s.tryStatement, condition) && s.catchStatements.stream()
+					.allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
+			                            || (s.finallyStatement != null && guaranteedToRun(s.finallyStatement, condition));
 		};
 	}
 	
@@ -141,6 +150,27 @@ public final class Flow{
 						yield minOccurrencesBefore(s.fail, before, condition, false);
 				}
 				yield Math.min(minOccurrencesBefore(s.success, before, condition, false), minOccurrencesBefore(s.fail, before, condition, false));
+			}
+			case TryCatchStatement s -> {
+				// forceEnter is meaningless here since there can be many catch blocks
+				// same applies to switch statements, so we'll need a proper fix eventually
+				// minimum of all branches, plus any from finally block, which runs alongside other occurrences
+				List<Statement> branches = new ArrayList<>(s.catchStatements.size() + 1);
+				branches.add(s.tryStatement);
+				for(CatchStatement statement : s.catchStatements)
+					branches.add(statement.onCatch());
+				if(forceEnter){
+					for(Statement branch : branches)
+						if(firstMatching(branch, y -> y == before).isPresent())
+							yield minOccurrencesBefore(branch, before, condition, false);
+					throw new IllegalStateException("Tried to force enter a try/catch statement with no matching branches");
+				}else{
+					int fromFinally = s.finallyStatement != null ? minOccurrencesBefore(s.finallyStatement, before, condition, false) : 0;
+					yield branches.stream()
+							.mapToInt(k -> minOccurrencesBefore(k, before, condition, false))
+							.min()
+							.orElse(0) + fromFinally;
+				}
 			}
 		};
 	}
@@ -173,7 +203,8 @@ public final class Flow{
 	public static void visitTerminals(Statement body, Consumer<Statement> visitor){
 		switch(body){
 			case default -> visitor.accept(body);
-			case null -> {}
+			case null -> {
+			}
 			case WhileStatement s -> visitTerminals(s.success, visitor);
 			case DoWhileStatement s -> visitTerminals(s.success, visitor);
 			case BlockStatement s -> s.contains.forEach(k -> visitTerminals(k, visitor));
@@ -185,6 +216,13 @@ public final class Flow{
 				visitTerminals(s.start, visitor);
 				visitTerminals(s.success, visitor);
 				visitTerminals(s.increment, visitor);
+			}
+			case TryCatchStatement s -> {
+				visitTerminals(s.tryStatement, visitor);
+				for(CatchStatement statement : s.catchStatements)
+					visitTerminals(statement.onCatch(), visitor);
+				if(s.finallyStatement != null)
+					visitTerminals(s.finallyStatement, visitor);
 			}
 		}
 	}

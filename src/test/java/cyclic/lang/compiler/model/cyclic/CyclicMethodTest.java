@@ -55,4 +55,11 @@ class CyclicMethodTest{
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("record T(int i){ double i() -> 0.0; }"));
 		assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum T{ static T valueOf(String s) -> null; }"));
 	}
+	
+	@Test
+	void testVarAssignedBeforeUse(){
+		assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ double i(){ int e; return e; } }"));
+		assertDoesNotThrow(() -> Compiler.compileString("class T{ double i(){ int e = 1; return e; } }"));
+		assertDoesNotThrow(() -> Compiler.compileString("class T{ double i(){ int e; e = 2; return e; } }"));
+	}
 }

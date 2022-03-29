@@ -298,4 +298,10 @@ public final class Utils{
 					ret.addAll(getAllTokens(r));
 		return ret;
 	}
+	
+	public static int maxMethodParameterLocalIndex(CallableReference method){
+		return method.parameters().stream()
+				.mapToInt(x -> x.equals(PlatformDependency.LONG) || x.equals(PlatformDependency.DOUBLE) ? 2 : 1)
+				.sum() + (method.isStatic() ? 0 : 1);
+	}
 }

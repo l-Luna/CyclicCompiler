@@ -396,7 +396,7 @@ public class SampleTests{
 	@Test
 	void testTryCatch(){
 		CyclicAssertions.assertEquals(1, """
-				static int test() -> {
+				static int test(){
 					try{
 						return 1;
 					}
@@ -404,7 +404,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
-				static int test() -> {
+				static int test(){
 					try{
 						throw new IllegalStateException();
 					}catch(IllegalArgumentException e){
@@ -414,7 +414,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertEquals(2, """
-				static int test() -> {
+				static int test(){
 					try{
 						throw new IllegalStateException();
 					}catch(IllegalStateException e){
@@ -424,7 +424,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertEquals(List.of(1, 3, 2), """
-				static List test() -> {
+				static List test(){
 					var collected = new ArrayList();
 					for(int i = 0; i < 3; i++;){
 						try{
@@ -447,7 +447,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
-				static List test() -> {
+				static List test(){
 					var collected = new ArrayList();
 					for(int i = 0; i < 3; i++;){
 						try{
@@ -470,7 +470,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertEquals(2, """
-				static int test() -> {
+				static int test(){
 					try{
 						throw new IllegalStateException();
 					}finally{
@@ -480,7 +480,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
-				static int test() -> {
+				static int test(){
 					try{
 						throw new IllegalStateException();
 					}finally{
@@ -490,7 +490,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertEquals(3, """
-				static int test() -> {
+				static int test(){
 					try{
 						throw new IllegalArgumentException();
 					}catch(IllegalArgumentException e){
@@ -502,7 +502,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
-				static int test() -> {
+				static int test(){
 					try{
 						throw new IllegalArgumentException();
 					}catch(IllegalArgumentException e){
@@ -513,9 +513,8 @@ public class SampleTests{
 				};
 				""");
 		
-		// FIXME: doesn't work!!!
 		CyclicAssertions.assertThrows(CompileTimeException.class, """
-				static int test() -> {
+				static int test(){
 					int i;
 					try{
 						i = 1;
@@ -528,7 +527,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertEquals(2, """
-				static int test() -> {
+				static int test(){
 					int i = 0;
 					try{
 						i = 1;
@@ -542,7 +541,7 @@ public class SampleTests{
 				""");
 		
 		CyclicAssertions.assertEquals(3, """
-				static int test() -> {
+				static int test(){
 					int i = 0;
 					try{
 						i = 1;
@@ -555,5 +554,7 @@ public class SampleTests{
 					return i;
 				};
 				""");
+		
+		// TODO: more finally tests
 	}
 }
