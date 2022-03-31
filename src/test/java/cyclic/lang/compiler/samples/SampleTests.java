@@ -400,7 +400,7 @@ public class SampleTests{
 					try{
 						return 1;
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
@@ -410,7 +410,7 @@ public class SampleTests{
 					}catch(IllegalArgumentException e){
 						return 2;
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertEquals(2, """
@@ -420,7 +420,7 @@ public class SampleTests{
 					}catch(IllegalStateException e){
 						return 2;
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertEquals(List.of(1, 3, 2), """
@@ -443,7 +443,7 @@ public class SampleTests{
 						}
 					}
 					return collected;
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
@@ -466,7 +466,7 @@ public class SampleTests{
 						}
 					}
 					return collected;
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertEquals(2, """
@@ -476,7 +476,7 @@ public class SampleTests{
 					}finally{
 						return 2;
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
@@ -486,7 +486,7 @@ public class SampleTests{
 					}finally{
 						// do nothing
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertEquals(3, """
@@ -498,7 +498,7 @@ public class SampleTests{
 					}finally{
 						return 3;
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
@@ -510,7 +510,7 @@ public class SampleTests{
 					}finally{
 						// do nothing
 					}
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertThrows(CompileTimeException.class, """
@@ -523,7 +523,7 @@ public class SampleTests{
 						// do nothing
 					}
 					return i;
-				};
+				}
 				""");
 		
 		CyclicAssertions.assertEquals(2, """
@@ -537,7 +537,19 @@ public class SampleTests{
 						// do nothing
 					}
 					return i;
-				};
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(1, """
+				static int test(){
+					try{
+						throw new IllegalArgumentException();
+					}catch(IllegalArgumentException e){
+						if(e != null)
+							return 1;
+					}
+					return 0;
+				}
 				""");
 		
 		CyclicAssertions.assertEquals(3, """
@@ -552,9 +564,46 @@ public class SampleTests{
 						i = 3;
 					}
 					return i;
-				};
+				}
 				""");
 		
-		// TODO: more finally tests
+		// `finally` blocks should capture returns to ensure cleanup in all cases
+		CyclicAssertions.assertEquals(3, """
+				static int test(){
+					try{
+						return 1;
+					}finally{
+						return 3;
+					}
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(3, """
+				static int test(){
+					try{
+						throw new IllegalStateException();
+					}catch(IllegalStateException e){
+						return -1;
+					}finally{
+						return 3;
+					}
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(3, """
+				static int test(){
+					try{
+						throw new IllegalStateException();
+					}catch(IllegalStateException e){
+						try{
+							return -1;
+						}finally{
+							return -2;
+						}
+					}finally{
+						return 3;
+					}
+				}
+				""");
 	}
 }

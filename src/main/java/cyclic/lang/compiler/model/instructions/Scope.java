@@ -1,16 +1,34 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.CompileTimeException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Scope{
 	
-	Scope parent;
-	List<Variable> variables = new ArrayList<>();
-	List<Variable> vIndexList = new ArrayList<>();
+	/**
+	 * Scope attributes are temporarily added to scopes during codegen to hook into the generation of
+	 * particular instructions, such as returns in try/catch, break/continue statements, yields, etc.
+	*/
+	public interface ScopeAttribute{}
+	public record InterferingScope(Runnable returnWriter) implements ScopeAttribute{
+		public void writeReturn(){
+			returnWriter.run();
+		}
+	}
+	// TODO: breaking/continuing scope, yielding scope
+	
+	@Nullable
+	private Scope parent;
+	private List<Variable> variables = new ArrayList<>();
+	private List<Variable> vIndexList = new ArrayList<>();
+	private Map<Class<? extends ScopeAttribute>, ScopeAttribute> attributes = new HashMap<>();
 	
 	public Label end;
 	
@@ -18,7 +36,7 @@ public class Scope{
 		this(null);
 	}
 	
-	public Scope(Scope parent){
+	public Scope(@Nullable Scope parent){
 		this.parent = parent;
 	}
 	
@@ -45,5 +63,21 @@ public class Scope{
 		list.add(v);
 		variables.add(v);
 		return list.indexOf(v);
+	}
+	
+	public void putAttribute(ScopeAttribute attribute){
+		attributes.put(attribute.getClass(), attribute);
+	}
+	
+	@Nullable
+	public <T extends ScopeAttribute> T getAttribute(@NotNull Class<T> type){
+		return type.cast(attributes.get(type));
+	}
+	
+	@Nullable
+	public <T extends ScopeAttribute> T getAttributeInHierarchy(@NotNull Class<T> type){
+		if(attributes.containsKey(type))
+			return getAttribute(type);
+		return parent != null ? parent.getAttributeInHierarchy(type) : null;
 	}
 }

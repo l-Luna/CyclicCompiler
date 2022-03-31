@@ -20,6 +20,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -173,11 +174,22 @@ public abstract class Statement{
 				Scope catchScope = new Scope(in);
 				TypeReference catchType = TypeResolver.resolve(aCatch.type(), imports, type.packageName());
 				String varName = aCatch.idPart().getText();
+				var catchVar = new Variable(varName, catchType, catchScope, null);
 				Statement catchBody = fromBlockAst(aCatch.block(), catchScope, type, callable);
-				return new TryCatchStatement.CatchStatement(catchType, varName, catchBody, catchScope);
+				catchVar.owner = catchBody;
+				return new TryCatchStatement.CatchStatement(catchType, varName, catchBody, catchScope, catchVar);
 			}).toList();
-			Statement finallyBlock = ts.finallyBlock() == null ? null : fromBlockAst(ts.finallyBlock().block(), in, type, callable);
-			Statement tryBody = fromBlockAst(ts.block(), in, type, callable);
+			
+			Statement finallyBlock;
+			if(ts.finallyBlock() == null)
+				finallyBlock = null;
+			else{
+				Scope finallyScope = new Scope(in);
+				finallyBlock = fromBlockAst(ts.finallyBlock().block(), finallyScope, type, callable);
+			}
+			
+			Scope mainTryScope = new Scope(in);
+			Statement tryBody = fromBlockAst(ts.block(), mainTryScope, type, callable);
 			result = new TryCatchStatement(in, tryBody, catches, finallyBlock, callable);
 		}else
 			result = new NoopStatement(in, callable);
@@ -268,18 +280,21 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			if(returnValue == null){
-				mv.visitInsn(Opcodes.RETURN);
-				return;
+			
+			if(returnValue != null){
+				var adjusted = returnValue.fit(toReturn);
+				if(adjusted == null)
+					throw new CompileTimeException(text, "Value of type \"" + returnValue.type().fullyQualifiedName() + "\" cannot be returned from method \"" + from.summary() + "\"");
+				adjusted.write(mv);
 			}
 			
-			// TODO: just use from.returns()
-			var adjusted = returnValue.fit(toReturn);
-			if(adjusted == null)
-				throw new CompileTimeException(text, "Value of type \"" + returnValue.type().fullyQualifiedName() + "\" cannot be returned from method \"" + from.summary() + "\"");
-			
-			adjusted.write(mv);
-			mv.visitInsn(adjusted.type().returnOpcode());
+			Scope.InterferingScope attr = in.getAttributeInHierarchy(Scope.InterferingScope.class);
+			if(attr != null)
+				attr.writeReturn();
+			else if(returnValue == null)
+				mv.visitInsn(Opcodes.RETURN);
+			else
+				mv.visitInsn(returnValue.type().returnOpcode());
 		}
 		
 		public void simplify(){
@@ -671,11 +686,7 @@ public abstract class Statement{
 	}
 	
 	public static class TryCatchStatement extends Statement{
-		public record CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope, Variable catchVariable){
-			public CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope){
-				this(type, name, onCatch, ownScope, new Variable(name, type, ownScope, onCatch));
-			}
-		}
+		public record CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope, Variable catchVariable){}
 		
 		public Statement tryStatement;
 		public List<CatchStatement> catchStatements;
@@ -686,8 +697,6 @@ public abstract class Statement{
 			this.tryStatement = tryStatement;
 			this.catchStatements = catchStatements;
 			this.finallyStatement = finallyStatement;
-			for(CatchStatement c : catchStatements)
-				c.catchVariable().owner = this;
 		}
 		
 		public void write(MethodVisitor mv){
@@ -695,27 +704,35 @@ public abstract class Statement{
 			Label blockStart = new Label(),
 					blockEnd = new Label(),
 					tryEnd = new Label(),
-					finallyStart = new Label(),
+					rethrowingFinallyStart = new Label(),
+					returningFinallyStart = new Label(),
 					finallyEnd = new Label();
 			Map<CatchStatement, Label> handlerStarts = catchStatements.stream()
 					.collect(Collectors.toMap(x -> x, x -> new Label()));
 			Map<CatchStatement, Label> handlerEnds = catchStatements.stream()
 					.collect(Collectors.toMap(x -> x, x -> new Label()));
 			
+			AtomicBoolean hasInterferedReturn = new AtomicBoolean(false);
+			
 			for(var c : catchStatements)
 				mv.visitTryCatchBlock(blockStart, blockEnd, handlerStarts.get(c), c.type().internalName());
 			if(finallyStatement != null){
-				mv.visitTryCatchBlock(blockStart, blockEnd, finallyStart, null);
-				for(var c : catchStatements)
-					mv.visitTryCatchBlock(handlerStarts.get(c), handlerEnds.get(c), finallyStart, null);
+				mv.visitTryCatchBlock(blockStart, blockEnd, rethrowingFinallyStart, null);
+				Scope.InterferingScope interferingScope = new Scope.InterferingScope(() -> {
+					hasInterferedReturn.set(true);
+					mv.visitJumpInsn(Opcodes.GOTO, returningFinallyStart);
+				});
+				tryStatement.in.putAttribute(interferingScope);
+				for(var c : catchStatements){
+					mv.visitTryCatchBlock(handlerStarts.get(c), handlerEnds.get(c), rethrowingFinallyStart, null);
+					c.ownScope().putAttribute(interferingScope);
+				}
 			}
 			
 			mv.visitLabel(blockStart);
 			tryStatement.write(mv);
 			mv.visitLabel(blockEnd);
-			if(finallyStatement != null) // non-rethrowing version
-				finallyStatement.write(mv);
-			mv.visitJumpInsn(Opcodes.GOTO, finallyEnd);
+			mv.visitJumpInsn(Opcodes.GOTO, tryEnd);
 			
 			for(var c : catchStatements){
 				Label start = handlerStarts.get(c);
@@ -724,20 +741,35 @@ public abstract class Statement{
 				c.catchVariable().writeStore(mv);
 				c.onCatch().write(mv);
 				mv.visitLabel(end);
-				// non-rethrowing version
-				if(finallyStatement != null)
-					finallyStatement.write(mv);
+				mv.visitJumpInsn(Opcodes.GOTO, tryEnd);
 				c.ownScope().end = end;
-				mv.visitJumpInsn(Opcodes.GOTO, finallyEnd);
 			}
 			mv.visitLabel(tryEnd);
 			
-			if(finallyStatement != null){ // rethrowing version
-				mv.visitLabel(finallyStart);
-				Variable toRethrow = new Variable("~exception", Utils.forAnyClass(Throwable.class), in, this);
-				toRethrow.writeStore(mv);
+			if(finallyStatement != null){
+				// non-rethrowing version
 				finallyStatement.write(mv);
-				toRethrow.writeLoad(mv);
+				mv.visitJumpInsn(Opcodes.GOTO, finallyEnd);
+				
+				// returning version
+				if(hasInterferedReturn.get()){
+					mv.visitLabel(returningFinallyStart);
+					finallyStatement.write(mv);
+					
+					TypeReference returns = from instanceof MethodReference ? ((MethodReference)from).returns() : null;
+					// consider nested interfering scopes
+					var intrAttr = in.getAttributeInHierarchy(Scope.InterferingScope.class);
+					if(intrAttr != null)
+						intrAttr.writeReturn();
+					else if(returns == null)
+						mv.visitInsn(Opcodes.RETURN);
+					else
+						mv.visitInsn(returns.returnOpcode());
+				}
+				
+				// rethrowing version
+				mv.visitLabel(rethrowingFinallyStart);
+				finallyStatement.write(mv);
 				mv.visitInsn(Opcodes.ATHROW);
 			}
 			mv.visitLabel(finallyEnd);
