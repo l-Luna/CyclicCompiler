@@ -606,4 +606,100 @@ public class SampleTests{
 				}
 				""");
 	}
+	
+	@Test
+	void testBreakContinue(){
+		CyclicAssertions.assertEquals(99, """
+				static int test(){
+					int i = 0;
+					while(true){
+						i++;
+						if(i == 99)
+							break;
+					}
+					return i;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(List.of(1, 2, 4, 5), """
+				static List test(){
+					List list = new ArrayList();
+					int i = 0;
+					while(i < 6){
+						i++;
+						if(i == 6)
+							continue;
+						if(i == 3)
+							continue;
+						list.add(i);
+					}
+					return list;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(1 + 2 + 3, """
+				static int test(){
+					int total = 0;
+					for(int i = 0; i < 5; i++;){
+						total += i;
+						if(i == 3)
+							break;
+					}
+					return total;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(1 + 2 + 4 + 6, """
+				static int test(){
+					int total = 0;
+					for(int i = 0; i < 7; i++;){
+						if((i == 3) || (i == 5))
+							continue;
+						total += i;
+					}
+					return total;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(2, """
+				static int test(){
+					int i = 0;
+					do{
+						i++;
+						if(i == 2)
+							break;
+					}while(i != 0);
+					return i;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(List.of(1, 2, 3, 4, 5, 7), """
+				static List test(){
+					List list = new ArrayList();
+					int i = 0;
+					do{
+						i++;
+						if(i == 6)
+							continue;
+						if(i == 8)
+							continue;
+						list.add(i);
+					}while(i < 8);
+					return list;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(1 + 5 + 7, """
+				static int test(){
+					int i = 0;
+					for(Object o : List.of(1, -2, 5, 7)){
+						int oi = (Integer)o;
+						if(oi == -2)
+							continue;
+						i += oi;
+					}
+					return i;
+				}
+				""");
+	}
 }

@@ -22,7 +22,9 @@ public class Scope{
 			returnWriter.run();
 		}
 	}
-	// TODO: breaking/continuing scope, yielding scope
+	// TODO: yielding scope
+	public record BreakingScope(Label endLabel) implements ScopeAttribute{}
+	public record ContinuingScope(Label restartLabel) implements ScopeAttribute{}
 	
 	@Nullable
 	private Scope parent;

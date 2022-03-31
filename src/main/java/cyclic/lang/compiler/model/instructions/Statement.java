@@ -61,9 +61,9 @@ public abstract class Statement{
 		CompileTimeException.pushContext(ctx);
 		
 		var imports = type.imports;
-		if(ctx.block() != null){
+		if(ctx.block() != null)
 			result = fromBlockAst(ctx.block(), in, type, callable);
-		}else if(ctx.varDecl() != null){
+		else if(ctx.varDecl() != null){
 			CyclicLangParser.VarDeclContext decl = ctx.varDecl();
 			if(decl.arguments() != null)
 				throw new CompileTimeException("Arguments not allowed here");
@@ -191,7 +191,11 @@ public abstract class Statement{
 			Scope mainTryScope = new Scope(in);
 			Statement tryBody = fromBlockAst(ts.block(), mainTryScope, type, callable);
 			result = new TryCatchStatement(in, tryBody, catches, finallyBlock, callable);
-		}else
+		}else if(ctx.breakStatement() != null) // TODO: labelled statements & break/continue
+			result = new BreakStatement(in, callable);
+		else if(ctx.continueStatement() != null)
+			result = new ContinueStatement(in, callable);
+		else
 			result = new NoopStatement(in, callable);
 		
 		CompileTimeException.popContext();
@@ -579,6 +583,8 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			super.write(mv);
 			Label postWrite = new Label(), preCheck = new Label();
+			success.in.putAttribute(new Scope.BreakingScope(postWrite));
+			success.in.putAttribute(new Scope.ContinuingScope(preCheck));
 			mv.visitLabel(preCheck);
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
@@ -609,12 +615,15 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			Label postWrite = new Label(), preCheck = new Label();
+			Label postWrite = new Label(), preCheck = new Label(), continueLabel = new Label();
+			success.in.putAttribute(new Scope.BreakingScope(postWrite));
+			success.in.putAttribute(new Scope.ContinuingScope(continueLabel));
 			start.write(mv);
 			mv.visitLabel(preCheck);
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
 			success.write(mv); // success block
+			mv.visitLabel(continueLabel); // we need to run the increment
 			increment.write(mv);
 			mv.visitJumpInsn(Opcodes.GOTO, preCheck); // check again
 			mv.visitLabel(postWrite);
@@ -647,11 +656,16 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			Label preWrite = new Label();
+			Label preWrite = new Label(), preCheck = new Label(), postWrite = new Label();
+			success.in.putAttribute(new Scope.BreakingScope(postWrite));
+			success.in.putAttribute(new Scope.ContinuingScope(preCheck));
 			mv.visitLabel(preWrite);
 			success.write(mv);
+			
+			mv.visitLabel(preCheck);
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFNE, preWrite);
+			mv.visitLabel(postWrite);
 			if(ownsScope){
 				Label endLabel = new Label();
 				in.end = endLabel;
@@ -782,5 +796,37 @@ public abstract class Statement{
 			if(finallyStatement != null)
 				finallyStatement.simplify();
 		}
+	}
+	
+	public static class BreakStatement extends Statement{
+		public BreakStatement(Scope in, CyclicCallable from){
+			super(in, from);
+		}
+		
+		public void write(MethodVisitor mv){
+			super.write(mv);
+			Scope.BreakingScope attr = in.getAttributeInHierarchy(Scope.BreakingScope.class);
+			if(attr == null)
+				throw new CompileTimeException(text, "Cannot break outside of a breaking scope (i.e. a loop)");
+			mv.visitJumpInsn(Opcodes.GOTO, attr.endLabel());
+		}
+		
+		public void simplify(){}
+	}
+	
+	public static class ContinueStatement extends Statement{
+		public ContinueStatement(Scope in, CyclicCallable from){
+			super(in, from);
+		}
+		
+		public void write(MethodVisitor mv){
+			super.write(mv);
+			Scope.ContinuingScope attr = in.getAttributeInHierarchy(Scope.ContinuingScope.class);
+			if(attr == null)
+				throw new CompileTimeException(text, "Cannot continue outside of a continuing scope (i.e. a loop)");
+			mv.visitJumpInsn(Opcodes.GOTO, attr.restartLabel());
+		}
+		
+		public void simplify(){}
 	}
 }

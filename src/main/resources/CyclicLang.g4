@@ -68,6 +68,8 @@ statement
     | tryStatement
     | switchStatement
     | yieldStatement
+	| breakStatement
+	| continueStatement
     | ((value | SUPER) DOT)? call SEMICOLON
     | ctorCall SEMICOLON
     | SEMICOLON
@@ -163,6 +165,9 @@ doWhileStatement: DO statement WHILE LPAREN value RPAREN SEMICOLON;
 tryStatement: TRY block catchBlock* finallyBlock?;
 catchBlock: CATCH LPAREN type idPart RPAREN block;
 finallyBlock: FINALLY block;
+
+breakStatement: BREAK /*(idPart)?*/ SEMICOLON;
+continueStatement: CONTINUE /*(idPart)?*/ SEMICOLON;
 
 switchStatement: SWITCH LPAREN value RPAREN LBRACE caseClause* defaultClause? RBRACE;
 caseClause: CASE value DASHARROW (statement | value SEMICOLON);
@@ -280,7 +285,6 @@ NONSEALED: 'non-sealed';
 DEFAULT: 'default';
 SWITCH: 'switch';
 WHILE: 'while';
-YIELD: 'yield';
 CASE: 'case';
 ELSE: 'else';
 FOR: 'for';
@@ -290,6 +294,10 @@ IF: 'if';
 TRY: 'try';
 CATCH: 'catch';
 FINALLY: 'finally';
+
+BREAK: 'break';
+CONTINUE: 'continue';
+YIELD: 'yield';
 
 DECLIT: MINUS? DIGIT* DOT DIGIT+ ('f' | 'd')?;
 INTLIT: MINUS? DIGIT+ ('f' | 'd' | 'l')?;
