@@ -5,6 +5,7 @@ import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Compiler;
 import cyclic.lang.compiler.gen.EnumMembers;
 import cyclic.lang.compiler.gen.RecordMethods;
+import cyclic.lang.compiler.gen.SingleMembers;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
@@ -269,12 +270,15 @@ public class CyclicType implements TypeReference{
 			addMember(RecordMethods.genHashCode(this));
 			addMember(RecordMethods.genCtor(this));
 		}
-		if(kind() == TypeKind.ENUM){
+		else if(kind() == TypeKind.ENUM){
 			addMember(EnumMembers.genValuesField(this));
 			addMember(EnumMembers.genValues(this));
 			addMember(EnumMembers.genValueOf(this));
 			addMember(EnumMembers.genEntriesField(this));
 			addMember(EnumMembers.genEntries(this));
+		}
+		else if(kind() == TypeKind.SINGLE){
+			addMember(SingleMembers.genInstanceField(this));
 		}
 	}
 	
@@ -321,6 +325,10 @@ public class CyclicType implements TypeReference{
 		
 		if(kind() != TypeKind.RECORD && unresolvedRecordComponents.size() > 0)
 			throw new CompileTimeException(null, "Non-records should have no record components");
+		
+		if(kind() == TypeKind.SINGLE)
+			if(constructors.stream().noneMatch(x -> x.parameters().size() == 0))
+				throw new CompileTimeException(null, "Single-types must have a no-arg constructor");
 	}
 	
 	public void resolveInheritance(){

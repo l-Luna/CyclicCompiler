@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.cyclic.CyclicCallable;
@@ -123,7 +124,7 @@ public interface ForEachStyle{
 		}
 		
 		public boolean appliesTo(Value value){
-			return ForEachStyle.super.appliesTo(value) && value instanceof TypeValue;
+			return ForEachStyle.super.appliesTo(value) && value instanceof TypeValue t && t.target.kind() == TypeKind.ENUM;
 		}
 		
 		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable from){

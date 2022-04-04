@@ -35,9 +35,9 @@ public abstract class Value{
 			case CyclicLangParser.ParenValueContext paren -> fromAst(paren.value(), scope, type, method);
 			case CyclicLangParser.ArrayIndexValueContext ind -> new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
 			case CyclicLangParser.PrimitiveClassValueContext prim -> new PrimitiveClassValue(PrimitiveTypeRef.getPrimitiveDesc(prim.primitiveType().getText()));
-			
 			case CyclicLangParser.PrefixOpValueContext preOp -> Operations.resolvePrefix(preOp.prefixop().getText(), fromAst(preOp.value(), scope, type, method));
 			case CyclicLangParser.PostfixOpValueContext postOp -> Operations.resolvePostfix(postOp.postfixop().getText(), fromAst(postOp.value(), scope, type, method));
+			
 			case CyclicLangParser.InlineAssignValueContext ia -> {
 				Value toAssign = fromAst(ia.left, scope, type, method);
 				Value newValue = fromAst(ia.right, scope, type, method);
@@ -45,7 +45,6 @@ public abstract class Value{
 					newValue = Operations.resolveBinary(ia.binaryop().getText(), toAssign, newValue, null);
 				yield createInlineAssignValue(toAssign, newValue);
 			}
-			
 			case CyclicLangParser.IntLitContext intLit -> {
 				String text = intLit.INTLIT().getText();
 				if(text.endsWith("f"))
@@ -100,9 +99,13 @@ public abstract class Value{
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
 				CallableReference target = Utils.resolveConstructor(of, args, method);
-				if(target != null && target.in().kind() == TypeKind.ENUM)
-					// pass expressions won't save you here, safe to eagerly throw
-					throw new CompileTimeException("Can't manually call enum constructors");
+				// pass expressions won't save you here, safe to eagerly throw
+				if(target != null){
+					if(target.in().kind() == TypeKind.ENUM)
+						throw new CompileTimeException("Can't manually call enum constructors");
+					if(target.in().kind() == TypeKind.SINGLE)
+						throw new CompileTimeException("Can't manually call single-type constructors");
+				}
 				yield new InitializationValue(args, target, of, method);
 			}
 			case CyclicLangParser.BinaryOpValueContext bin -> {
@@ -398,7 +401,7 @@ public abstract class Value{
 	}
 	
 	/**
-	 * If the target is a singleton type, this is the single value of that type.
+	 * If the target is a single-type, this is the single value of that type.
 	 * Otherwise, it simply provides static members.
 	 */
 	public static class TypeValue extends Value{
@@ -419,6 +422,8 @@ public abstract class Value{
 		
 		public void write(MethodVisitor mv){
 			// write singleton types
+			if(target.kind() == TypeKind.SINGLE)
+				mv.visitFieldInsn(Opcodes.GETSTATIC, target.internalName(), "INSTANCE", "L" + target.internalName() + ";");
 		}
 		
 		public TypeReference type(){
@@ -687,9 +692,9 @@ public abstract class Value{
 		
 		// for pass expressions
 		public TypeReference of;
-		public CallableReference from;
+		public MemberReference from;
 		
-		public InitializationValue(List<Value> args, CallableReference ctor, TypeReference of, CallableReference from){
+		public InitializationValue(List<Value> args, CallableReference ctor, TypeReference of, MemberReference from){
 			this.args = args;
 			this.ctor = ctor;
 			this.of = of;

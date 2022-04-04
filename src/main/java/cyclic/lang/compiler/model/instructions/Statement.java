@@ -413,7 +413,7 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			if(on != null && !(on instanceof Value.TypeValue)) // TODO: consider singletons
+			if(on != null && !(on instanceof Value.TypeValue t && t.target.kind() == TypeKind.SINGLE))
 				on.write(mv);
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())
@@ -480,7 +480,7 @@ public abstract class Statement{
 		public AssignFieldStatement(Scope in, FieldReference fieldRef, Value on, Value toSet, CyclicCallable from){
 			super(in, from);
 			this.fieldRef = fieldRef;
-			this.on = on instanceof Value.TypeValue ? null : on;
+			this.on = (on instanceof Value.TypeValue t && t.target.kind() != TypeKind.SINGLE) ? null : on;
 			this.toSet = toSet;
 		}
 		
