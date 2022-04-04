@@ -43,7 +43,13 @@ class CyclicTypeTest{
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("enum E{ val A; static E X = new E(); }")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("enum E{ val A(3); E(int i){  } }")),
 				
-				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ U(); }"))
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("class T{ U(); }")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ private S(){ } }")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("single S{ S(int i); }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ S(int i); S(){ this(0); } }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ S(); void test(){ System.out.println(S); } }"))
 		);
 	}
 	
