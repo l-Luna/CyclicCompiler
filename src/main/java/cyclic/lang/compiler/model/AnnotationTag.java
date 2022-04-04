@@ -92,6 +92,7 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 	 * Changes an Object value into a type that can be handled by {@linkplain AnnotationTag}.
 	 * <p>{@linkplain Class} values become {@linkplain TypeReference}s, {@linkplain Enum} constants become {@linkplain EnumConstant}s,
 	 * {@linkplain Annotation} values become {@linkplain AnnotationTag}s, and primitive values become their wrapper types.
+	 *
 	 * @return A representation of the value that can be handled by {@linkplain AnnotationTag}.
 	 */
 	public static Object clean(Object value, @Nullable AnnotatableElement on){
@@ -143,7 +144,8 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		if(first.isEmpty())
 			return RetentionPolicy.CLASS;
 		EnumConstant policy = (EnumConstant)first.get().arguments.get("value");
-		if(policy == null) return RetentionPolicy.SOURCE; // TODO: classfile annotation values aren't loaded
+		if(policy == null)
+			return RetentionPolicy.SOURCE;
 		return RetentionPolicy.valueOf(policy.name());
 	}
 }

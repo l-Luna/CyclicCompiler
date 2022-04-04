@@ -1,7 +1,7 @@
 package cyclic.lang.compiler;
 
-import cyclic.lang.compiler.gen.AsmCyclicCW;
 import cyclic.lang.compiler.gen.CyclicClassWriter;
+import cyclic.lang.compiler.gen.asm.AsmCyclicCW;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import cyclic.lang.compiler.resolve.Dependency;

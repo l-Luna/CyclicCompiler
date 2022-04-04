@@ -4,7 +4,10 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.objectweb.asm.ClassReader;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +26,7 @@ public class ClassfileTypeRef implements TypeReference{
 	protected List<ClassfileMember.Field> fields = new ArrayList<>();
 	protected List<ClassfileMember.Method> methods = new ArrayList<>();
 	protected List<ClassfileMember.Method> constructors = new ArrayList<>();
-	protected Set<String> annotationSigs = new HashSet<>();
+	protected Set<ClassfileAnnotationPrototype> annotationPtts = new HashSet<>();
 	
 	private TypeReference superClass;
 	private List<TypeReference> interfaces;
@@ -90,11 +93,8 @@ public class ClassfileTypeRef implements TypeReference{
 				.map(x -> x.replace('/', '.'))
 				.map(TypeResolver::resolveFq)
 				.toList();
-		annotations = annotationSigs.stream()
-				.map(k -> k.substring(1, k.length() - 1))
-				.map(k -> k.replace('/', '.'))
-				.map(TypeResolver::resolveFq)
-				.map(k -> new AnnotationTag(k, Map.of(), Map.of(), this))
+		annotations = annotationPtts.stream()
+				.map(x -> x.resolve(this))
 				.collect(Collectors.toSet());
 		
 		fields.forEach(ClassfileMember::resolveRefs);

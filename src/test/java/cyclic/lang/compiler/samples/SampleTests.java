@@ -712,4 +712,36 @@ public class SampleTests{
 				}
 				""");
 	}
+	
+	@Test
+	void testSingles() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, NoSuchFieldException{
+		MethodHandles.Lookup lookup = MethodHandles.lookup();
+		
+		Class<?> holderSingle = lookup.defineClass(Compiler.compileSingleClass("""
+				package cyclic.lang.compiler.samples;
+				single SingleHolder0{
+					int value = 3;
+					static int test() -> SingleHolder0.value;
+					int testInst() -> value;
+				}
+				"""));
+		
+		Method test = holderSingle.getDeclaredMethod("test");
+		Assertions.assertEquals(test.invoke(null), 3);
+		
+		Method testI = holderSingle.getDeclaredMethod("testInst");
+		Object instance = holderSingle.getDeclaredField("INSTANCE").get(null);
+		Assertions.assertEquals(testI.invoke(instance), 3);
+		
+		Class<?> holderStaticSingle = lookup.defineClass(Compiler.compileSingleClass("""
+				package cyclic.lang.compiler.samples;
+				static single SingleHolder1{
+					int value = 4;
+					static int test() -> value;
+				}
+				"""));
+		
+		Method staticTest = holderStaticSingle.getDeclaredMethod("test");
+		Assertions.assertEquals(staticTest.invoke(null), 4);
+	}
 }

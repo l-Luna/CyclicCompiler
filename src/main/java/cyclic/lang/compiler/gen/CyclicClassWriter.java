@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.gen.asm.IsSingleAttribute;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
@@ -19,6 +20,9 @@ public final class CyclicClassWriter{
 	public static void writeClass(ClassWriter writer, CyclicType type){
 		CompileTimeException.setFile(type.fullyQualifiedName());
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, type.superClass().internalName(), type.superInterfaces().stream().map(TypeReference::internalName).toArray(String[]::new));
+		
+		if(type.kind() == TypeKind.SINGLE)
+			writer.visitAttribute(new IsSingleAttribute());
 		
 		// class init
 		{
@@ -107,11 +111,6 @@ public final class CyclicClassWriter{
 			}
 		}
 		
-		/*if(type.outerClass() != null)
-			writer.visitOuterClass(type.outerClass().internalName(), null, null);
-		
-		for(var inner : type.innerClasses())
-			writer.visitInnerClass(inner.internalName(), type.internalName(), inner.shortName(), getAccessFlags(inner));*/
 		writer.visitEnd();
 	}
 	

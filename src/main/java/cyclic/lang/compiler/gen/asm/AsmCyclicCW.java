@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.gen;
+package cyclic.lang.compiler.gen.asm;
 
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.resolve.TypeResolver;
