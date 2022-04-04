@@ -225,6 +225,11 @@ public final class Utils{
 	}
 	
 	public static MethodReference resolveSingleMethod(TypeReference from, String name, boolean isStatic, TypeReference... args){
+		return resolveSingleOptionalMethod(from, name, isStatic, args).orElseThrow(() ->
+				new IllegalStateException("Couldn't find " + (isStatic ? "static" : "non-static") + " method \"" + name + "\" in type " + from.fullyQualifiedName() + "!"));
+	}
+	
+	public static Optional<MethodReference> resolveSingleOptionalMethod(TypeReference from, String name, boolean isStatic, TypeReference... args){
 		candidates:
 		for(var c : from.methods()){
 			if((c.isStatic() == isStatic) && c.name().equals(name) && c.parameters().size() == args.length){
@@ -233,10 +238,10 @@ public final class Utils{
 					if(!args[i].equals(p))
 						continue candidates;
 				}
-				return c;
+				return Optional.of(c);
 			}
 		}
-		throw new IllegalStateException("Couldn't find " + (isStatic ? "static" : "non-static") + " method \"" + name + "\" in type " + from.fullyQualifiedName() + "!");
+		return Optional.empty();
 	}
 	
 	public static FieldReference getField(TypeReference from, String name){

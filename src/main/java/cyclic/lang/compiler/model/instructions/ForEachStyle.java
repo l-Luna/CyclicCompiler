@@ -82,6 +82,11 @@ public interface ForEachStyle{
 		}
 		
 		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
+			return forEachStatementInner(iterating, varName, varType, finalVar, in, body, c);
+		}
+		
+		@NotNull
+		protected static Statement forEachStatementInner(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
 			/*    for(T t : x)
 			 *         act;
 			 *  becomes
@@ -128,13 +133,21 @@ public interface ForEachStyle{
 			*  becomes
 			*     for(T t : T.entries())
 			*         act;
-			*  where T extends Enum
+			*  where T extends Enum and entries() exists
+			*  otherwise fall back to T.values()
 			*/
 			TypeReference type = iterating.type();
 			if(varType != null && !type.isAssignableTo(varType))
 				throw new CompileTimeException("Variable type of an enum for-each loop must be the enum type");
-			var entriesExpr = new CallValue(null, List.of(), Utils.resolveSingleMethod(type, "entries", true));
-			return IteratorForEach.forEachStatementWithType(entriesExpr, varName, type, finalVar, in, body, from);
+			var entries = Utils.resolveSingleOptionalMethod(type, "entries", true);
+			if(entries.isPresent()){
+				var entriesExpr = new CallValue(null, List.of(), entries.get());
+				return IteratorForEach.forEachStatementWithType(entriesExpr, varName, type, finalVar, in, body, from);
+			}else{
+				var values = Utils.resolveSingleMethod(type, "values", true);
+				var valuesExpr = new CallValue(null, List.of(), values);
+				return ArrayForEach.forEachStatementInner(valuesExpr, varName, varType, finalVar, in, body, from);
+			}
 		}
 	}
 }

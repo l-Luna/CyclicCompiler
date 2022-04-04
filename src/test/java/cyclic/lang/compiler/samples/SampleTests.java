@@ -161,6 +161,16 @@ public class SampleTests{
 					""", lookup);
 			Assertions.assertEquals(207, loops.invoke(null, 100));
 			
+			CyclicAssertions.assertEquals(12, """
+					static int test(){
+						int i = 0;
+						for(var e : java.lang.annotation.ElementType){
+							i++;
+						}
+						return i;
+					}
+					""");
+			
 			Assertions.assertEquals("12", Compiler.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
