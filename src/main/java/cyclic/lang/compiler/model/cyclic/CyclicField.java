@@ -43,7 +43,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 		this.type = type;
 	}
 	
-	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in, boolean isPublicStaticFinalRequired){
+	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in, boolean isPsfRequired, boolean staticByDefault){
 		name = ctx.idPart().getText();
 		this.in = in;
 		text = ctx;
@@ -52,10 +52,12 @@ public class CyclicField implements FieldReference, CyclicMember{
 			isV |= modifier.equals("volatile");
 		});
 		
-		if(isPublicStaticFinalRequired){
+		if(isPsfRequired){
 			isS = true;
 			flags = new AccessFlags(Visibility.PUBLIC, false, true);
 		}
+		if(staticByDefault)
+			isS = true;
 		
 		typeName = ctx.typeOrInferred();
 		defaultValText = ctx.value();

@@ -49,7 +49,11 @@ class CyclicTypeTest{
 				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ private S(){ } }")),
 				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("single S{ S(int i); }")),
 				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ S(int i); S(){ this(0); } }")),
-				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ S(); void test(){ System.out.println(S); } }"))
+				() -> assertDoesNotThrow(() -> Compiler.compileString("single S{ S(); void test(){ System.out.println(S); } }")),
+				
+				() -> assertDoesNotThrow(() -> Compiler.compileString("static single S{ }")),
+				() -> assertDoesNotThrow(() -> Compiler.compileString("static single S{ String text = \"\"; void test(){ System.out.println(text); } }")),
+				() -> assertThrows(CompileTimeException.class, () -> Compiler.compileString("static abstract single S{  }"))
 		);
 	}
 	

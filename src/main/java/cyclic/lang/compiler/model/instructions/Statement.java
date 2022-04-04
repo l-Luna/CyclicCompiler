@@ -413,7 +413,7 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			if(on != null && !(on instanceof Value.TypeValue t && t.target.kind() == TypeKind.SINGLE))
+			if(on != null && !(target.isStatic() || on instanceof Value.TypeValue t && t.target.kind() != TypeKind.SINGLE))
 				on.write(mv);
 			// implicit this for instance method calls with no explicit value
 			if(on == null && !target.isStatic())
@@ -486,10 +486,12 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			if(on != null)
-				on.write(mv);
-			else if(!fieldRef.isStatic())
-				mv.visitVarInsn(Opcodes.ALOAD, 0);
+			if(!fieldRef.isStatic()){
+				if(on != null)
+					on.write(mv);
+				else
+					mv.visitVarInsn(Opcodes.ALOAD, 0);
+			}
 			toSet.write(mv);
 			fieldRef.writePut(mv);
 		}

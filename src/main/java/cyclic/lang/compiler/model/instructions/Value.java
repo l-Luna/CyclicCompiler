@@ -227,7 +227,8 @@ public abstract class Value{
 		return ret != null ? ret.fit(target) : null;
 	}
 	
-	public void write(MethodVisitor mv){}
+	public void write(MethodVisitor mv){
+	}
 	
 	public void simplify(Statement in){
 		// evaluate constant expressions...
@@ -550,11 +551,13 @@ public abstract class Value{
 		// make sure that changes here are mirrored in InitializationValue
 		// and CallStatement
 		public void write(MethodVisitor mv){
-			if(on != null)
-				on.write(mv);
-			// implicit this for instance method calls with no explicit value
-			if(on == null && !target.isStatic())
-				mv.visitVarInsn(Opcodes.ALOAD, 0);
+			if(!target.isStatic()){
+				if(on != null)
+					on.write(mv);
+					// implicit this for instance method calls with no explicit value
+				else
+					mv.visitVarInsn(Opcodes.ALOAD, 0);
+			}
 			// for varargs methods, all extra parameters are stuffed into an array
 			if(target.isVarargs()){
 				args = new ArrayList<>(args);
@@ -969,7 +972,8 @@ public abstract class Value{
 		
 		// only one of these lines should be set
 		int localIdx = -10;
-		Value fieldOf = null; FieldReference field = null;
+		Value fieldOf = null;
+		FieldReference field = null;
 		Value array = null, arrayIndex = null;
 		
 		// if true, evaluate to the value pre-assignment, like in ++x
@@ -1017,12 +1021,15 @@ public abstract class Value{
 				mv.visitVarInsn(newValue.type().localStoreOpcode(), localIdx);
 			}else if(field != null){
 				boolean farDup = true;
-				if(fieldOf != null)
-					fieldOf.write(mv);
-				else if(!field.isStatic())
-					mv.visitVarInsn(Opcodes.ALOAD, 0);
-				else
+				
+				if(!field.isStatic()){
+					if(fieldOf != null)
+						fieldOf.write(mv);
+					else
+						mv.visitVarInsn(Opcodes.ALOAD, 0);
+				}else
 					farDup = false;
+				
 				newValue.write(mv);
 				if(!returnPreAssign){
 					if(farDup){

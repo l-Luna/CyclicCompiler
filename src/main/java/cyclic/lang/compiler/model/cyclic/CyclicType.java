@@ -48,7 +48,9 @@ public class CyclicType implements TypeReference{
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
 	public List<String> imports;
+	
 	public int enumConstIdx = 0;
+	private boolean isStaticSingle = false;
 	
 	public CyclicType(CyclicLangParser.ClassDeclContext ast, String packageName, List<String> imports){
 		this.name = ast.idPart().getText();
@@ -82,7 +84,14 @@ public class CyclicType implements TypeReference{
 			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
 		}
 		
-		flags = Utils.fromModifiers(ast.modifiers());
+		flags = Utils.fromModifiers(ast.modifiers(), mod -> {
+			if(kind() == TypeKind.SINGLE && mod.equals("static"))
+				isStaticSingle = true;
+		});
+		
+		// static single types are always final
+		if(isStaticSingle)
+			flags = new AccessFlags(flags.visibility(), flags.isAbstract(), true);
 		
 		if(flags.isAbstract() && flags.isFinal())
 			throw new CompileTimeException(null, "Type cannot be abstract and final");
@@ -90,13 +99,13 @@ public class CyclicType implements TypeReference{
 		boolean isInterface = kind() == TypeKind.INTERFACE;
 		for(var member : ast.member()){
 			if(member.function() != null)
-				methods.add(new CyclicMethod(member.function(), this, isInterface));
+				methods.add(new CyclicMethod(member.function(), this, isInterface, isStaticSingle));
 			else if(member.constructor() != null)
 				constructors.add(new CyclicConstructor(member.constructor(), this));
 			else if(member.init() != null)
 				initBlocks.add(new CyclicConstructor(member.init(), this));
 			else if(member.varDecl() != null)
-				fields.add(new CyclicField(member.varDecl(), this, isInterface));
+				fields.add(new CyclicField(member.varDecl(), this, isInterface, isStaticSingle));
 		}
 		
 		members.addAll(fields);
@@ -219,7 +228,7 @@ public class CyclicType implements TypeReference{
 		}else if(kind == TypeKind.SINGLE)
 			if(flags.isAbstract())
 				throw new CompileTimeException(null, "Single types must not be abstract");
-			
+		
 		members.forEach(CyclicMember::resolve);
 		
 		generateMembersForKind();
@@ -269,15 +278,13 @@ public class CyclicType implements TypeReference{
 			addMember(RecordMethods.genToString(this));
 			addMember(RecordMethods.genHashCode(this));
 			addMember(RecordMethods.genCtor(this));
-		}
-		else if(kind() == TypeKind.ENUM){
+		}else if(kind() == TypeKind.ENUM){
 			addMember(EnumMembers.genValuesField(this));
 			addMember(EnumMembers.genValues(this));
 			addMember(EnumMembers.genValueOf(this));
 			addMember(EnumMembers.genEntriesField(this));
 			addMember(EnumMembers.genEntries(this));
-		}
-		else if(kind() == TypeKind.SINGLE){
+		}else if(kind() == TypeKind.SINGLE){
 			addMember(SingleMembers.genInstanceField(this));
 		}
 	}
@@ -436,6 +443,7 @@ public class CyclicType implements TypeReference{
 	}
 	
 	private Set<String> suppresses = null;
+	
 	private Set<String> suppressedWarns(){
 		if(suppresses != null)
 			return suppresses;
