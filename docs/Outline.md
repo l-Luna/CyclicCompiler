@@ -235,3 +235,15 @@ This is a pretty raw API still, only slightly tamer than `invokedynamic`; but do
 - Could delegation between linked be given a more explicit form?
 - Could a different outline provide better opportunities for static analysis?
 - Could the use of a raw `MethodHandle` be avoided and replaced with something more convenient?
+
+### Values as methods/members
+In Java, functional interfaces represent methods and getters. Invoking these can be verbose compared to languages with actual function values - `x.apply(y)` compared to `x(y)` - but keeps the value-ness explicit.
+I'd like to provide shorthand for performing the "obvious action" of an object:
+```
+Function<...> uppercase = String::toUpperCase;
+val shout = uppercase!("hi");
+
+Supplier<Object> property = () -> null;
+val it = property!;
+```
+- Should non-FIs be able to define an obvious action? By what syntax?
