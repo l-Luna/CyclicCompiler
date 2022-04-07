@@ -190,7 +190,7 @@ interface Numeric<T> {
     abstract static T add(T a, T b);
 }
 ...
-public <T> T double(T x) {
+public <class T> T double(T x) {
     return T.add(x, x);
 }
 ```
