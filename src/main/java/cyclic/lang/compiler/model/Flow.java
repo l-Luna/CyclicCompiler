@@ -204,6 +204,7 @@ public final class Flow{
 		switch(body){
 			case default -> visitor.accept(body);
 			case null -> {
+				// no-op
 			}
 			case WhileStatement s -> visitTerminals(s.success, visitor);
 			case DoWhileStatement s -> visitTerminals(s.success, visitor);

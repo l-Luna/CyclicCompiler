@@ -460,11 +460,12 @@ public abstract class Value{
 		}
 		
 		public void write(MethodVisitor mv){
-			if(from != null)
-				from.write(mv);
-			// implicit this when needed
-			if(from == null && !ref.isStatic())
-				mv.visitVarInsn(Opcodes.ALOAD, 0);
+			if(!ref.isStatic()){
+				if(from != null)
+					from.write(mv);
+				else
+					mv.visitVarInsn(Opcodes.ALOAD, 0);
+			}
 			ref.writeFetch(mv);
 		}
 		
