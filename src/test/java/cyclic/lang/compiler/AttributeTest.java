@@ -9,9 +9,12 @@ public class AttributeTest{
 	
 	@Test
 	void testAttributes(){
-		var compiled = Compiler.compileSingleClass("single S;");
-		ClassfileTypeRef ref = new ClassfileTypeRef(compiled);
-		// skip resolution
-		Assertions.assertEquals(TypeKind.SINGLE, ref.kind());
+		var compiledSingle = Compiler.compileSingleClass("single S;");
+		ClassfileTypeRef singleRef = new ClassfileTypeRef(compiledSingle);
+		Assertions.assertEquals(TypeKind.SINGLE, singleRef.kind());
+		
+		var compiledClass = Compiler.compileSingleClass("class C;");
+		ClassfileTypeRef classRef = new ClassfileTypeRef(compiledClass);
+		Assertions.assertEquals(TypeKind.CLASS, classRef.kind());
 	}
 }

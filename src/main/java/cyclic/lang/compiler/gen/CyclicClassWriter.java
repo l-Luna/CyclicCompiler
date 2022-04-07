@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.gen.asm.IsSingleAttribute;
+import cyclic.lang.compiler.gen.asm.CyclicModifiersAttribute;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
@@ -21,8 +21,7 @@ public final class CyclicClassWriter{
 		CompileTimeException.setFile(type.fullyQualifiedName());
 		writer.visit(outputClassfileVersion, getTypeAccessFlags(type), type.internalName(), null, type.superClass().internalName(), type.superInterfaces().stream().map(TypeReference::internalName).toArray(String[]::new));
 		
-		if(type.kind() == TypeKind.SINGLE)
-			writer.visitAttribute(new IsSingleAttribute());
+		writer.visitAttribute(new CyclicModifiersAttribute(getCyclicModifiers(type)));
 		
 		// class init
 		{
@@ -173,5 +172,9 @@ public final class CyclicClassWriter{
 		return flags.visibility().modifier |
 				(flags.isAbstract() ? Opcodes.ACC_ABSTRACT : 0) |
 				(flags.isFinal() ? Opcodes.ACC_FINAL : 0);
+	}
+	
+	public static int getCyclicModifiers(TypeReference type){
+		return type.kind() == TypeKind.SINGLE ? CyclicModifiersAttribute.MOD_SINGLE : 0;
 	}
 }

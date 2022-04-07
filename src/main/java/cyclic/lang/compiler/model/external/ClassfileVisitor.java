@@ -1,17 +1,21 @@
 package cyclic.lang.compiler.model.external;
 
-import cyclic.lang.compiler.gen.asm.IsSingleAttribute;
+import cyclic.lang.compiler.gen.asm.CyclicModifiersAttribute;
+import cyclic.lang.compiler.lib.CyclicClassVisitor;
 import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.Utils;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.*;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.objectweb.asm.Opcodes.*;
 
-/*package-private*/ class ClassfileVisitor extends ClassVisitor{
+/*package-private*/ class ClassfileVisitor extends CyclicClassVisitor{
 	
 	private ClassfileTypeRef fill;
 	
@@ -73,9 +77,8 @@ import static org.objectweb.asm.Opcodes.*;
 		return new ClassfileAnnotationVisitor(ptt);
 	}
 	
-	public void visitAttribute(Attribute attribute){
-		super.visitAttribute(attribute);
-		if(attribute.type.equals(IsSingleAttribute.SINGLE_ATTR_NAME))
+	public void visitCyclicModifiers(int modifiers){
+		if(Utils.isBitSet(modifiers, CyclicModifiersAttribute.MOD_SINGLE))
 			fill.kind = TypeKind.SINGLE;
 	}
 	
