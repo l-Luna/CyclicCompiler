@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.model.external;
 
-import cyclic.lang.compiler.gen.asm.CyclicModifiersAttribute;
 import cyclic.lang.compiler.lib.CyclicClassVisitor;
+import cyclic.lang.compiler.lib.CyclicModifiersAttribute;
 import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.Utils;
 import org.jetbrains.annotations.NotNull;

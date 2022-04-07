@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.gen;
 
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.gen.asm.CyclicModifiersAttribute;
+import cyclic.lang.compiler.lib.CyclicModifiersAttribute;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;

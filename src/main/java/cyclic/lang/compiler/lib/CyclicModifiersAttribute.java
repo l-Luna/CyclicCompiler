@@ -1,4 +1,4 @@
-package cyclic.lang.compiler.gen.asm;
+package cyclic.lang.compiler.lib;
 
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ByteVector;

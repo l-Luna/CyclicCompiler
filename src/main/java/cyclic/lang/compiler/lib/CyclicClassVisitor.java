@@ -1,6 +1,5 @@
 package cyclic.lang.compiler.lib;
 
-import cyclic.lang.compiler.gen.asm.CyclicModifiersAttribute;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassVisitor;
 
