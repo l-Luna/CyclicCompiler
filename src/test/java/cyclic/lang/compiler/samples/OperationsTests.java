@@ -1,6 +1,6 @@
 package cyclic.lang.compiler.samples;
 
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ public class OperationsTests{
 	void testPrefixOps() throws IllegalAccessException, InvocationTargetException{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
-		Assertions.assertEquals(5, Compiler.compileSingleMethod("""
+		Assertions.assertEquals(5, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int test(int x) -> +x;
@@ -21,7 +21,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5));
 		
-		Assertions.assertEquals(-5, Compiler.compileSingleMethod("""
+		Assertions.assertEquals(-5, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int test(int x) -> -x;
@@ -29,7 +29,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5));
 		
-		Assertions.assertEquals(-5L, Compiler.compileSingleMethod("""
+		Assertions.assertEquals(-5L, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static long test(long x) -> -x;
@@ -37,7 +37,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5L));
 		
-		Assertions.assertEquals(-5F, Compiler.compileSingleMethod("""
+		Assertions.assertEquals(-5F, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static float test(float x) -> -x;
@@ -45,7 +45,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5F));
 		
-		Assertions.assertEquals(-5D, Compiler.compileSingleMethod("""
+		Assertions.assertEquals(-5D, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static double test(double x) -> -x;
@@ -53,7 +53,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5D));
 		
-		Assertions.assertEquals(false, Compiler.compileSingleMethod("""
+		Assertions.assertEquals(false, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static boolean test(boolean x) -> !x;
@@ -66,7 +66,7 @@ public class OperationsTests{
 	void testAssignOps() throws IllegalAccessException, InvocationTargetException{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
-		Assertions.assertArrayEquals(new int[]{ 1, 1 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 1, 1 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { ++x, x };
@@ -74,7 +74,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 0));
 		
-		Assertions.assertArrayEquals(new int[]{ 0, 1 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 0, 1 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { x++, x };
@@ -82,7 +82,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 0));
 		
-		Assertions.assertArrayEquals(new int[]{ -1, -1 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ -1, -1 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { --x, x };
@@ -90,7 +90,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 0));
 		
-		Assertions.assertArrayEquals(new int[]{ 0, -1 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 0, -1 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { x--, x };
@@ -98,7 +98,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 0));
 		
-		Assertions.assertArrayEquals(new int[]{ 5, 5 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 5, 5 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { x += 5, x };
@@ -106,7 +106,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 0));
 		
-		Assertions.assertArrayEquals(new int[]{ 0, 0 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 0, 0 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { x %= 5, x };
@@ -114,7 +114,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5));
 		
-		Assertions.assertArrayEquals(new int[]{ 5, 7, 7 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 5, 7, 7 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] test(int x) -> new int[] { x, x ^= 2, x };
@@ -122,7 +122,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 5));
 		
-		Assertions.assertArrayEquals(new int[]{ 7, 7, 5 }, (int[])(Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 7, 7, 5 }, (int[])(CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int value = 0;
@@ -131,7 +131,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 7)));
 		
-		Assertions.assertArrayEquals(new int[]{ 7, 7, 5 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 7, 7, 5 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						int value = 0;
@@ -143,7 +143,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 7));
 		
-		Assertions.assertArrayEquals(new int[]{ 8, 0, -2, 0 }, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 8, 0, -2, 0 }, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int[] value = new int[]{ 0, 1, 2 };
@@ -152,7 +152,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null, 7));
 		
-		Assertions.assertArrayEquals(new int[]{ 8, 0, -2, 2}, (int[])Compiler.compileSingleMethod("""
+		Assertions.assertArrayEquals(new int[]{ 8, 0, -2, 2}, (int[])CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						int[] value = new int[] { 0, 1, 2, 3 };
@@ -169,7 +169,7 @@ public class OperationsTests{
 	void testShortCircuitOps(){
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
-		Assertions.assertThrows(InvocationTargetException.class, () -> Compiler.compileSingleMethod("""
+		Assertions.assertThrows(InvocationTargetException.class, () -> CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static boolean test(){
@@ -182,7 +182,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null));
 		
-		Assertions.assertDoesNotThrow(() -> Compiler.compileSingleMethod("""
+		Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static boolean test(){
@@ -195,7 +195,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null));
 		
-		Assertions.assertThrows(InvocationTargetException.class, () -> Compiler.compileSingleMethod("""
+		Assertions.assertThrows(InvocationTargetException.class, () -> CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static boolean test(){
@@ -208,7 +208,7 @@ public class OperationsTests{
 					""", lookup)
 				.invoke(null));
 		
-		Assertions.assertDoesNotThrow(() -> Compiler.compileSingleMethod("""
+		Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static boolean test(){

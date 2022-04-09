@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.samples;
 
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ public class VisibilityTest{
 	
 	@Test
 	void testConstructorVisibility(){
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						public A();
@@ -24,7 +24,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						protected A();
@@ -35,7 +35,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						A();
@@ -46,7 +46,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						private A();
@@ -60,7 +60,7 @@ public class VisibilityTest{
 	
 	@Test
 	void testFieldVisibility(){
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						public Object field = null;
@@ -71,7 +71,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						protected Object field = null;
@@ -82,7 +82,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						Object field = null;
@@ -93,7 +93,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						private Object field = null;
@@ -107,7 +107,7 @@ public class VisibilityTest{
 	
 	@Test
 	void testMethodVisibility(){
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						public Object method() -> null;
@@ -118,7 +118,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						protected Object method() -> null;
@@ -129,7 +129,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						Object method() -> null;
@@ -140,7 +140,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					class A{
 						private Object method() -> null;
@@ -154,7 +154,7 @@ public class VisibilityTest{
 	
 	@Test
 	void testClassVisibility(){
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					class A;
 					class B{
@@ -163,7 +163,7 @@ public class VisibilityTest{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					private class A;
 					class B{

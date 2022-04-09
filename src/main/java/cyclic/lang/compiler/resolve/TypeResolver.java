@@ -1,7 +1,11 @@
 package cyclic.lang.compiler.resolve;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.configuration.Dependency;
+import cyclic.lang.compiler.configuration.dependencies.CyclicDependency;
+import cyclic.lang.compiler.configuration.dependencies.JdkDependency;
+import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.TypeReference;
 
 import java.util.ArrayList;
@@ -123,7 +127,7 @@ public final class TypeResolver{
 		if(currentPackage != null && !currentPackage.isBlank())
 			imports.add(currentPackage + ".*");
 		
-		imports.addAll(Compiler.project.default_imports);
+		imports.addAll(CompilerLauncher.project.default_imports);
 		
 		for(var im : imports){
 			if(im.endsWith(".*"))

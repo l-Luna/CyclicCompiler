@@ -1,6 +1,6 @@
 package cyclic.lang.compiler.gen;
 
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.model.AnnotationTag;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
@@ -17,7 +17,7 @@ import static cyclic.lang.compiler.gen.CyclicClassWriter.writeAnnotation;
 public final class CyclicMethodWriter{
 	
 	public static void writeMethod(MethodVisitor mv, CyclicMethod method){
-		boolean debug = Compiler.includeDebugInfo;
+		boolean debug = CompilerLauncher.includeDebugInfo;
 		Label first = null, last = null;
 		if(debug){
 			for(String paramName : method.parameterNames())
@@ -77,7 +77,7 @@ public final class CyclicMethodWriter{
 	}
 	
 	public static void writeCtor(MethodVisitor mv, CyclicConstructor ctor){
-		boolean debug = Compiler.includeDebugInfo;
+		boolean debug = CompilerLauncher.includeDebugInfo;
 		Label first = null, last = null;
 		if(debug){
 			if(!ctor.isCanonRecordCtor || ctor.isGeneratedRecordCtor)

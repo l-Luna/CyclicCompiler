@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.samples;
 
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +10,7 @@ public class FlowTests{
 	@Test
 	void testDefiniteAssignment(){
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					void test(){
 						int a = 1;
@@ -19,7 +19,7 @@ public class FlowTests{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					void test(int a){
 						System.out.println(a);
@@ -27,7 +27,7 @@ public class FlowTests{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(){
 						System.out.println(a);
@@ -35,7 +35,7 @@ public class FlowTests{
 				}
 				"""));
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(){
 						int a;
@@ -44,7 +44,7 @@ public class FlowTests{
 				}
 				"""));
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -55,7 +55,7 @@ public class FlowTests{
 				}
 				"""));
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -68,7 +68,7 @@ public class FlowTests{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -80,7 +80,7 @@ public class FlowTests{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -92,7 +92,7 @@ public class FlowTests{
 				}
 				"""));
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -104,7 +104,7 @@ public class FlowTests{
 				}
 				"""));
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -116,7 +116,7 @@ public class FlowTests{
 				}
 				""");
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -126,7 +126,7 @@ public class FlowTests{
 				}
 				""");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;
@@ -137,7 +137,7 @@ public class FlowTests{
 				}
 				"""));
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileString("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					void test(boolean def){
 						int a;

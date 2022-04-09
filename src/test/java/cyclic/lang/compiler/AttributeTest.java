@@ -9,11 +9,11 @@ public class AttributeTest{
 	
 	@Test
 	void testAttributes(){
-		var compiledSingle = Compiler.compileSingleClass("single S;");
+		var compiledSingle = CompilerLauncher.compileSingleClass("single S;");
 		ClassfileTypeRef singleRef = new ClassfileTypeRef(compiledSingle);
 		Assertions.assertEquals(TypeKind.SINGLE, singleRef.kind());
 		
-		var compiledClass = Compiler.compileSingleClass("class C;");
+		var compiledClass = CompilerLauncher.compileSingleClass("class C;");
 		ClassfileTypeRef classRef = new ClassfileTypeRef(compiledClass);
 		Assertions.assertEquals(TypeKind.CLASS, classRef.kind());
 	}

@@ -15,7 +15,7 @@ public class CyclicAssertions{
 				class Holder{
 				""" + sourceToEvaluate + "}";
 		try{
-			return Compiler.compileSingleMethod(wrapped, LOOKUP).invoke(null);
+			return CompilerLauncher.compileSingleMethod(wrapped, LOOKUP).invoke(null);
 		}catch(IllegalAccessException | InvocationTargetException e){
 			throw new RuntimeException(e);
 		}

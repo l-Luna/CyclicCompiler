@@ -1,5 +1,11 @@
-package cyclic.lang.compiler;
+package cyclic.lang.compiler.configuration;
 
+import org.jetbrains.annotations.NotNull;
+import org.yaml.snakeyaml.Yaml;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,15 +34,32 @@ public class CyclicProject{
 	public List<CyclicPackage> packages = new ArrayList<>();
 	public List<CyclicPackage> dependencies = new ArrayList<>();
 	
+	@NotNull
+	public static CyclicProject parse(Path projectPath) throws IOException{
+		var yaml = new Yaml();
+		var text = Files.readString(projectPath);
+		var project = yaml.loadAs(text, CyclicProject.class);
+		project.updatePaths(projectPath.getParent());
+		return project;
+	}
+	
 	/*package-private*/ void updatePaths(Path root){
 		this.root = root;
 		sourcePath = root.resolve(source).normalize();
 		outputPath = root.resolve(output).normalize();
 	}
 	
-	/*package-private*/ void validate(){
+	public void validate(){
 		int curJdk = Runtime.version().feature();
 		if(curJdk != jdk)
 			throw new IllegalStateException("Incorrect compiler JDK " + curJdk + ", project requires " + jdk);
+	}
+	
+	public Path pathFromRoot(String path){
+		return root.resolve(path).normalize();
+	}
+	
+	public File fileFromRoot(String path){
+		return pathFromRoot(path).toFile();
 	}
 }

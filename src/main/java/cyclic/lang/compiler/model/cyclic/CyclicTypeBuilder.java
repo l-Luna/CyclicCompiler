@@ -14,6 +14,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class CyclicTypeBuilder{
@@ -74,5 +75,20 @@ public final class CyclicTypeBuilder{
 		parser.getErrorListeners().clear();
 		parser.addErrorListener(new SyntaxException.SyntaxErrorListener());
 		return parser;
+	}
+	
+	/**
+	 * Recursively visit every file in a file tree, running the passed visitor on every file, but not on directories or other entries.
+	 * @param root The directory to visit the children of.
+	 * @param visitor The visitor to be given every file.
+	 */
+	public static void visitFiles(File root, Consumer<File> visitor){
+		File[] files = root.listFiles();
+		if(files != null)
+			for(File item : files)
+				if(item.isFile())
+					visitor.accept(item);
+				else if(item.isDirectory())
+					visitFiles(item, visitor);
 	}
 }

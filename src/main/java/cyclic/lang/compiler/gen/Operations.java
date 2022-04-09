@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 
-import static cyclic.lang.compiler.resolve.PlatformDependency.*;
+import static cyclic.lang.compiler.configuration.dependencies.PlatformDependency.*;
 
 public final class Operations{
 	

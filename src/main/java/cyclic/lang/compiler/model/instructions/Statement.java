@@ -2,14 +2,14 @@ package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicCallable;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
-import cyclic.lang.compiler.resolve.PlatformDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public abstract class Statement{
 	
 	public void write(MethodVisitor mv){
 		// may be null for e.g. the generated while loop from a foreach
-		if(Compiler.project.include_debug && text != null){
+		if(CompilerLauncher.project.include_debug && text != null){
 			Label currentLine = new Label();
 			mv.visitLabel(currentLine);
 			mv.visitLineNumber(text.start.getLine(), currentLine);
@@ -369,7 +369,7 @@ public abstract class Statement{
 				if(adjusted == null)
 					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
 				adjusted.write(mv);
-				if(Compiler.project.include_debug){
+				if(CompilerLauncher.project.include_debug){
 					Label label = new Label();
 					mv.visitLabel(label);
 					if(declare)

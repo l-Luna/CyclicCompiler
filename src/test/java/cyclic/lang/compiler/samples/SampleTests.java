@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.samples;
 
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.CyclicAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -19,7 +19,7 @@ public class SampleTests{
 		try{
 			MethodHandles.Lookup lookup = MethodHandles.lookup();
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static void test();
@@ -27,7 +27,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null);
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static void test(){}
@@ -35,7 +35,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null);
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static void test() -> ;
@@ -53,7 +53,7 @@ public class SampleTests{
 		try{
 			MethodHandles.Lookup lookup = MethodHandles.lookup();
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static void test() -> System.out.println("Hello from Cyclic! (1/2)");
@@ -61,7 +61,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null);
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static void test(){
@@ -71,7 +71,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null);
 			
-			Assertions.assertEquals(1, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(1, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static int test() -> 1;
@@ -79,7 +79,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals("1", Compiler.compileSingleMethod("""
+			Assertions.assertEquals("1", CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static String test() -> "1";
@@ -87,7 +87,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals(4, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(4, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static int test() -> (1 + 1) + (1 + 1);
@@ -95,7 +95,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals(0, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(0, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static int test() -> (1 + 1) - (1 + 1);
@@ -103,7 +103,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Method oneOrTwo = Compiler.compileSingleMethod("""
+			Method oneOrTwo = CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int test(boolean one){
@@ -117,7 +117,7 @@ public class SampleTests{
 			Assertions.assertEquals(1, oneOrTwo.invoke(null, true));
 			Assertions.assertEquals(2, oneOrTwo.invoke(null, false));
 			
-			Method loops = Compiler.compileSingleMethod("""
+			Method loops = CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						static int test(int times){
@@ -171,7 +171,7 @@ public class SampleTests{
 					}
 					""");
 			
-			Assertions.assertEquals("12", Compiler.compileSingleMethod("""
+			Assertions.assertEquals("12", CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static String test() -> "1" + "2";
@@ -179,7 +179,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals("1k2345k", Compiler.compileSingleMethod("""
+			Assertions.assertEquals("1k2345k", CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static String test(String obj) -> "1" + obj + "2" + "3" + "4" + "5" + obj;
@@ -187,7 +187,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null, "k"));
 			
-			Assertions.assertEquals("12345", Compiler.compileSingleMethod("""
+			Assertions.assertEquals("12345", CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static String test() -> ("1" + "2") + ("3" + "4" + 5);
@@ -195,7 +195,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals("k".repeat(14 * 21), Compiler.compileSingleMethod("""
+			Assertions.assertEquals("k".repeat(14 * 21), CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static String repetition(String obj) -> obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
@@ -216,7 +216,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null, "k"));
 			
-			Assertions.assertEquals(26f, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(26f, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static float test(int obj) -> (float)(obj + 1) + 1;
@@ -224,7 +224,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null, 24));
 			
-			Assertions.assertArrayEquals(new int[]{24}, (int[])Compiler.compileSingleMethod("""
+			Assertions.assertArrayEquals(new int[]{24}, (int[])CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static int[] test(int obj) -> new int[]{obj};
@@ -232,7 +232,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null, 24));
 			
-			Assertions.assertEquals(1, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(1, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static int test(int obj) -> new int[]{obj}.length;
@@ -240,7 +240,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null, 0));
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static void test(){
@@ -278,7 +278,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null);
 			
-			Assertions.assertEquals(Integer.class, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(Integer.class, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static Object test() -> Integer.class;
@@ -286,7 +286,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals(int.class, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(int.class, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static Object test() -> int.class;
@@ -294,7 +294,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Assertions.assertEquals(void.class, Compiler.compileSingleMethod("""
+			Assertions.assertEquals(void.class, CompilerLauncher.compileSingleMethod("""
 							package cyclic.lang.compiler.samples;
 							class Holder{
 								static Object test() -> void.class;
@@ -302,7 +302,7 @@ public class SampleTests{
 							""", lookup)
 					.invoke(null));
 			
-			Compiler.compileSingleMethod("""
+			CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
 						Object test() -> this;
@@ -317,7 +317,7 @@ public class SampleTests{
 	@Test
 	void testAnnotations(){
 		
-		Compiler.compileString("""
+		CompilerLauncher.compileString("""
 				package cyclic.lang.compiler.samples;
 				import java.lang.annotation.*;
 				@Deprecated
@@ -335,7 +335,7 @@ public class SampleTests{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
 		// Must use `defineClass` instead of normal hidden classes to avoid NoClassDefFoundError
-		Class<?> holderEnum = lookup.defineClass(Compiler.compileSingleClass("""
+		Class<?> holderEnum = lookup.defineClass(CompilerLauncher.compileSingleClass("""
 				package cyclic.lang.compiler.samples;
 				enum EnumHolder0{
 					val A; val B; val C;
@@ -382,7 +382,7 @@ public class SampleTests{
 		Method iterTestMethod = holderEnum.getDeclaredMethod("all");
 		Assertions.assertEquals(iterTestMethod.invoke(null), "ABC012");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> Compiler.compileSingleClass("""
+		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileSingleClass("""
 				package cyclic.lang.compiler.samples;
 				enum EnumHolder1{
 					static void all(){
@@ -392,7 +392,7 @@ public class SampleTests{
 				}
 				"""));
 		
-		Assertions.assertDoesNotThrow(() -> Compiler.compileSingleClass("""
+		Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileSingleClass("""
 				package cyclic.lang.compiler.samples;
 				enum EnumHolder1{
 					static void all(){
@@ -717,7 +717,7 @@ public class SampleTests{
 	void testSingles() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, NoSuchFieldException{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		
-		Class<?> holderSingle = lookup.defineClass(Compiler.compileSingleClass("""
+		Class<?> holderSingle = lookup.defineClass(CompilerLauncher.compileSingleClass("""
 				package cyclic.lang.compiler.samples;
 				single SingleHolder0{
 					int value = 3;
@@ -733,7 +733,7 @@ public class SampleTests{
 		Object instance = holderSingle.getDeclaredField("INSTANCE").get(null);
 		Assertions.assertEquals(testI.invoke(instance), 3);
 		
-		Class<?> holderStaticSingle = lookup.defineClass(Compiler.compileSingleClass("""
+		Class<?> holderStaticSingle = lookup.defineClass(CompilerLauncher.compileSingleClass("""
 				package cyclic.lang.compiler.samples;
 				static single SingleHolder1{
 					int value = 4;

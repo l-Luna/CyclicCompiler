@@ -2,7 +2,7 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.Compiler;
+import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.gen.EnumMembers;
 import cyclic.lang.compiler.gen.RecordMethods;
 import cyclic.lang.compiler.gen.SingleMembers;
@@ -236,7 +236,7 @@ public class CyclicType implements TypeReference{
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
 			annotations.add(AnnotationTag.fromAst(annotation, this, this));
 		
-		if(Compiler.project.include_cyclic_lib_refs)
+		if(CompilerLauncher.project.include_cyclic_lib_refs)
 			annotations.add(new AnnotationTag(TypeResolver.resolveFq(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
 		
 		validate();

@@ -8,8 +8,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 
-import static cyclic.lang.compiler.Compiler.compileClass;
-import static cyclic.lang.compiler.Compiler.compileSingleMethod;
+import static cyclic.lang.compiler.CompilerLauncher.compileClass;
+import static cyclic.lang.compiler.CompilerLauncher.compileSingleMethod;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

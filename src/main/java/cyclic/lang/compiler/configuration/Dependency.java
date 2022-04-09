@@ -1,6 +1,7 @@
-package cyclic.lang.compiler.resolve;
+package cyclic.lang.compiler.configuration;
 
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,9 +28,19 @@ public interface Dependency extends Closeable{
 	
 	/**
 	 * Closes this dependency and releases any resources associated with it.
-	 * <p>Some dependencies, like {@linkplain PlatformDependency}, do not have any associated resources.
-	 * Dependencies that open files, like {@linkplain JarDependency}, will need to be closed.
+	 * Most dependencies will not need to implement this method.
 	 */
-	default void close() throws IOException{
-	}
+	default void close() throws IOException{}
+	
+	/**
+	 * Resolves initial references in types within this dependency to other types, which may be in other dependencies.
+	 */
+	default void resolveRefs(){}
+	
+	/**
+	 * Resolves complex references in types within this dependency to other types, which may be in other dependencies,
+	 * such as inherited members.
+	 * <p/>This method must be called after {@link #resolveRefs()} has been called.
+	 */
+	default void resolveInheritance(){}
 }

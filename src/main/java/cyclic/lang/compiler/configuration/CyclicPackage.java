@@ -1,4 +1,4 @@
-package cyclic.lang.compiler;
+package cyclic.lang.compiler.configuration;
 
 /**
  * Represents a packaged file that can be produced by compilation, such as a jar file.

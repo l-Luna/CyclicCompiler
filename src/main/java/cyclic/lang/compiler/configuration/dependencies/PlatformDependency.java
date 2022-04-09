@@ -1,8 +1,10 @@
-package cyclic.lang.compiler.resolve;
+package cyclic.lang.compiler.configuration.dependencies;
 
+import cyclic.lang.compiler.configuration.Dependency;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.Optional;
 

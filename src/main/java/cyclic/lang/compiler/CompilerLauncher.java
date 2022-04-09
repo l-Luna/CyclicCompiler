@@ -1,16 +1,17 @@
 package cyclic.lang.compiler;
 
+import cyclic.lang.compiler.configuration.CyclicPackage;
+import cyclic.lang.compiler.configuration.CyclicProject;
+import cyclic.lang.compiler.configuration.Dependencies;
+import cyclic.lang.compiler.configuration.Dependency;
 import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.gen.asm.AsmCyclicCW;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
-import cyclic.lang.compiler.resolve.Dependency;
-import cyclic.lang.compiler.resolve.JarDependency;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,17 +21,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.spi.ToolProvider;
 
 /**
  * Entry point of the Cyclic Compiler. Contains the <code>main</code> method, alongside several other methods for compiling
  * Cyclic files and strings from other code.
  *
- * @see Compiler#main(String[])
- * @see Compiler#compileFileSet(Set, Path)
+ * @see CompilerLauncher#main(String[])
+ * @see CompilerLauncher#compileFileSet(Set, Path)
  */
-public final class Compiler{
+public final class CompilerLauncher{
 	
 	/** The set of types that are currently being compiled, indexed by their fully qualified names. */
 	public static final Map<String, CyclicType> toCompile = new HashMap<>();
@@ -53,12 +53,9 @@ public final class Compiler{
 		
 		// setup cyclic project
 		if(args[0].equals("-p")){
-			var yaml = new Yaml();
+			Path projectPath = Path.of(args[1]);
 			try{
-				Path projectPath = Path.of(args[1]);
-				var text = Files.readString(projectPath);
-				project = yaml.loadAs(text, CyclicProject.class);
-				project.updatePaths(projectPath.getParent());
+				project = CyclicProject.parse(projectPath);
 			}catch(Exception e){
 				System.err.println("Invalid project file: " + e);
 				System.exit(1);
@@ -76,20 +73,8 @@ public final class Compiler{
 		includeDebugInfo = project.include_debug;
 		
 		// load any dependencies
-		// TODO: better dependency management: non-jar deps, check versions/names, download deps?
-		for(CyclicPackage dependency : project.dependencies){
-			if(dependency.type.equalsIgnoreCase("jar")){
-				try{
-					Path filePath = project.root.resolve(dependency.location).normalize();
-					JarDependency e = new JarDependency(filePath.toFile());
-					TypeResolver.dependencies.add(e);
-					e.resolve();
-				}catch(IOException e){
-					e.printStackTrace();
-				}
-			}else
-				System.err.println("Unknown dependency type \"" + dependency.type + "\", only \"jar\" is supported");
-		}
+		for(CyclicPackage dependency : project.dependencies)
+			TypeResolver.dependencies.add(Dependencies.create(dependency, project));
 		
 		// go through all specified files and compile each
 		var inputFolder = project.sourcePath;
@@ -97,7 +82,7 @@ public final class Compiler{
 		
 		File inputFile = inputFolder.toFile();
 		Set<File> todo = new HashSet<>();
-		visitFiles(inputFile, file -> {
+		CyclicTypeBuilder.visitFiles(inputFile, file -> {
 			if(file.getName().endsWith(".cyc"))
 				todo.add(file);
 		});
@@ -162,21 +147,6 @@ public final class Compiler{
 	}
 	
 	/**
-	 * Recursively visit every file in a file tree, running the passed visitor on every file, but not on directories or other entries.
-	 * @param root The directory to visit the children of.
-	 * @param visitor The visitor to be given every file.
-	 */
-	private static void visitFiles(File root, Consumer<File> visitor){
-		File[] files = root.listFiles();
-		if(files != null)
-			for(File item : files)
-				if(item.isFile())
-					visitor.accept(item);
-				else if(item.isDirectory())
-					visitFiles(item, visitor);
-	}
-	
-	/**
 	 * Compiles a set of files into classes, returning every compiled class indexed by their fully-qualified names.
 	 * May return more classes than files if one file contains inner classes.
 	 * A root path may optionally be specified to enforce that fully-qualified names matches folder structure and file names.
@@ -228,7 +198,7 @@ public final class Compiler{
 	 *
 	 * @param text A string containing a Cyclic class.
 	 * @return A map containing the bytes of compiled classes indexed by fully-qualified names.
-	 * @see Compiler#compileSingleClass(String)
+	 * @see CompilerLauncher#compileSingleClass(String)
 	 */
 	public static Map<String, byte[]> compileString(@NotNull String text){
 		project = new CyclicProject();
@@ -262,7 +232,7 @@ public final class Compiler{
 	 *
 	 * @param text A string containing a Cyclic class.
 	 * @return The bytes of the first compiled class found.
-	 * @see Compiler#compileString(String)
+	 * @see CompilerLauncher#compileString(String)
 	 */
 	public static byte[] compileSingleClass(@NotNull String text){
 		return compileString(text).values().stream().findFirst().orElseThrow(() -> new IllegalArgumentException("No classes were contained in the given text, but one was expected"));
@@ -270,7 +240,7 @@ public final class Compiler{
 	
 	/**
 	 * Compiles a string containing a Cyclic class into a class, and loads it using the given Lookup into the Lookup's package.
-	 * Follows the behaviour of {@linkplain Compiler#compileSingleClass(String)}.
+	 * Follows the behaviour of {@linkplain CompilerLauncher#compileSingleClass(String)}.
 	 * <p>The class must have the same declared package as the class associated with the lookup.
 	 * <p>The returned class is a hidden class, which do not have names and are more eagerly garbage collected that regular classes.
 	 *
