@@ -58,8 +58,8 @@ public final class CompilerLauncher{
 				System.err.println("The specified project file does not exist: " + projectPath);
 				return;
 			}
-			if(!projectPath.toString().endsWith(".cyc.yaml")){
-				System.err.println("Project file name must end in .cyc.yaml");
+			if(!projectPath.toString().endsWith(CyclicProject.PROJECT_FILE_EXTENSION)){
+				System.err.println("Project file name must end in " + CyclicProject.PROJECT_FILE_EXTENSION);
 				return;
 			}
 			try{
@@ -74,11 +74,11 @@ public final class CompilerLauncher{
 			project.outputPath = Path.of(args[1]);
 			if(args.length >= 3)
 				includeDebugInfo = Boolean.parseBoolean(args[2]);
-			project.include_cyclic_lib_refs = false;
+			project.includeCyclicLibRefs = false;
 		}
 		
 		project.validate();
-		includeDebugInfo = project.include_debug;
+		includeDebugInfo = project.includeDebug;
 		
 		// load any dependencies
 		for(CyclicPackage dependency : project.dependencies)
@@ -97,8 +97,8 @@ public final class CompilerLauncher{
 		
 		var out = compileFileSet(todo, inputFolder);
 		
-		if(project.no_output){
-			System.out.println("Skipping output and packaging (because the project has \"no_output\" set to true).");
+		if(project.noOutput){
+			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");
 			return;
 		}
 		
@@ -212,7 +212,7 @@ public final class CompilerLauncher{
 	 */
 	public static Map<String, byte[]> compileString(@NotNull String text){
 		project = new CyclicProject();
-		project.include_cyclic_lib_refs = false;
+		project.includeCyclicLibRefs = false;
 		toCompile.clear();
 		
 		var types = CyclicTypeBuilder.fromFile(text, null);

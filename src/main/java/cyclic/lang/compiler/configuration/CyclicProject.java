@@ -17,6 +17,8 @@ import java.util.List;
  */
 public class CyclicProject{
 	
+	public static final String PROJECT_FILE_EXTENSION = ".cyc.yaml";
+	
 	// raw path strings, must be public for snakeyaml
 	public String source, output;
 	
@@ -26,13 +28,13 @@ public class CyclicProject{
 	public Path sourcePath, outputPath, root;
 	
 	public int jdk = Runtime.version().feature(),
-	           cyclic_lib = jdk;
+	           cyclicLib = jdk;
 	
-	public boolean include_debug = true,
-	               include_cyclic_lib_refs = true,
-	               no_output = false;
+	public boolean includeDebug = true,
+	               includeCyclicLibRefs = true,
+	               noOutput = false;
 	
-	public List<String> default_imports = new ArrayList<>();
+	public List<String> defaultImports = new ArrayList<>();
 	
 	public List<CyclicPackage> packages = new ArrayList<>();
 	public List<CyclicPackage> dependencies = new ArrayList<>();
@@ -43,8 +45,10 @@ public class CyclicProject{
 		var text = Files.readString(projectPath);
 		var project = yaml.loadAs(text, CyclicProject.class);
 		project.updatePaths(projectPath.getParent());
-		if(project.name == null)
-			project.name = projectPath.getFileName().toString().replace(".cyc.yaml", "");
+		if(project.name == null){
+			var filename = projectPath.getFileName().toString();
+			project.name = filename.substring(0, filename.length() - PROJECT_FILE_EXTENSION.length());
+		}
 		return project;
 	}
 	

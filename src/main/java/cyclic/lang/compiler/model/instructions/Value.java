@@ -504,7 +504,7 @@ public abstract class Value{
 			mv.visitVarInsn(type().localLoadOpcode(), localIdx);
 			
 			// end range is exclusive, so attach to next instruction
-			if(CompilerLauncher.project.include_cyclic_lib_refs && variable != null){
+			if(CompilerLauncher.project.includeCyclicLibRefs && variable != null){
 				Label label = new Label();
 				mv.visitLabel(label);
 				if(variable.end == null || variable.end.getOffset() < label.getOffset())
@@ -1054,7 +1054,7 @@ public abstract class Value{
 				throw new IllegalStateException();
 			
 			// end range is exclusive, so attach to next instruction
-			if(CompilerLauncher.project.include_cyclic_lib_refs){
+			if(CompilerLauncher.project.includeCyclicLibRefs){
 				Label label = new Label();
 				mv.visitLabel(label);
 				for(Variable use : uses)

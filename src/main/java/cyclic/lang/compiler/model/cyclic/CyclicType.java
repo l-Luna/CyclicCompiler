@@ -236,7 +236,7 @@ public class CyclicType implements TypeReference{
 		for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
 			annotations.add(AnnotationTag.fromAst(annotation, this, this));
 		
-		if(CompilerLauncher.project.include_cyclic_lib_refs)
+		if(CompilerLauncher.project.includeCyclicLibRefs)
 			annotations.add(new AnnotationTag(TypeResolver.resolveFq(CYCLIC_FILE_MARKER), Map.of(), Map.of(), this));
 		
 		validate();

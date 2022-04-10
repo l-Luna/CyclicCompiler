@@ -41,7 +41,7 @@ public abstract class Statement{
 	
 	public void write(MethodVisitor mv){
 		// may be null for e.g. the generated while loop from a foreach
-		if(CompilerLauncher.project.include_debug && text != null){
+		if(CompilerLauncher.project.includeDebug && text != null){
 			Label currentLine = new Label();
 			mv.visitLabel(currentLine);
 			mv.visitLineNumber(text.start.getLine(), currentLine);
@@ -369,7 +369,7 @@ public abstract class Statement{
 				if(adjusted == null)
 					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
 				adjusted.write(mv);
-				if(CompilerLauncher.project.include_debug){
+				if(CompilerLauncher.project.includeDebug){
 					Label label = new Label();
 					mv.visitLabel(label);
 					if(declare)

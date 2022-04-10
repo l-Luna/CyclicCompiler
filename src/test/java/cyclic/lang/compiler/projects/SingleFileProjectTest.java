@@ -14,7 +14,7 @@ public class SingleFileProjectTest extends ProjectTestCase{
 				
 				jdk: 17
 				
-				include_cyclic_lib_refs: false
+				includeCyclicLibRefs: false
 				""");
 		
 		addCyclicFile("cyclic/SimpleFile", """
@@ -25,6 +25,6 @@ public class SingleFileProjectTest extends ProjectTestCase{
 				}
 				""");
 		
-		invokeCompiler("singleFile");
+		compileProject("singleFile");
 	}
 }

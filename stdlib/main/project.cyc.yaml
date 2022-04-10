@@ -3,9 +3,9 @@ output: "../../build/classes/cyclic/"
 
 jdk: 17
 # We *are* the cyclic lib, don't try to load another one
-cyclic_lib: -1
+cyclicLib: -1
 
-include_debug: true
+includeDebug: true
 
 packages:
 - name: "cyclic_lib"

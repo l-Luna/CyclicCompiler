@@ -14,7 +14,7 @@ public class ProjectWithSourceDepsTest extends ProjectTestCase{
 				
 				jdk: 17
 				
-				include_cyclic_lib_refs: false
+				includeCyclicLibRefs: false
 				
 				dependencies:
 				- location: "dependency"
@@ -35,6 +35,6 @@ public class ProjectWithSourceDepsTest extends ProjectTestCase{
 				}
 				""");
 		
-		invokeCompiler("sourceDeps");
+		compileProject("sourceDeps");
 	}
 }

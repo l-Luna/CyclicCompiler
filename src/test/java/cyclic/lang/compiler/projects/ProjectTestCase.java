@@ -63,7 +63,7 @@ public class ProjectTestCase{
 			throw new IOException("Failed to create test case folder");
 	}
 	
-	public void invokeCompiler(String projectName){
+	public void compileProject(String projectName){
 		Path projectFile = projectFiles.get(projectName);
 		CompilerLauncher.main("-p", projectFile.toString());
 	}
