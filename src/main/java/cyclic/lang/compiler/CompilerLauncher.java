@@ -132,7 +132,7 @@ public final class CompilerLauncher{
 			// TODO: handle resources for jars, and handle other formats (JMODs?)
 			// probably want to move this all out elsewhere
 			if(cycPackage.name == null || cycPackage.version == null)
-				System.err.println("Unnamed package found, will be skipped");
+				System.err.println("Unnamed/un-versioned package found, will be skipped");
 			if(cycPackage.type == null)
 				System.err.printf("Unspecified package type for package \"%s\" version %s, will be skipped%n", cycPackage.name, cycPackage.version);
 			
@@ -142,13 +142,13 @@ public final class CompilerLauncher{
 					System.err.printf("Could not get jar tool for packaging jar project \"%s\", skipping packaging%n", cycPackage.name);
 					continue;
 				}
-				ToolProvider jartool = optionalJarTool.get();
-				Path filePath = project.outputPath.resolve(cycPackage.location).normalize();
+				ToolProvider jarTool = optionalJarTool.get();
+				Path filePath = project.root.resolve(cycPackage.location).normalize();
 				String targetPath = filePath.toAbsolutePath() + "/" + cycPackage.name + "-" + cycPackage.version + ".jar";
 				//noinspection ResultOfMethodCallIgnored
 				Path.of(targetPath).getParent().toFile().mkdirs();
 				// jar -c --file <filePath name "-" version> -C <outputPath>
-				int result = jartool.run(System.out, System.err, "-c", "--file", targetPath, "-C", project.outputPath.toAbsolutePath().toString(), ".");
+				int result = jarTool.run(System.out, System.err, "-c", "--file", targetPath, "-C", project.outputPath.toAbsolutePath().toString(), ".");
 				if(result == 1)
 					System.err.printf("Failed to make jar file for package \"%s\" version %s%n", cycPackage.name, cycPackage.version);
 			}else

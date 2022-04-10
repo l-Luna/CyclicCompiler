@@ -9,26 +9,26 @@ Project files are written in YAML. Each file defines a single project, with a si
 An example of a project file is:
 ```yaml
 source: "cyclic/"
-output: "../../build/classes/cyclic/"
+output: "out/classes/"
 
 jdk: 17
 includeDebug: false
 
 dependencies:
-- location: "../libs/cyclic_lib-0.0.1.jar"
+- location: "libs/cyclic_lib-0.0.1.jar"
   type: "jar"
 
 packages:
 - name: "my_cool_lib"
   version: "1.0.0"
   type: "jar"
-  location: "../../libs/"
+  location: "out/libs/"
 ```
 
 `source` and `output` define the input and output root folders, relative to the project file. Input file packages are expected to match the file structure after this folder, and compiled classes are placed in the output folder according to their package names. `./` and `../` can be used in these paths.
 
 `dependencies` is a list of dependencies this project has, where extra types and symbols are loaded from. `packages` is a list of packages that this project should be packaged into. Elements in both of these lists have the same properties:
-- `location`: Where to find or put this package. For an output package, this is relative to the output root; for a dependency, this is relative to the project file.
+- `location`: Where to find or put this package, relative to the project file.
 - `name`: The name of the package. Ignored for dependencies; used as part of the file name of output packages.
 - `version`: The version of the package. Ignored for dependencies; used as part of the file name of output packages.
 - `type`: The type of the package.
@@ -37,6 +37,8 @@ For a dependency, the following `type`s are supported:
 - `jar`: A JAR file.
 - `classFolder`: A folder containing compiled classes.
 - `sourceFolder`: A folder containing source files.
+
+For a package, only the `jar` type is supported.
 
 References from dependencies take into account types being currently compiled, but are not compiled or output themselves. Method bodies are not validated.
 

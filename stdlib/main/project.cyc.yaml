@@ -1,5 +1,5 @@
 source: "cyclic/"
-output: "../../build/classes/cyclic/"
+output: "out/classes/"
 
 jdk: 17
 # We *are* the cyclic lib, don't try to load another one
@@ -11,4 +11,4 @@ packages:
 - name: "cyclic_lib"
   version: "0.0.1"
   type: "jar"
-  location: "../../libs/" # relative to output
+  location: "out/libs/"

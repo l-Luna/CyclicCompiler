@@ -7,3 +7,4 @@
 /run/
 /samples/*/out/
 /src/main/java/cyclic/lang/antlr_generated/
+/stdlib/main/out/
