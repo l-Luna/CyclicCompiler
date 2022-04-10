@@ -23,11 +23,16 @@ import java.util.Optional;
 public final class TypeResolver{
 	
 	/**
+	 * The default list of dependencies.
+	 */
+	public static final List<Dependency> INITIAL_DEPENDENCIES = List.of(
+			new PlatformDependency(), new JdkDependency(), new CyclicDependency()
+	);
+	
+	/**
 	 * The list of dependencies from which types can be obtained, including primitives and platform types.
 	 */
-	public static List<Dependency> dependencies = new ArrayList<>(List.of(
-			new PlatformDependency(), new JdkDependency(), new CyclicDependency()
-	));
+	public static List<Dependency> dependencies = new ArrayList<>(INITIAL_DEPENDENCIES);
 	
 	/**
 	 * Returns a reference to a type with the given fully qualified name, throwing

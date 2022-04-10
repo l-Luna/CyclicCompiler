@@ -125,6 +125,8 @@ public final class CompilerLauncher{
 			}catch(IOException e){
 				e.printStackTrace();
 			}
+		// reset dependency list for next run
+		TypeResolver.dependencies = new ArrayList<>(TypeResolver.INITIAL_DEPENDENCIES);
 		
 		for(CyclicPackage cycPackage : project.packages){
 			// TODO: handle resources for jars, and handle other formats (JMODs?)
