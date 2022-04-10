@@ -54,6 +54,14 @@ public final class CompilerLauncher{
 		// setup cyclic project
 		if(args[0].equals("-p")){
 			Path projectPath = Path.of(args[1]);
+			if(!Files.exists(projectPath)){
+				System.err.println("The specified project file does not exist: " + projectPath);
+				return;
+			}
+			if(!projectPath.toString().endsWith(".cyc.yaml")){
+				System.err.println("Project file name must end in .cyc.yaml");
+				return;
+			}
 			try{
 				project = CyclicProject.parse(projectPath);
 			}catch(Exception e){
@@ -173,8 +181,8 @@ public final class CompilerLauncher{
 			}
 		}
 		
-		toCompile.values().forEach(CyclicType::resolveRefs);
-		toCompile.values().forEach(CyclicType::resolveInheritance);
+		TypeResolver.dependencies.forEach(Dependency::resolveRefs);
+		TypeResolver.dependencies.forEach(Dependency::resolveInheritance);
 		toCompile.values().forEach(CyclicType::resolveBodies);
 		
 		Map<String, byte[]> ret = new HashMap<>(toCompile.size());

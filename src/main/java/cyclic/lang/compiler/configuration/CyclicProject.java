@@ -12,13 +12,16 @@ import java.util.List;
 
 /**
  * Represents a Cyclic project.
- * <p>When compiling from a project file ("project.cyc.yaml"), settings are parsed from the file.
+ * <p>When compiling from a project file ("<code>&lt;name&gt;.cyc.yaml</code>"), settings are parsed from the file.
  * Otherwise, a dummy project is used.
  */
 public class CyclicProject{
 	
 	// raw path strings, must be public for snakeyaml
 	public String source, output;
+	
+	// if not set, inferred from filename
+	public String name = null;
 	
 	public Path sourcePath, outputPath, root;
 	
@@ -40,6 +43,8 @@ public class CyclicProject{
 		var text = Files.readString(projectPath);
 		var project = yaml.loadAs(text, CyclicProject.class);
 		project.updatePaths(projectPath.getParent());
+		if(project.name == null)
+			project.name = projectPath.getFileName().toString().replace(".cyc.yaml", "");
 		return project;
 	}
 	
