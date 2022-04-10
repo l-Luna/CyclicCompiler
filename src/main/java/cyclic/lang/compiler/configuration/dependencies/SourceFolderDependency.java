@@ -29,7 +29,8 @@ public class SourceFolderDependency implements Dependency{
 		CyclicTypeBuilder.visitFiles(folder, file -> {
 			if(file.getName().endsWith(".cyc"))
 				try{
-					for(CyclicType type : CyclicTypeBuilder.fromFile(Files.readString(file.toPath()), from))
+					Path relative = from.relativize(file.toPath());
+					for(CyclicType type : CyclicTypeBuilder.fromFile(Files.readString(file.toPath()), relative))
 						types.put(type.fullyQualifiedName(), type);
 				}catch(IOException e){
 					throw new RuntimeException("Failed to read dependency source file: " + file, e);

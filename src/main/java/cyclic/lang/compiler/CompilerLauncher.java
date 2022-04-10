@@ -41,7 +41,7 @@ public final class CompilerLauncher{
 	/** The project currently being compiled. */
 	public static CyclicProject project;
 	
-	public static void main(String[] args){
+	public static void main(String... args){
 		if(args.length < 2){
 			System.out.println("""
 					The Cyclic Compiler compiles files in the Cyclic language with the extension .cyc into JVM class files.
