@@ -42,7 +42,7 @@ tasks.withType<Javadoc>{
 
 tasks.withType<Jar> {
     manifest {
-        attributes["Main-Class"] = "cyclic.lang.compiler.Compiler"
+        attributes["Main-Class"] = "cyclic.lang.compiler.CompilerLauncher"
     }
     configurations["compileClasspath"].forEach { file ->
         from(zipTree(file.absoluteFile))
