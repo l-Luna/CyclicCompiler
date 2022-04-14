@@ -1,39 +1,20 @@
 package cyclic.lang.compiler.projects;
 
 import cyclic.lang.compiler.CompilerLauncher;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ProjectTestCase{
 	
+	@TempDir
 	Path tempFolder;
 	
 	Map<String, Path> projectFiles = new HashMap<>();
-	
-	@BeforeAll
-	public void setup() throws IOException{
-		tempFolder = Files.createTempDirectory(null);
-	}
-	
-	@AfterAll
-	public void reset() throws IOException{
-		try(Stream<File> stream = Files.walk(tempFolder)
-				.sorted(Comparator.reverseOrder())
-				.map(Path::toFile)){
-			stream.forEach(File::delete);
-		}
-	}
 	
 	public Path addFile(String name, String content) throws IOException{
 		Path file = tempFolder.resolve(name);
