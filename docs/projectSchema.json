@@ -1,0 +1,118 @@
+{
+  "title": "Cyclic Project",
+  "description": "Represents a Cyclic project.",
+  "type": "object",
+  "required": ["source", "output"],
+
+  "properties": {
+    "source": {
+      "type": "string",
+      "description": "Relative path to source root.",
+      "examples": ["src/", "cyclic/"]
+    },
+    "output": {
+      "type": "string",
+      "description": "Relative path to output root.",
+      "examples": ["out/"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of this project; derived from filename if not present."
+    },
+
+    "jdk": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "description": "JDK major version to use.",
+      "examples": [17, 18]
+    },
+    "cyclicLib": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "description": "Cyclic library version - currently unused."
+    },
+
+    "includeCyclicLibRefs": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to include references to the Cyclic library; set to false if not present."
+    },
+    "includeDebug": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether to include debug info in generated classes, like line numbers and local variable info."
+    },
+    "noOutput": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether class files and packages should not be generated for this project."
+    },
+
+    "defaultImports": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "examples": ["cyclic.lang.*"]
+      },
+      "description": "A set of imports to be considered, even when not explicitly present."
+    },
+
+    "packages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name that the package should be tagged with, used in jar filenames."
+          },
+          "version": {
+            "type": "string",
+            "description": "The version that the package should be tagged with, used in jar filenames."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["jar"],
+            "description": "The type of package to generate."
+          },
+          "location": {
+            "type": "string",
+            "description": "Relative path to the folder where the package should be placed."
+          }
+        },
+        "additionalProperties": false,
+        "description": "A single package to generate on compilation."
+      },
+      "description": "A set of packages to generate when compiling this project, like jar files."
+    },
+
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the dependency to look for - currently unused."
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of this dependency to look for - currently unused."
+          },
+          "type": {
+            "type": "string",
+            "enum": ["jar", "classFolder", "sourceFolder"],
+            "description": "The type of dependency."
+          },
+          "location": {
+            "type": "string",
+            "description": "Where to find this dependency; a relative path from this file."
+          }
+        },
+        "additionalProperties": false,
+        "description": "A dependency to get additional definitions from."
+      },
+      "description": "A set of dependencies to get additional definitions from."
+    }
+  }
+}

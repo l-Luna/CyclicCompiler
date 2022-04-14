@@ -5,11 +5,8 @@ import cyclic.lang.compiler.CompilerLauncher;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+// TODO: cross-package visibility tests
 public class VisibilityTest{
-	
-	// Note that private members are not visible within the same file, unlike in Java; no implicit nesting.
-	// This does make private classes useless currently...
-	// TODO: cross-package visibility tests
 	
 	@Test
 	void testConstructorVisibility(){
