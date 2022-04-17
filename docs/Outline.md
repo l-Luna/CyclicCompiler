@@ -154,10 +154,10 @@ type Element = Leaf | Node;
 type MatchErrors = NullPointerException | IncompatibleClassChangeError;
 type SerializableFunction<T, R> = Function<T, R> & Serializable;
 ```
-- Defining methods with the type `'this`, with subtypes returning their exact type, avoiding the `Foo<F extends Foo>` dance.
+- Defining methods with the type `this!`, with subtypes returning their exact type, avoiding the `Foo<F extends Foo>` dance. (Should `this!` be usable as a type in other contexts?)
 ```
 class CoolCollection<T> {
-    'this mapButCool(Function<T, T> f) -> ...;
+    this! mapButCool(Function<T, T> f) -> ...;
 }
 class CoolList<T> extends CoolCollection<T> {
     ...
@@ -172,9 +172,12 @@ interface CoolFunction<in T, out R> {
 }
 ```
 - Reifiable generics, which allow operations like `instanceof T`, `new T[]`, and `T.class`, defined with `<class T>`.
+
 ```cyclic
+import java.util.*;
 class CoolList<class T> extends List<T> {
     T[] array = new T[0];
+
     void addIfRightType(Object o) {
         if(o instanceof T){
             array = Arrays.copyOf(array, array.length + 1);
@@ -183,7 +186,7 @@ class CoolList<class T> extends List<T> {
     }
 }
 ```
-- `abstract static` methods in interfaces, allowing for a form of typeclasses.
+- `abstract static` methods in interfaces.
 ```
 interface Numeric<T> {
     abstract static T zero();
@@ -205,15 +208,15 @@ annotation Valid extends Checker<Element>{
     }
 }
 ...
-void deleteElement(#Registered Element e){
+void deleteElement(#Valid Element e){
     entry.source.delete();
 }
 ...
-#Registered Element e = ...;
+#Valid Element e = ...;
 deleteElement(e); // OK
 deleteElement(new Element()); // IllegalStateException
 Element ok = new Element(new Source(...));
-deleteElement((#Registered _)ok); // OK
+deleteElement((#Valid _)ok); // OK
 ```
 The compiler assumes that check conditions can only be modified by specific operations, and otherwise allows a value that is known correct (via runtime checks or static evaluation) to be passed around.
 - How should invalidation operations be defined?
