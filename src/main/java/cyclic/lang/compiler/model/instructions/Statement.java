@@ -20,7 +20,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -292,10 +291,11 @@ public abstract class Statement{
 				adjusted.write(mv);
 			}
 			
-			Scope.InterferingScope attr = in.getAttributeInHierarchy(Scope.InterferingScope.class);
+			Scope.FinallyScope attr = in.getAttributeInHierarchy(Scope.FinallyScope.class);
 			if(attr != null)
-				attr.writeReturn();
-			else if(returnValue == null)
+				attr.writeCleanup();
+			
+			if(returnValue == null)
 				mv.visitInsn(Opcodes.RETURN);
 			else
 				mv.visitInsn(returnValue.type().returnOpcode());
@@ -585,8 +585,8 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			super.write(mv);
 			Label postWrite = new Label(), preCheck = new Label();
-			success.in.putAttribute(new Scope.BreakingScope(postWrite));
-			success.in.putAttribute(new Scope.ContinuingScope(preCheck));
+			success.in.putAttribute(new Scope.BreakingScope(postWrite, in));
+			success.in.putAttribute(new Scope.ContinuingScope(preCheck, in));
 			mv.visitLabel(preCheck);
 			condition.write(mv);
 			mv.visitJumpInsn(Opcodes.IFEQ, postWrite); // if false, skip
@@ -618,8 +618,8 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			super.write(mv);
 			Label postWrite = new Label(), preCheck = new Label(), continueLabel = new Label();
-			success.in.putAttribute(new Scope.BreakingScope(postWrite));
-			success.in.putAttribute(new Scope.ContinuingScope(continueLabel));
+			success.in.putAttribute(new Scope.BreakingScope(postWrite, in));
+			success.in.putAttribute(new Scope.ContinuingScope(continueLabel, in));
 			start.write(mv);
 			mv.visitLabel(preCheck);
 			condition.write(mv);
@@ -659,8 +659,8 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			super.write(mv);
 			Label preWrite = new Label(), preCheck = new Label(), postWrite = new Label();
-			success.in.putAttribute(new Scope.BreakingScope(postWrite));
-			success.in.putAttribute(new Scope.ContinuingScope(preCheck));
+			success.in.putAttribute(new Scope.BreakingScope(postWrite, in));
+			success.in.putAttribute(new Scope.ContinuingScope(preCheck, in));
 			mv.visitLabel(preWrite);
 			success.write(mv);
 			
@@ -721,27 +721,21 @@ public abstract class Statement{
 					blockEnd = new Label(),
 					tryEnd = new Label(),
 					rethrowingFinallyStart = new Label(),
-					returningFinallyStart = new Label(),
 					finallyEnd = new Label();
 			Map<CatchStatement, Label> handlerStarts = catchStatements.stream()
 					.collect(Collectors.toMap(x -> x, x -> new Label()));
 			Map<CatchStatement, Label> handlerEnds = catchStatements.stream()
 					.collect(Collectors.toMap(x -> x, x -> new Label()));
 			
-			AtomicBoolean hasInterferedReturn = new AtomicBoolean(false);
-			
 			for(var c : catchStatements)
 				mv.visitTryCatchBlock(blockStart, blockEnd, handlerStarts.get(c), c.type().internalName());
 			if(finallyStatement != null){
 				mv.visitTryCatchBlock(blockStart, blockEnd, rethrowingFinallyStart, null);
-				Scope.InterferingScope interferingScope = new Scope.InterferingScope(() -> {
-					hasInterferedReturn.set(true);
-					mv.visitJumpInsn(Opcodes.GOTO, returningFinallyStart);
-				});
-				tryStatement.in.putAttribute(interferingScope);
+				Scope.FinallyScope finallyScope = new Scope.FinallyScope(() -> finallyStatement.write(mv));
+				tryStatement.in.putAttribute(finallyScope);
 				for(var c : catchStatements){
 					mv.visitTryCatchBlock(handlerStarts.get(c), handlerEnds.get(c), rethrowingFinallyStart, null);
-					c.ownScope().putAttribute(interferingScope);
+					c.ownScope().putAttribute(finallyScope);
 				}
 			}
 			
@@ -767,26 +761,12 @@ public abstract class Statement{
 				finallyStatement.write(mv);
 				mv.visitJumpInsn(Opcodes.GOTO, finallyEnd);
 				
-				// returning version
-				if(hasInterferedReturn.get()){
-					mv.visitLabel(returningFinallyStart);
-					finallyStatement.write(mv);
-					
-					TypeReference returns = from instanceof MethodReference ? ((MethodReference)from).returns() : null;
-					// consider nested interfering scopes
-					var intrAttr = in.getAttributeInHierarchy(Scope.InterferingScope.class);
-					if(intrAttr != null)
-						intrAttr.writeReturn();
-					else if(returns == null)
-						mv.visitInsn(Opcodes.RETURN);
-					else
-						mv.visitInsn(returns.returnOpcode());
-				}
-				
 				// rethrowing version
 				mv.visitLabel(rethrowingFinallyStart);
 				finallyStatement.write(mv);
 				mv.visitInsn(Opcodes.ATHROW);
+				
+				// returning, breaking, etc variants are created at their representative statements
 			}
 			mv.visitLabel(finallyEnd);
 		}
@@ -810,7 +790,12 @@ public abstract class Statement{
 			Scope.BreakingScope attr = in.getAttributeInHierarchy(Scope.BreakingScope.class);
 			if(attr == null)
 				throw new CompileTimeException(text, "Cannot break outside of a breaking scope (i.e. a loop)");
-			mv.visitJumpInsn(Opcodes.GOTO, attr.endLabel());
+			
+			Scope.FinallyScope finallyScope = in.getAttributesUpTo(Scope.FinallyScope.class, attr.targetScope());
+			if(finallyScope != null)
+				finallyScope.writeCleanup();
+			
+			mv.visitJumpInsn(Opcodes.GOTO, attr.targetLabel());
 		}
 		
 		public void simplify(){}
@@ -826,7 +811,12 @@ public abstract class Statement{
 			Scope.ContinuingScope attr = in.getAttributeInHierarchy(Scope.ContinuingScope.class);
 			if(attr == null)
 				throw new CompileTimeException(text, "Cannot continue outside of a continuing scope (i.e. a loop)");
-			mv.visitJumpInsn(Opcodes.GOTO, attr.restartLabel());
+			
+			Scope.FinallyScope finallyScope = in.getAttributesUpTo(Scope.FinallyScope.class, attr.targetScope());
+			if(finallyScope != null)
+				finallyScope.writeCleanup();
+			
+			mv.visitJumpInsn(Opcodes.GOTO, attr.targetLabel());
 		}
 		
 		public void simplify(){}

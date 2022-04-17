@@ -714,6 +714,55 @@ public class SampleTests{
 	}
 	
 	@Test
+	void testJumpFromFinally(){
+		CyclicAssertions.assertEquals(1, """
+				static int test(){
+					while(true){
+						try{
+							if(true){
+								break;
+							}
+						}finally{
+							return 1;
+						}
+					}
+					return -1;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(1, """
+				static int test(){
+					while(true){
+						try{
+							if(true){
+								continue;
+							}
+						}finally{
+							return 1;
+						}
+					}
+					return -1;
+				}
+				""");
+		
+		CyclicAssertions.assertEquals(1, """
+				static int test(){
+					while(true){
+						try{
+							while(true){
+								break;
+							}
+							return 1;
+						}finally{
+							//no-op
+						}
+					}
+					return -1;
+				}
+				""");
+	}
+	
+	@Test
 	void testSingles() throws IllegalAccessException, NoSuchMethodException, InvocationTargetException, NoSuchFieldException{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
 		

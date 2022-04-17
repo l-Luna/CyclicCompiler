@@ -15,16 +15,17 @@ public class Scope{
 	/**
 	 * Scope attributes are temporarily added to scopes during codegen to hook into the generation of
 	 * particular instructions, such as returns in try/catch, break/continue statements, yields, etc.
-	*/
+	 */
 	public interface ScopeAttribute{}
-	public record InterferingScope(Runnable returnWriter) implements ScopeAttribute{
-		public void writeReturn(){
-			returnWriter.run();
+	
+	public record FinallyScope(Runnable cleanupWriter) implements ScopeAttribute{
+		public void writeCleanup(){
+			cleanupWriter.run();
 		}
 	}
 	// TODO: yielding scope
-	public record BreakingScope(Label endLabel) implements ScopeAttribute{}
-	public record ContinuingScope(Label restartLabel) implements ScopeAttribute{}
+	public record BreakingScope(Label targetLabel, Scope targetScope) implements ScopeAttribute{}
+	public record ContinuingScope(Label targetLabel, Scope targetScope) implements ScopeAttribute{}
 	
 	@Nullable
 	private Scope parent;
@@ -81,5 +82,17 @@ public class Scope{
 		if(attributes.containsKey(type))
 			return getAttribute(type);
 		return parent != null ? parent.getAttributeInHierarchy(type) : null;
+	}
+	
+	@Nullable
+	public <T extends ScopeAttribute> T getAttributesUpTo(@NotNull Class<T> type, @NotNull Scope limit){
+		Scope current = this;
+		while(current != limit && current != null){
+			T attribute = current.getAttribute(type);
+			if(attribute != null)
+				return attribute;
+			current = current.parent;
+		}
+		return null;
 	}
 }
