@@ -1,5 +1,6 @@
 plugins{
     java
+    antlr
 }
 
 group = "com.github.l-Luna.CyclicCompiler"
@@ -14,6 +15,8 @@ dependencies{
     implementation("org.ow2.asm:asm:9.3")
     implementation("org.jetbrains:annotations:23.0.0")
     implementation("org.yaml:snakeyaml:1.30")
+    
+    antlr("org.antlr:antlr4:4.5")
     
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
@@ -47,4 +50,9 @@ tasks.withType<Jar>{
     configurations["compileClasspath"].forEach { file ->
         from(zipTree(file.absoluteFile))
     }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.generateGrammarSource{
+    arguments = arguments + listOf("-visitor")
 }

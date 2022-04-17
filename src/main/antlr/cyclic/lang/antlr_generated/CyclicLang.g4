@@ -1,5 +1,9 @@
 grammar CyclicLang;
 
+@header{
+package cyclic.lang.antlr_generated;
+}
+
 file: packageDecl? imports classDecl EOF;
 
 packageDecl: PACKAGE id SEMICOLON;
