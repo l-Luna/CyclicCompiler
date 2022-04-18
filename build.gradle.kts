@@ -16,7 +16,7 @@ dependencies{
     implementation("org.jetbrains:annotations:23.0.0")
     implementation("org.yaml:snakeyaml:1.30")
     
-    antlr("org.antlr:antlr4:4.5")
+    antlr("org.antlr:antlr4:4.9.3")
     
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
