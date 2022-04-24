@@ -5,6 +5,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 
@@ -151,6 +152,17 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	}
 	
 	/**
+	 * If this is a raw type, returns this. If this is a parameterized type, returns its raw type.
+	 * If this is a type parameter, returns the bound type. If this is an array of any of the above,
+	 * returns an array of the component's erasure.
+	 *
+	 * @return The erasure of this type.
+	 */
+	default TypeReference erasure(){
+		return this;
+	}
+	
+	/**
 	 * Resolves references in this type reference to other type references, filling in information like
 	 * its super class. Also performs basic validation, such as checking duplicate method descriptors.
 	 */
@@ -176,6 +188,7 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	 *
 	 * @return The fully qualified name of this type.
 	 */
+	@NotNull
 	default String fullyQualifiedName(){
 		return packageName().isBlank() ? shortName() : packageName() + "." + shortName();
 	}

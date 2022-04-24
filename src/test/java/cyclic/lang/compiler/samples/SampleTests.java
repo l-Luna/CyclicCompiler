@@ -379,6 +379,7 @@ public class SampleTests{
 		var entriesAgain = entriesMethod.invoke(null);
 		Assertions.assertNotNull(entries);
 		Assertions.assertTrue(entries instanceof List<?>);
+		System.out.println(entries);
 		Assertions.assertEquals(3, ((List<?>)entries).size());
 		Assertions.assertSame(entries, entriesAgain);
 		

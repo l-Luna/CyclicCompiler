@@ -77,7 +77,16 @@ public class ArrayTypeRef implements TypeReference{
 		return underlying;
 	}
 	
+	public TypeReference erasure(){
+		var erasedComp = getComponent().erasure();
+		if(erasedComp != getComponent())
+			return new ArrayTypeRef(erasedComp);
+		return this;
+	}
+	
 	public boolean isAssignableTo(TypeReference target){
+		if(target == null)
+			return false;
 		if(target.fullyQualifiedName().equals(Constants.OBJECT))
 			return true;
 		
