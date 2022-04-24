@@ -57,12 +57,15 @@ public interface TypeParameterReference extends TypeReference{
 		return TypeKind.CONSTRUCTED;
 	}
 	
-	// acts as our erasure
-	@NotNull
-	default TypeReference superClass(){
+	default TypeReference erasure(){
 		return bounds().size() > 0 && bounds().get(0).kind() == TypeKind.CLASS
 				? bounds().get(0)
 				: TypeResolver.resolveFq(Constants.OBJECT);
+	}
+	
+	@NotNull
+	default TypeReference superClass(){
+		return erasure();
 	}
 	
 	default List<? extends TypeReference> superInterfaces(){
@@ -73,11 +76,11 @@ public interface TypeParameterReference extends TypeReference{
 	
 	// use erasure's methods/fields
 	default List<? extends MethodReference> methods(){
-		return superClass().methods();
+		return erasure().methods();
 	}
 	
 	default List<? extends FieldReference> fields(){
-		return superClass().fields();
+		return erasure().fields();
 	}
 	
 	// a type parameter has no constructors
@@ -97,8 +100,8 @@ public interface TypeParameterReference extends TypeReference{
 		return null;
 	}
 	
-	default String fullyQualifiedName(){
-		return superClass().fullyQualifiedName();
+	default @NotNull String fullyQualifiedName(){
+		return erasure().fullyQualifiedName();
 	}
 	
 	/**

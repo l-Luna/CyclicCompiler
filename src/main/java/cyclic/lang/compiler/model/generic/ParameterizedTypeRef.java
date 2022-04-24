@@ -70,4 +70,8 @@ public class ParameterizedTypeRef implements TypeReference{
 	public List<? extends CallableReference> constructors(){
 		return base.constructors();
 	}
+	
+	public TypeReference erasure(){
+		return base.erasure(); // type aliases might need multiple erasure steps
+	}
 }
