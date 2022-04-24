@@ -25,7 +25,7 @@ import java.util.List;
  * @see CyclicTypeBuilder
  * @see TypeResolver
  */
-public interface TypeReference extends AnnotatableElement, MemberReference{
+public interface TypeReference extends AnnotatableElement, GenericElement, MemberReference{
 	
 	/**
 	 * Returns the short name of this type. For example, the short name of <code>cyclic.lang.compiler.model.TypeReference</code>
@@ -137,6 +137,17 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 */
 	default List<? extends RecordComponentReference> recordComponents(){
 		return List.of();
+	}
+	
+	/**
+	 * If this is a raw generic type, returns a list of references to the type parameters of this generic type.
+	 * <p>Otherwise, returns an empty list. This includes non-generic types and parameterized generic types.
+	 * <p>This list must be in the same order as the type parameters are declared.
+	 *
+	 * @return The type parameters of this generic type.
+	 */
+	default List<? extends TypeParameterReference> typeParameters(){
+		return GenericElement.super.typeParameters();
 	}
 	
 	/**

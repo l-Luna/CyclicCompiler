@@ -34,8 +34,8 @@ public class CyclicType implements TypeReference, CyclicMember{
 	private List<FieldReference> fieldsAndInherited = new ArrayList<>();
 	private List<MethodReference> methodsAndInherited = new ArrayList<>();
 	
-	private String superTypeName;
-	private List<String> interfaceNames;
+	private CyclicLangParser.TypeContext superTypeName;
+	private List<CyclicLangParser.TypeContext> interfaceNames;
 	private TypeReference superType;
 	private List<TypeReference> interfaces;
 	
@@ -76,15 +76,15 @@ public class CyclicType implements TypeReference, CyclicMember{
 		CompileTimeException.setFile(fullyQualifiedName());
 		
 		if(kind == TypeKind.INTERFACE){
-			superTypeName = OBJECT;
-			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
+			superTypeName = null;
+			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type() : Collections.emptyList();
 			if(ast.objectImplements() != null && ast.objectImplements().type().size() > 0)
 				throw new CompileTimeException(text.objectImplements(), "Interfaces cannot implement interfaces, but this declares " + ast.objectImplements().type().size() + " super-interface(s)", "Help: Use extends instead");
 		}else{
 			if(ast.objectExtends() != null && ast.objectExtends().type().size() > 1)
 				throw new CompileTimeException(text.objectExtends(), "Non-interfaces cannot have multiple supertypes, but this declares " + ast.objectExtends().type().size() + " supertypes");
-			superTypeName = ast.objectExtends() != null ? TypeResolver.getBaseName(ast.objectExtends().type(0)) : OBJECT;
-			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
+			superTypeName = ast.objectExtends() != null ? ast.objectExtends().type(0) : null;
+			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type() : Collections.emptyList();
 		}
 		
 		flags = Utils.fromModifiers(ast.modifiers(), mod -> {
@@ -198,7 +198,9 @@ public class CyclicType implements TypeReference, CyclicMember{
 	public void resolveRefs(){
 		CompileTimeException.setFile(fullyQualifiedName());
 		
-		superType = TypeResolver.resolve(superTypeName, imports, packageName());
+		superType = superTypeName != null
+				? TypeResolver.resolve(superTypeName, imports, packageName())
+				: TypeResolver.resolveFq(OBJECT);
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
 		if(!Visibility.visibleFrom(superType, this))

@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * @see TypeReference
  * @see CallableReference
  */
-public interface MethodReference extends CallableReference{
+public interface MethodReference extends CallableReference, GenericElement{
 	
 	/**
 	 * Returns the name of this method.
@@ -22,8 +22,8 @@ public interface MethodReference extends CallableReference{
 	String name();
 	
 	/**
-	 * Returns the return type of this method. For a void method, this is an {@linkplain cyclic.lang.compiler.model.platform.PrimitiveTypeRef}
-	 * with a <code>VOID</code> type.
+	 * Returns the return type of this method. For a void method, this is a
+	 * {@linkplain cyclic.lang.compiler.model.platform.PrimitiveTypeRef} with a <code>VOID</code> type.
 	 *
 	 * @return The return type of this method.
 	 */

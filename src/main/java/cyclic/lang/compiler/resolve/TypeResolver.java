@@ -7,6 +7,7 @@ import cyclic.lang.compiler.configuration.dependencies.CyclicDependency;
 import cyclic.lang.compiler.configuration.dependencies.JdkDependency;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,9 +71,9 @@ public final class TypeResolver{
 	}
 	
 	/**
-	 * Returns a reference to a type with the given (<em>possibly</em> qualified) type name tree,
-	 * throwing a {@linkplain TypeNotFoundException} if it could not be found in the given
-	 * imports, default imports, or package.
+	 * Returns a reference to a type with the given (<em>possibly</em> qualified or generic) type name tree,
+	 * throwing a {@linkplain TypeNotFoundException} if it could not be found in the given imports, default
+	 * imports, or package.
 	 *
 	 * @param name
 	 * 		A possibly qualified type name tree of the type to resolve.
@@ -86,6 +87,7 @@ public final class TypeResolver{
 	 */
 	public static TypeReference resolve(CyclicLangParser.TypeContext name, List<String> imports, String currentPackage){
 		return resolveOptional(getBaseName(name), imports, currentPackage)
+				.map(t -> withTypeArguments(t, name.genericTypeUses(), imports, currentPackage))
 				.orElseThrow(() -> new TypeNotFoundException(name.getText() + " was not found in imports [" + String.join(", ", imports) + "] or package " + currentPackage));
 	}
 	
@@ -150,7 +152,7 @@ public final class TypeResolver{
 		return Optional.empty();
 	}
 	
-	// TODO: handle generics and better handle annotations
+	// TODO: better handle annotations
 	/**
 	 * Simplifies a type name tree, removing any generics, annotations, and extra spaces.
 	 */
@@ -164,5 +166,22 @@ public final class TypeResolver{
 		if(name.inferType() != null)
 			return name.inferType().getText();
 		return getBaseName(name.type());
+	}
+	
+	// TODO: properly handle generics
+	private static TypeReference withTypeArguments(TypeReference base,
+	                                               CyclicLangParser.GenericTypeUsesContext args,
+	                                               List<String> imports,
+	                                               String currentPackage){
+		if(args == null)
+			return base;
+		
+		List<TypeReference> arguments = new ArrayList<>();
+		for(var arg : args.genericTypeUse())
+			arguments.add(resolve(arg.type(), imports, currentPackage));
+		
+		if(!arguments.isEmpty())
+			return new ParameterizedTypeRef(base, arguments);
+		return base;
 	}
 }

@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.*;
 
+import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -86,6 +87,13 @@ public class JdkTypeRef implements TypeReference{
 	
 	public List<? extends RecordComponentReference> recordComponents(){
 		return components;
+	}
+	
+	@SuppressWarnings({"unchecked", "rawtypes"}) // we know that the declaration is a Class
+	public List<? extends TypeParameterReference> typeParameters(){
+		return Arrays.stream(underlying.getTypeParameters())
+				.map(x -> new JdkTypeParamRef((TypeVariable)x))
+				.toList();
 	}
 	
 	public Set<AnnotationTag> annotations(){

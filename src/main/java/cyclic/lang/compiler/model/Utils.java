@@ -115,7 +115,6 @@ public final class Utils{
 	 * @see TypeReference
 	 * @see TypeResolver
 	 */
-	@Contract("_ -> new")
 	public static @NotNull TypeReference forAnyClass(@NotNull Class<?> type){
 		if(classCache.containsKey(type))
 			return classCache.get(type);
@@ -253,7 +252,7 @@ public final class Utils{
 			if((c.isStatic() == isStatic) && c.name().equals(name) && c.parameters().size() == args.length){
 				for(int i = 0; i < c.parameters().size(); i++){
 					TypeReference p = c.parameters().get(i);
-					if(!args[i].equals(p))
+					if(!args[i].isAssignableTo(p))
 						continue candidates;
 				}
 				return Optional.of(c);

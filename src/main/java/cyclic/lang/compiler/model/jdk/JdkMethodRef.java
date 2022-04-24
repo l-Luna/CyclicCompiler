@@ -8,9 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class JdkMethodRef implements MethodReference{
-	
-	private final Method underlying;
-	private List<TypeReference> parameters = null;
+	Method underlying;
 	
 	public JdkMethodRef(Method underlying){
 		this.underlying = underlying;
@@ -25,20 +23,11 @@ public class JdkMethodRef implements MethodReference{
 	}
 	
 	public TypeReference returns(){
-		return Utils.forAnyClass(underlying.getReturnType());
+		return JdkUtils.fromReflectType(underlying.getGenericReturnType());
 	}
 	
 	public List<TypeReference> parameters(){
-		if(parameters == null){
-			synchronized(this){
-				Class<?>[] types = underlying.getParameterTypes();
-				var temp = new ArrayList<TypeReference>(types.length);
-				for(Class<?> c : types)
-					temp.add(Utils.forAnyClass(c));
-				parameters = temp;
-			}
-		}
-		return parameters;
+		return Arrays.stream(underlying.getGenericParameterTypes()).map(JdkUtils::fromReflectType).collect(Collectors.toList());
 	}
 	
 	public List<String> parameterNames(){
