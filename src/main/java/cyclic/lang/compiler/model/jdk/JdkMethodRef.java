@@ -26,11 +26,11 @@ public class JdkMethodRef implements MethodReference{
 	}
 	
 	public TypeReference returns(){
-		return Utils.forAnyClass(underlying.getReturnType());
+		return JdkUtils.fromReflectType(underlying.getGenericReturnType());
 	}
 	
 	public List<TypeReference> parameters(){
-		return Arrays.stream(underlying.getParameterTypes()).map(Utils::forAnyClass).collect(Collectors.toList());
+		return Arrays.stream(underlying.getGenericParameterTypes()).map(JdkUtils::fromReflectType).collect(Collectors.toList());
 	}
 	
 	public List<String> parameterNames(){

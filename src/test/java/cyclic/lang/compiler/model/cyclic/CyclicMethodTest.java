@@ -53,7 +53,7 @@ class CyclicMethodTest{
 	@Test
 	void testAllowed(){
 		assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("record T(int i){ double i() -> 0.0; }"));
-		assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("enum T{ static T valueOf(String s) -> null; }"));
+		assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("enum E{ static E valueOf(String s) -> null; }"));
 	}
 	
 	@Test

@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.Set;
 
 /**
- * Represents an element in Cyclic that can be annotated.
+ * Represents an element that can be annotated.
  *
  * @see AnnotationTag
  * @see TypeReference
