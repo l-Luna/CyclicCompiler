@@ -156,6 +156,7 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	 *
 	 * @return The erasure of this type.
 	 */
+	@NotNull
 	default TypeReference erasure(){
 		return this;
 	}
@@ -192,12 +193,21 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	}
 	
 	/**
-	 * Returns the fully qualified name of this type, with all dots replaced with forward slashes, e.g.
+	 * Returns the internal name of this type.
+	 * <p>
+	 * If this type has an erasure, this is the internal name of that type.
+	 * <p>
+	 * For an array type, this is the descriptor.
+	 * <p>
+	 * Otherwise, returns the fully qualified name of this type, with all dots replaced with forward slashes, e.g.
 	 * <code>cyclic/lang/compiler/types/TypeReference</code>.
 	 *
 	 * @return The internal name of this type.
 	 */
 	default String internalName(){
+		var erasure = erasure();
+		if(!erasure.equals(this))
+			return erasure.internalName();
 		return fullyQualifiedName().replace('.', '/');
 	}
 	
@@ -249,6 +259,8 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	 * For an array type, this is true if the target is <code>java.lang.Object</code>, or the target is an array and the
 	 * component type of this array is assignable to the other array's component type.
 	 * <p>
+	 * If the target is a generic type parameter, this is true if this is assignable to the type parameter's erasure.
+	 * <p>
 	 * For any other reference type, this is true if the target has the same fully qualified name
 	 * (i.e. is the same type) as this, or any implemented interface is assignable to the target, or this type's superclass
 	 * is assignable to the target.
@@ -267,6 +279,9 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 		// special case Object for interfaces
 		if(target.fullyQualifiedName().equals(Constants.OBJECT))
 			return true;
+		
+		if(target instanceof TypeParameterReference tpr)
+			return isAssignableTo(tpr.erasure());
 		
 		// either we're the target, we're a subtype of the target, or we implement the target
 		if(fullyQualifiedName().equals(target.fullyQualifiedName()))

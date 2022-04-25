@@ -71,7 +71,7 @@ public class ParameterizedTypeRef implements TypeReference{
 		return base.constructors();
 	}
 	
-	public TypeReference erasure(){
+	public @NotNull TypeReference erasure(){
 		return base.erasure(); // type aliases might need multiple erasure steps
 	}
 }
