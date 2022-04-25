@@ -1,6 +1,8 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.antlr_generated.CyclicLangParser.GenericTypeUsesContext;
+import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
@@ -113,7 +115,15 @@ public abstract class Value{
 				List<Value> args = func.call().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				// TODO: "X.super.Y()" for interface methods? maybe "X:super.Y()"?
 				var funcName = func.call().idPart().getText();
-				yield new CallValue(on, args, Utils.resolveMethod(funcName, on, args, method, isSuperCall), isSuperCall, funcName, method);
+				GenericTypeUsesContext typeArgNames = func.call().genericTypeUses();
+				List<TypeReference> typeArgs;
+				if(typeArgNames != null){
+					typeArgs = typeArgNames.genericTypeUse().stream()
+							.map(x -> TypeResolver.resolve(x.type(), type.imports, type.packageName()))
+							.toList();
+				}else
+					typeArgs = List.of();
+				yield new CallValue(on, args, Utils.resolveGenericMethod(funcName, on, args, method, isSuperCall, typeArgs), isSuperCall, funcName, method, typeArgs);
 			}
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
@@ -608,20 +618,23 @@ public abstract class Value{
 		// for pass expressions
 		public String name;
 		public CallableReference method;
+		public List<TypeReference> typeArgs;
 		
+		// for synthetic call values
 		public CallValue(Value on, List<Value> args, MethodReference target){
 			this.on = on;
 			this.args = args;
 			this.target = target;
 		}
 		
-		public CallValue(Value on, List<Value> args, MethodReference target, boolean isSuperCall, String name, CallableReference method){
+		public CallValue(Value on, List<Value> args, MethodReference target, boolean isSuperCall, String name, CallableReference method, List<TypeReference> typeArgs){
 			this.on = on;
 			this.args = args;
 			this.target = target;
 			this.isSuperCall = isSuperCall;
 			this.name = name;
 			this.method = method;
+			this.typeArgs = typeArgs;
 		}
 		
 		// make sure that changes here are mirrored in InitializationValue

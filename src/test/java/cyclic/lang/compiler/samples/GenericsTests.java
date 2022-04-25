@@ -24,5 +24,31 @@ public class GenericsTests{
 					list.add(0);
 				}
 				""");
+		
+		assertEquals("yes", """
+				static String test(){
+					List<String> list = List.<String>of("yes");
+					return list.get(0);
+				}
+				""");
+		
+		// TODO: infer generic type (should not throw!)
+		assertThrows(CompileTimeException.class, """
+				static void test(){
+					List<String> list = List.of("yes");
+				}
+				""");
+		
+		assertThrows(CompileTimeException.class, """
+				static void test(){
+					List<String> list = List.<Integer>of("yes");
+				}
+				""");
+		
+		assertThrows(CompileTimeException.class, """
+				static void test(){
+					List<String> list = List.<Integer>of(1);
+				}
+				""");
 	}
 }

@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.antlr_generated.CyclicLangParser.GenericTypeUsesContext;
 import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.gen.Operations;
@@ -134,15 +135,15 @@ public abstract class Statement{
 		}else if(uctx.forStatement() != null){
 			var f = uctx.forStatement();
 			Scope forScope = new Scope(in);
-			Statement setup = f.start != null ? fromAst(f.start, forScope, type, callable) : new NoopStatement(in, callable);
-			Statement increment = f.end != null ? fromAst(f.end, forScope, type, callable) : new NoopStatement(in, callable);
+			Statement setup = f.start != null ? fromAst(f.start, forScope, type, call(able) : new NoopStatement(in, call(able);
+			Statement increment = f.end != null ? fromAst(f.end, forScope, type, call(able) : new NoopStatement(in, callExable);
 			Value c = Value.fromAst(f.cond, forScope, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + uctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeName());
-			Statement success = fromAst(f.action, forScope, type, callable);
+			Statement success = fromAst(f.action, forScope, type, cable);
 			// could just implement it as synthetic block statements
-			result = new ForStatement(forScope, success, setup, increment, cond, callable, true);
+			result = new ForStatement(forScope, success, setup, increment, cond, cable, true);
 		}else if(uctx.doWhileStatement() != null){
 			Scope doScope = new Scope(in);
 			Value c = Value.fromAst(uctx.doWhileStatement().value(), in, type, callable);
@@ -233,7 +234,17 @@ public abstract class Statement{
 			boolean isSuperCall = vctx.SUPER() != null;
 			List<Value> args = vctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
 			String name = vctx.call().idPart().getText();
-			result = new CallStatement(in, on, name, Utils.resolveMethod(name, on, args, callable, isSuperCall), args, isSuperCall, callable);
+			
+			GenericTypeUsesContext typeArgNames = vctx.call().genericTypeUses();
+			List<TypeReference> typeArgs;
+			if(typeArgNames != null){
+				typeArgs = typeArgNames.genericTypeUse().stream()
+						.map(x -> TypeResolver.resolve(x.type(), type.imports, type.packageName()))
+						.toList();
+			}else
+				typeArgs = List.of();
+			
+			result = new CallStatement(in, on, name, Utils.resolveGenericMethod(name, on, args, callable, isSuperCall, typeArgs), args, isSuperCall, callable);
 		}else if(vctx.varAssignment() != null){
 			Value left = Value.fromAst(vctx.varAssignment().value(0), in, type, callable);
 			Value right = Value.fromAst(vctx.varAssignment().value(1), in, type, callable);

@@ -503,8 +503,7 @@ public final class Operations{
 			if(oRight instanceof Value.CallValue right){
 				List<Value> newArgs = new ArrayList<>(right.args);
 				newArgs.add(0, left);
-				String funcName = right.name;
-				return new Value.CallValue(right.on, newArgs, Utils.resolveMethod(funcName, right.on, newArgs, right.method, right.isSuperCall), right.isSuperCall, funcName, right.method);
+				return new Value.CallValue(right.on, newArgs, Utils.resolveGenericMethod(right.name, right.on, newArgs, right.method, right.isSuperCall, right.typeArgs), right.isSuperCall, right.name, right.method, right.typeArgs);
 			}
 			if(oRight instanceof Value.InitializationValue right){
 				List<Value> newArgs = new ArrayList<>(right.args);

@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
+import cyclic.lang.compiler.model.generic.ParameterizedMethodRef;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.instructions.Variable;
@@ -197,6 +198,7 @@ public final class Utils{
 		return out;
 	}
 	
+	@Nullable
 	public static MethodReference resolveMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall){
 		// possible method references are:
 		// - from the value being called on, if present, OR
@@ -227,6 +229,36 @@ public final class Utils{
 		candidates = filtered;
 		
 		return MethodResolver.best(candidates, args);
+	}
+	
+	@Nullable
+	public static MethodReference resolveGenericMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall, List<TypeReference> typeArgs){
+		var base = resolveMethod(name, on, args, from, superCall);
+		if(base == null)
+			return null;
+		if(typeArgs.isEmpty())
+			return base;
+		var newTarget = new ParameterizedMethodRef(base, typeArgs, null);
+		// check that its arguments are compatible with the type arguments
+		if(!newTarget.isVarargs() && newTarget.parameters().size() != args.size())
+			return null; // shouldn't happen
+		TypeReference lastNewParam = newTarget.parameters().get(newTarget.parameters().size() - 1);
+		boolean isExplicitVarargs = newTarget.isVarargs()
+				&& args.get(args.size() - 1).type() instanceof ArrayTypeRef atr
+				&& lastNewParam instanceof ArrayTypeRef lnptr
+				&& atr.getComponent().equals(lnptr.getComponent());
+		for(int i = 0; i < args.size(); i++){
+			var arg = args.get(i);
+			boolean isVarargParam = i >= newTarget.parameters().size();
+			
+			var param = isVarargParam
+					? lastNewParam
+					: newTarget.parameters().get(i);
+			if(arg.fit(param) == null ||
+					(isVarargParam && !isExplicitVarargs && param instanceof ArrayTypeRef atr && arg.fit(atr.getComponent()) == null))
+				return null;
+		}
+		return newTarget;
 	}
 	
 	public static ConstructorReference resolveConstructor(TypeReference of, List<Value> args, MemberReference from){

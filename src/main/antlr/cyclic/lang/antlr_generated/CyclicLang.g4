@@ -163,7 +163,7 @@ value
 initialisation: NEW type LPAREN arguments RPAREN;
 cast: LPAREN type RPAREN value;
 varAssignment: value binaryop? ASSIGN value;
-call: idPart LPAREN arguments RPAREN;
+call: genericTypeUses? idPart LPAREN arguments RPAREN;
 ctorCall: (THIS | SUPER) LPAREN arguments RPAREN;
 newArray: NEW type LSQUAR value RSQUAR;
 newListedArray: NEW type LSQUAR RSQUAR LBRACE (value (COMMA value)*)? RBRACE;

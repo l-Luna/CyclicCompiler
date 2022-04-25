@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.generic;
 import cyclic.lang.compiler.model.AccessFlags;
 import cyclic.lang.compiler.model.MethodReference;
 import cyclic.lang.compiler.model.TypeReference;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -14,7 +15,7 @@ public class ParameterizedMethodRef implements MethodReference{
 	private List<TypeReference> typeParameters;
 	private TypeReference container;
 	
-	public ParameterizedMethodRef(MethodReference base, List<TypeReference> typeParameters, TypeReference container){
+	public ParameterizedMethodRef(MethodReference base, List<TypeReference> typeParameters, @Nullable TypeReference container){
 		this.base = base;
 		this.typeParameters = typeParameters;
 		this.container = container;
@@ -37,7 +38,7 @@ public class ParameterizedMethodRef implements MethodReference{
 	}
 	
 	public TypeReference in(){
-		return container;
+		return container != null ? container : base.in();
 	}
 	
 	public AccessFlags flags(){
