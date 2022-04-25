@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
+import cyclic.lang.antlr_generated.CyclicLangParser.GenericTypeUsesContext;
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
@@ -87,7 +88,15 @@ public abstract class Statement{
 			boolean isSuperCall = ctx.SUPER() != null;
 			List<Value> args = ctx.call().arguments().value().stream().map(x -> Value.fromAst(x, in, type, callable)).toList();
 			String name = ctx.call().idPart().getText();
-			result = new CallStatement(in, on, name, Utils.resolveMethod(name, on, args, callable, isSuperCall), args, isSuperCall, callable);
+			GenericTypeUsesContext typeArgNames = ctx.call().genericTypeUses();
+			List<TypeReference> typeArgs;
+			if(typeArgNames != null){
+				typeArgs = typeArgNames.genericTypeUse().stream()
+						.map(x -> TypeResolver.resolve(x.type(), type.imports, type.packageName()))
+						.toList();
+			}else
+				typeArgs = List.of();
+			result = new CallStatement(in, on, name, Utils.resolveGenericMethod(name, on, args, callable, isSuperCall, typeArgs), args, isSuperCall, callable);
 		}else if(ctx.ifStatement() != null){
 			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
