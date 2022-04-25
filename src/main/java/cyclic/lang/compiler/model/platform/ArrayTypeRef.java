@@ -3,6 +3,7 @@ package cyclic.lang.compiler.model.platform;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -77,7 +78,7 @@ public class ArrayTypeRef implements TypeReference{
 		return underlying;
 	}
 	
-	public TypeReference erasure(){
+	public @NotNull TypeReference erasure(){
 		var erasedComp = getComponent().erasure();
 		if(erasedComp != getComponent())
 			return new ArrayTypeRef(erasedComp);

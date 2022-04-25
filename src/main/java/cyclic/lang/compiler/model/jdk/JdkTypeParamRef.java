@@ -1,10 +1,10 @@
 package cyclic.lang.compiler.model.jdk;
 
+import cyclic.lang.compiler.model.MemberReference;
 import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Member;
 import java.lang.reflect.TypeVariable;
@@ -20,16 +20,21 @@ public class JdkTypeParamRef implements TypeParameterReference{
 		this.underlying = underlying;
 	}
 	
-	public @Nullable TypeReference from(){
-		return underlying.getGenericDeclaration() instanceof Class<?> c ? Utils.forAnyClass(c) : null;
+	@NotNull
+	public MemberReference owner(){
+		return switch(underlying.getGenericDeclaration()){
+			case Class<?> c -> Utils.forAnyClass(c);
+			case Member m -> JdkUtils.fromReflectMember(m);
+			case null, default -> throw new IllegalStateException();
+		};
 	}
 	
 	public @NotNull TypeReference in(){
-		if(underlying.getGenericDeclaration() instanceof Class<?> c)
-			return Utils.forAnyClass(c);
-		else if(underlying.getGenericDeclaration() instanceof Member m)
-			return JdkUtils.declaringType(m);
-		throw new UnsupportedOperationException();
+		return switch(underlying.getGenericDeclaration()){
+			case Class<?> c -> Utils.forAnyClass(c);
+			case Member m -> JdkUtils.declaringType(m);
+			case null, default -> throw new UnsupportedOperationException();
+		};
 	}
 	
 	public int index(){
@@ -52,10 +57,6 @@ public class JdkTypeParamRef implements TypeParameterReference{
 	
 	public String shortName(){
 		return underlying.getName();
-	}
-	
-	public boolean equals(Object obj){
-		return obj instanceof TypeParameterReference tps && from().equals(tps.from()) && index() == tps.index();
 	}
 	
 	public String descriptor(){

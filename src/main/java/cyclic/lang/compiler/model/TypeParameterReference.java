@@ -3,7 +3,6 @@ package cyclic.lang.compiler.model;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,10 +28,8 @@ public interface TypeParameterReference extends TypeReference{
 		}
 	}
 	
-	// the type this is a parameter of
-	// TODO: methods
-	@Nullable
-	TypeReference from();
+	@NotNull
+	MemberReference owner();
 	
 	@NotNull
 	TypeReference in();
@@ -57,7 +54,7 @@ public interface TypeParameterReference extends TypeReference{
 		return TypeKind.CONSTRUCTED;
 	}
 	
-	default TypeReference erasure(){
+	default @NotNull TypeReference erasure(){
 		return bounds().size() > 0 && bounds().get(0).kind() == TypeKind.CLASS
 				? bounds().get(0)
 				: TypeResolver.resolveFq(Constants.OBJECT);
@@ -100,17 +97,26 @@ public interface TypeParameterReference extends TypeReference{
 		return null;
 	}
 	
-	default @NotNull String fullyQualifiedName(){
-		return erasure().fullyQualifiedName();
-	}
-	
 	/**
-	 * Returns whether this is a reference to the same type parameter as this.
-	 * <p>Two references to the same type parameter must be from an equal type/method and have an equal index.
+	 * Returns the fully qualified name of this type parameter.
+	 * <p/>For a class type parameter, this is the fully qualified name of the class,
+	 * plus <code>/</code>, plus the name of the type parameter.
+	 * <p>Example: <code>org.example.Example/A</code>
 	 *
-	 * @return Whether this is a reference to the same type parameter as this.
+	 * <p/>For a method type parameter, this is the fully qualified name of the type
+	 * that declares the method, plus <code>::</code>, plus the name and descriptor
+	 * of the method, plus <code>/</code>, plus the name of the type parameter.
+	 * <p>Example: <code>org.example.Example::foo(ILjava/lang/String;)V/A</code>
+	 *
+	 * @return The fully qualified name of this type parameter.
 	 */
-	boolean equals(Object other);
+	default @NotNull String fullyQualifiedName(){
+		return switch(owner()){
+			case TypeReference tr -> tr.fullyQualifiedName() + "/" + shortName();
+			case MethodReference mr -> mr.in().fullyQualifiedName() + "::" + mr.nameAndDescriptor() + "/" + shortName();
+			default -> throw new IllegalStateException();
+		};
+	}
 	
 	default String summary(){
 		// e.g. "T", "T extends X", "T extends X & Y", "in T", "out class T extends X & Y & Z"
