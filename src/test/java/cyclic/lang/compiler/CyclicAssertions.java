@@ -37,6 +37,7 @@ public class CyclicAssertions{
 			if(!expected.isInstance(t))
 				throw new RuntimeException("Expected " + expected.getName() + " but got " + t.getClass().getName(), t);
 		}
+		throw new RuntimeException("Expected " + expected.getName() + " but no exception was thrown");
 	}
 	
 	public static void assertEquals(Object expected, String sourceToEvaluate){
