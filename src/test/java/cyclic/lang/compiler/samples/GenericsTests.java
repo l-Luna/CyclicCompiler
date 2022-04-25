@@ -49,7 +49,7 @@ public class GenericsTests{
 				""");
 		
 		assertThrows(CompileTimeException.class, """
-				static List test(){
+				static List<String> test(){
 					List<String> list = List.<Integer>of(1);
 					return list;
 				}
