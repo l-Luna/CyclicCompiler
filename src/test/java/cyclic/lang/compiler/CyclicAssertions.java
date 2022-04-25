@@ -22,9 +22,10 @@ public class CyclicAssertions{
 	}
 	
 	public static void assertThrows(Class<? extends Throwable> expected, String sourceToEvaluate){
+		Object result;
 		try{
 			try{
-				evaluate(sourceToEvaluate);
+				result = evaluate(sourceToEvaluate);
 			}catch(RuntimeException e){
 				// unwrap InvocationTargetExceptions
 				if(e.getCause() instanceof InvocationTargetException)
@@ -36,8 +37,9 @@ public class CyclicAssertions{
 		}catch(Throwable t){
 			if(!expected.isInstance(t))
 				throw new RuntimeException("Expected " + expected.getName() + " but got " + t.getClass().getName(), t);
+			return;
 		}
-		throw new RuntimeException("Expected " + expected.getName() + " but no exception was thrown");
+		throw new RuntimeException("Expected " + expected.getName() + " but no exception was thrown; evaluation result was " + result);
 	}
 	
 	public static void assertEquals(Object expected, String sourceToEvaluate){
