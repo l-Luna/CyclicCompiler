@@ -372,11 +372,11 @@ public abstract class Statement{
 		public void write(MethodVisitor mv){
 			super.write(mv);
 			if(v.isFinal && this != v.owner)
-				throw new CompileTimeException(text, "Can't assign the value of a final local variable outside of its declaration!");
+				throw new CompileTimeException(text, "Can't assign the value of a final local variable outside of its declaration");
 			if(value != null){
 				var adjusted = value.fit(v.type);
 				if(adjusted == null)
-					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
+					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName());
 				adjusted.write(mv);
 				if(CompilerLauncher.project.includeDebug){
 					Label label = new Label();

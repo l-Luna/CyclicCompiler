@@ -13,6 +13,8 @@ public final class GenericUtils{
 			return args.get(tpr.index());
 		if(type instanceof ArrayTypeRef atr) // T[] -> U[], T[][] -> U[][], etc
 			return new ArrayTypeRef(substitute(atr.getComponent(), args));
+		if(type instanceof ParameterizedTypeRef ptr) // List<T> -> List<U>, List<List<T>> -> List<List<U>>, etc
+			return new ParameterizedTypeRef(ptr.erasure(), withSubstitutions(ptr.getTypeArguments(), args));
 		return type;
 	}
 	

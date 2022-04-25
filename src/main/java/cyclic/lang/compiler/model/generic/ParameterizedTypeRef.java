@@ -74,4 +74,19 @@ public class ParameterizedTypeRef implements TypeReference{
 	public @NotNull TypeReference erasure(){
 		return base.erasure(); // type aliases might need multiple erasure steps
 	}
+	
+	public List<TypeReference> getTypeArguments(){
+		return typeArguments;
+	}
+	
+	/**
+	 * Returns if this is a concrete parameterized type.
+	 * <p>True if none of the type arguments are type parameters.
+	 *
+	 * @return If this is a concrete parameterized type.
+	 */
+	public boolean isConcrete(){
+		// TODO: consider wildcards
+		return typeArguments.stream().noneMatch(TypeParameterReference.class::isInstance);
+	}
 }
