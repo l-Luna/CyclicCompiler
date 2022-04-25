@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.Contract;
@@ -252,6 +253,8 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 		return ref;
 	}
 	
+	// TODO: consider unchecked conversion
+	// TODO: wildcard types
 	/**
 	 * Returns whether an instance of this type can be assigned to a variable or parameter of the target type.
 	 * <p>
@@ -262,6 +265,9 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	 * component type of this array is assignable to the other array's component type.
 	 * <p>
 	 * If the target is a generic type parameter, this is true if this is assignable to the type parameter's erasure.
+	 * <p>
+	 * If the target is a parameterized type, this is true if this is assignable to the erasure of the target.
+	 * If this is also a parameterized type, it is also required that the type parameters are equal.
 	 * <p>
 	 * For any other reference type, this is true if the target has the same fully qualified name
 	 * (i.e. is the same type) as this, or any implemented interface is assignable to the target, or this type's superclass
@@ -287,6 +293,12 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 		
 		if(target instanceof TypeParameterReference tpr)
 			return isAssignableTo(tpr.erasure());
+		
+		if(target instanceof ParameterizedTypeRef ptr){
+			if(this instanceof ParameterizedTypeRef thisPtr && ptr.isConcrete() && thisPtr.isConcrete())
+				return isAssignableTo(ptr.erasure()) && thisPtr.getTypeArguments().equals(ptr.getTypeArguments());
+			return isAssignableTo(ptr.erasure());
+		}
 		
 		// either we're the target, we're a subtype of the target, or we implement the target
 		if(fullyQualifiedName().equals(target.fullyQualifiedName()))

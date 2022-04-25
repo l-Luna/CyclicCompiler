@@ -3,6 +3,8 @@ package cyclic.lang.compiler.samples;
 import cyclic.lang.compiler.CompileTimeException;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static cyclic.lang.compiler.CyclicAssertions.assertEquals;
 import static cyclic.lang.compiler.CyclicAssertions.assertThrows;
 
@@ -32,10 +34,11 @@ public class GenericsTests{
 				}
 				""");
 		
-		// TODO: infer generic type (should not throw!)
-		assertThrows(CompileTimeException.class, """
-				static void test(){
+		// TODO: unchecked warning
+		assertEquals(List.of("yes"), """
+				static List<String> test(){
 					List<String> list = List.of("yes");
+					return list;
 				}
 				""");
 		
@@ -46,8 +49,9 @@ public class GenericsTests{
 				""");
 		
 		assertThrows(CompileTimeException.class, """
-				static void test(){
+				static List test(){
 					List<String> list = List.<Integer>of(1);
+					return list;
 				}
 				""");
 	}
