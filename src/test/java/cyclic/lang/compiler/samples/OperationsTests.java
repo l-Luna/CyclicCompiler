@@ -10,8 +10,9 @@ import java.lang.reflect.InvocationTargetException;
 public class OperationsTests{
 	
 	@Test
-	void testPrefixOps() throws IllegalAccessException, InvocationTargetException{
+	void testBasicOps() throws IllegalAccessException, InvocationTargetException{
 		MethodHandles.Lookup lookup = MethodHandles.lookup();
+		// TODO: rewrite with CyclicAssertions
 		
 		Assertions.assertEquals(5, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
@@ -60,6 +61,46 @@ public class OperationsTests{
 					}
 					""", lookup)
 				.invoke(null, true));
+		
+		Assertions.assertEquals(true, CompilerLauncher.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static boolean test(int x) -> x > 3;
+					}
+					""", lookup)
+				.invoke(null, 5));
+		
+		Assertions.assertEquals(false, CompilerLauncher.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static boolean test(int x) -> x < 3;
+					}
+					""", lookup)
+				.invoke(null, 5));
+		
+		Assertions.assertEquals(10 << 2, CompilerLauncher.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int test(int x) -> x << 2;
+					}
+					""", lookup)
+				.invoke(null, 10));
+		
+		Assertions.assertEquals(10 >> 2, CompilerLauncher.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int test(int x) -> x >> 2;
+					}
+					""", lookup)
+				.invoke(null, 10));
+		
+		Assertions.assertEquals(10 >>> 2, CompilerLauncher.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int test(int x) -> x >>> 2;
+					}
+					""", lookup)
+				.invoke(null, 10));
 	}
 	
 	@Test

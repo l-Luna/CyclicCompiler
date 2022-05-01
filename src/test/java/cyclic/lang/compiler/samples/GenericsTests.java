@@ -57,13 +57,13 @@ public class GenericsTests{
 		
 		assertThrows(CompileTimeException.class, """
 				static void test(){
-					List<String> list = List.<List<String> >of(List.<String>of("yes"));
+					List<String> list = List.<List<String>>of(List.<String>of("yes"));
 				}
 				""");
 		
 		assertEquals(null, """
 				static void test(){
-					List<List<String> > list = List.<List<String> >of(List.<String>of("yes"));
+					List<List<String>> list = List.<List<String>>of(List.<String>of("yes"));
 				}
 				""");
 	}

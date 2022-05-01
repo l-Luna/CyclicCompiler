@@ -215,12 +215,15 @@ binaryop
     | LESSEREQ
     | GREATER
     | LESSER
-    | LSHIFT
-    | RSHIFT
-    | ULSHIFT
-    | URSHIFT
+    | lshift
+    | rshift
+    | urshift
     | PASS
     ;
+
+lshift: LESSER LESSER;
+rshift: GREATER GREATER;
+urshift: GREATER GREATER GREATER;
 
 prefixop
     : PLUS
@@ -341,11 +344,6 @@ PLUS: '+';
 MINUS: '-';
 PERCENT: '%';
 AT: '@';
-
-LSHIFT: '<<';
-RSHIFT: '>>';
-ULSHIFT: '<<<';
-URSHIFT: '>>>';
 
 EQUAL: '==';
 INEQUAL: '!=';
