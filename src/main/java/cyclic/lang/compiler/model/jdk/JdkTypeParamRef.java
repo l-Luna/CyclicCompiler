@@ -62,4 +62,16 @@ public class JdkTypeParamRef implements TypeParameterReference{
 	public String descriptor(){
 		return superClass().descriptor();
 	}
+	
+	public boolean equals(Object o){
+		return o instanceof TypeReference t && t.fullyQualifiedName().equals(fullyQualifiedName());
+	}
+	
+	public int hashCode(){
+		return fullyQualifiedName().hashCode();
+	}
+	
+	public String toString(){
+		return fullyQualifiedName();
+	}
 }

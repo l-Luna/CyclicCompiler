@@ -5,12 +5,14 @@ import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class GenericUtils{
 	
-	public static TypeReference substitute(TypeReference type, List<TypeReference> args){
-		if(type instanceof TypeParameterReference tpr && args.size() > tpr.index())
-			return args.get(tpr.index());
+	public static TypeReference substitute(TypeReference type, Map<TypeParameterReference, TypeReference> args){
+		if(type instanceof TypeParameterReference tpr && args.containsKey(tpr))
+			return args.get(tpr);
 		if(type instanceof ArrayTypeRef atr) // T[] -> U[], T[][] -> U[][], etc
 			return new ArrayTypeRef(substitute(atr.getComponent(), args));
 		if(type instanceof ParameterizedTypeRef ptr) // List<T> -> List<U>, List<List<T>> -> List<List<U>>, etc
@@ -18,9 +20,13 @@ public final class GenericUtils{
 		return type;
 	}
 	
-	public static List<TypeReference> withSubstitutions(List<TypeReference> args, List<TypeReference> substitutions){
-		return args.stream()
-				.map(arg -> substitute(arg, substitutions))
-				.toList();
+	public static Map<TypeParameterReference, TypeReference> withSubstitutions(Map<TypeParameterReference, TypeReference> types,
+	                                                                           Map<TypeParameterReference, TypeReference> substitutions){
+		return types.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> substitute(e.getValue(), substitutions)));
+	}
+	
+	public static List<TypeReference> withSubstitutions(List<TypeReference> types,
+	                                                    Map<TypeParameterReference, TypeReference> substitutions){
+		return types.stream().map(t -> substitute(t, substitutions)).collect(Collectors.toList());
 	}
 }

@@ -14,6 +14,7 @@ import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
@@ -152,20 +153,25 @@ public abstract class Value{
 				var fit = casting.fit(target);
 				if(fit != null){
 					yield new SubstituteTypeValue(target, fit);
-				}else if(target instanceof PrimitiveTypeRef p){
-					if(p.type == PrimitiveTypeRef.Primitive.NULL)
-						yield casting;
-					else if(casting.type() instanceof PrimitiveTypeRef c){
-						if(c.narrowingOpcodes(p.type) == null)
-							throw new CompileTimeException("Cannot convert value of type " + c.fullyQualifiedName() + " to " + p.fullyQualifiedName());
-						else
-							yield new PrimitiveCastValue(casting, p.type);
-					}else
-						throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.fullyQualifiedName());
-				}else if(casting.type() instanceof PrimitiveTypeRef p)
-					throw new CompileTimeException("Cannot convert primitive value of type " + p.fullyQualifiedName() + " to non-primitive type " + target.fullyQualifiedName());
-				else
-					yield new ClassCastValue(casting, target);
+				}else{
+					// if the value has a null type after fitting (i.e. poly expression that doesn't conform), we definitely can't cast it
+					if(casting.type() == null)
+						throw new CompileTimeException("Cannot convert value " + casting + " to type " + target);
+					if(target instanceof PrimitiveTypeRef p){
+						if(p.type == PrimitiveTypeRef.Primitive.NULL)
+							yield casting;
+						else if(casting.type() instanceof PrimitiveTypeRef c){
+							if(c.narrowingOpcodes(p.type) == null)
+								throw new CompileTimeException("Cannot convert value of type " + c.fullyQualifiedName() + " to " + p.fullyQualifiedName());
+							else
+								yield new PrimitiveCastValue(casting, p.type);
+						}else
+							throw new CompileTimeException("Cannot convert non-primitive value of type " + casting.type().fullyQualifiedName() + " to primitive type " + p.fullyQualifiedName());
+					}else if(casting.type() instanceof PrimitiveTypeRef p)
+						throw new CompileTimeException("Cannot convert primitive value of type " + p.fullyQualifiedName() + " to non-primitive type " + target.fullyQualifiedName());
+					else
+						yield new ClassCastValue(casting, target);
+				}
 			}
 			case CyclicLangParser.NewArrayValueContext array -> {
 				TypeReference component = TypeResolver.resolve(array.newArray().type(), type.imports, type.packageName());
@@ -209,13 +215,13 @@ public abstract class Value{
 	 * @return An equivalent to this as the target, or null.
 	 */
 	public Value fit(TypeReference target){
-		if(type().isAssignableTo(target))
+		if(typeAssignableTo(target))
 			return this;
 		
 		Value ret = null;
 		// unboxing conversion
 		if(target instanceof PrimitiveTypeRef prim)
-			if(type().fullyQualifiedName().equals(prim.boxedTypeName()))
+			if(type() != null && type().fullyQualifiedName().equals(prim.boxedTypeName()))
 				ret = new UnboxValue(this, prim.type);
 		
 		if(type() instanceof PrimitiveTypeRef p){
@@ -247,7 +253,19 @@ public abstract class Value{
 		return text != null ? Utils.format(text) : "<generated: " + getClass().getSimpleName() + ">";
 	}
 	
+	@Nullable("null -> unresolved poly expression")
+	@Contract(pure = true)
 	public abstract TypeReference type();
+	
+	// null-safe type().isAssignableTo()
+	public boolean typeAssignableTo(TypeReference target){
+		return type() != null && type().isAssignableTo(target);
+	}
+	
+	// null-safe type().toString() for display
+	public String typeDisplayName(){
+		return type() != null ? type().toString() : "<unknown>";
+	}
 	
 	public static class NullLiteralValue extends Value{
 		
@@ -452,6 +470,7 @@ public abstract class Value{
 		public FieldValue(String fieldName, Value from, @Nullable CallableReference method, @NotNull TypeReference mIn){
 			this.fieldName = fieldName;
 			this.from = from;
+			assert from.type() != null;
 			ref = from.type().fields().stream()
 					.filter(x -> x.name().equals(fieldName))
 					.filter(x -> Visibility.visibleFrom(x, method == null ? mIn : method))
@@ -521,6 +540,7 @@ public abstract class Value{
 			}
 		}
 		
+		@NotNull
 		public TypeReference type(){
 			return type;
 		}
@@ -601,14 +621,14 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			if(target == null)
-				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeDisplayName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
 		}
 		
 		public TypeReference type(){
-			return target.returns();
+			return target == null ? null : target.returns();
 		}
 		
 		public String toString(){
@@ -625,10 +645,12 @@ public abstract class Value{
 		public UnboxValue(Value underlying, PrimitiveTypeRef.Primitive type){
 			this.underlying = underlying;
 			this.type = type;
+			assert underlying.type() != null;
 		}
 		
 		public void write(MethodVisitor mv){
 			underlying.write(mv); // is a boxed value
+			assert underlying.type() != null; // shush IJ
 			mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, underlying.type().internalName(), type.name().toLowerCase() + "Value", "()" + PrimitiveTypeRef.getPrimitiveDesc(type), false);
 		}
 		
@@ -648,10 +670,12 @@ public abstract class Value{
 		public BoxValue(Value underlying, TypeReference targetType){
 			this.underlying = underlying;
 			this.targetType = targetType;
+			assert underlying.type() != null;
 		}
 		
 		public void write(MethodVisitor mv){
 			underlying.write(mv);
+			assert underlying.type() != null; // shush IJ
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, targetType.internalName(), "valueOf", "(" + underlying.type().descriptor() + ")" + targetType.descriptor(), false);
 		}
 		
@@ -730,7 +754,7 @@ public abstract class Value{
 		public void simplify(Statement in){
 			if(ctor == null){
 				String candidates = of.constructors().stream().map(CallableReference::summary).collect(Collectors.joining(", "));
-				String types = args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::typeDisplayName).collect(Collectors.joining(", "));
 				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
 			}
 			args.forEach(value -> value.simplify(in));
@@ -867,12 +891,12 @@ public abstract class Value{
 			this.array = array;
 			this.index = index.fit(PlatformDependency.INT);
 			if(this.index == null){
-				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer!");
+				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.typeDisplayName() + ", which cannot be fit to an integer!");
 			}
 			if(array.type() instanceof ArrayTypeRef a)
 				arrayType = a;
 			else
-				throw new CompileTimeException(text, "Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array!");
+				throw new CompileTimeException(text, "Tried to index a value of type " + array.typeDisplayName() + ", which is not an array!");
 		}
 		
 		public void write(MethodVisitor mv){
@@ -1000,6 +1024,7 @@ public abstract class Value{
 			this.newValue = newValue;
 			localIdx = varIdx;
 			uses = new Variable[]{newValue instanceof LocalVarValue local ? local.variable : null};
+			assert newValue.type() != null;
 		}
 		
 		public InlineAssignValue(Value newValue, Value on, FieldReference target){
@@ -1010,6 +1035,7 @@ public abstract class Value{
 					newValue instanceof LocalVarValue nLocal ? nLocal.variable : null,
 					on instanceof LocalVarValue onLocal ? onLocal.variable : null
 			};
+			assert newValue.type() != null;
 		}
 		
 		public InlineAssignValue(Value newValue, Value array, Value index){
@@ -1021,49 +1047,54 @@ public abstract class Value{
 					array instanceof LocalVarValue arrLocal ? arrLocal.variable : null,
 					index instanceof LocalVarValue idxLocal ? idxLocal.variable : null
 			};
+			assert newValue.type() != null;
+			assert array.type() instanceof ArrayTypeRef;
 		}
 		
 		public void write(MethodVisitor mv){
 			if(returnPreAssign)
 				target.write(mv);
 			
+			TypeReference newType = newValue.type();
+			assert newType != null;
 			if(localIdx > -10){
 				newValue.write(mv);
 				if(!returnPreAssign)
 					mv.visitInsn(Opcodes.DUP);
-				mv.visitVarInsn(newValue.type().localStoreOpcode(), localIdx);
-			}else if(field != null){
-				boolean farDup = true;
-				
-				if(!field.isStatic()){
-					if(fieldOf != null)
-						fieldOf.write(mv);
-					else
-						mv.visitVarInsn(Opcodes.ALOAD, 0);
-				}else
-					farDup = false;
-				
-				newValue.write(mv);
-				if(!returnPreAssign){
-					if(farDup){
-						mv.visitInsn((newValue.type().equals(PlatformDependency.LONG) || newValue.type().equals(PlatformDependency.DOUBLE))
-								? Opcodes.DUP2_X1 : Opcodes.DUP_X1);
-					}else{
-						mv.visitInsn((newValue.type().equals(PlatformDependency.LONG) || newValue.type().equals(PlatformDependency.DOUBLE))
-								? Opcodes.DUP2 : Opcodes.DUP);
+				mv.visitVarInsn(newType.localStoreOpcode(), localIdx);
+			}else{
+				boolean isLongType = newType.equals(PlatformDependency.LONG) || newType.equals(PlatformDependency.DOUBLE);
+				if(field != null){
+					boolean farDup = true;
+					
+					if(!field.isStatic()){
+						if(fieldOf != null)
+							fieldOf.write(mv);
+						else
+							mv.visitVarInsn(Opcodes.ALOAD, 0);
+					}else
+						farDup = false;
+					
+					newValue.write(mv);
+					if(!returnPreAssign){
+						if(farDup){
+							mv.visitInsn(isLongType ? Opcodes.DUP2_X1 : Opcodes.DUP_X1);
+						}else{
+							mv.visitInsn(isLongType ? Opcodes.DUP2 : Opcodes.DUP);
+						}
 					}
-				}
-				field.writePut(mv);
-			}else if(array != null && arrayIndex != null){
-				array.write(mv);
-				arrayIndex.write(mv);
-				newValue.write(mv);
-				if(!returnPreAssign)
-					mv.visitInsn((newValue.type().equals(PlatformDependency.LONG) || newValue.type().equals(PlatformDependency.DOUBLE))
-							? Opcodes.DUP2_X2 : Opcodes.DUP_X2);
-				mv.visitInsn(((ArrayTypeRef)array.type()).getComponent().arrayStoreOpcode());
-			}else
-				throw new IllegalStateException();
+					field.writePut(mv);
+				}else if(array != null && arrayIndex != null){
+					array.write(mv);
+					arrayIndex.write(mv);
+					newValue.write(mv);
+					if(!returnPreAssign)
+						mv.visitInsn(isLongType ? Opcodes.DUP2_X2 : Opcodes.DUP_X2);
+					assert array.type() != null; // shush IJ
+					mv.visitInsn(((ArrayTypeRef)array.type()).getComponent().arrayStoreOpcode());
+				}else
+					throw new IllegalStateException();
+			}
 			
 			// end range is exclusive, so attach to next instruction
 			if(CompilerLauncher.project.includeCyclicLibRefs){

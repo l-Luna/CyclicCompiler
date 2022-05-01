@@ -126,4 +126,8 @@ public interface TypeParameterReference extends TypeReference{
 				+ (bounds().size() > 0
 					? " extends " + bounds().stream().map(TypeReference::shortName).collect(Collectors.joining(" & ")) : "");
 	}
+	
+	default boolean isConcrete(){
+		return false;
+	}
 }
