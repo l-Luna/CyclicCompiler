@@ -231,14 +231,27 @@ public final class Utils{
 		return MethodResolver.best(candidates, args);
 	}
 	
+	/*
+	 TODO: generic applicability test in overload resolution
+	 TODO: make this not bad
+	 TODO: generic applicability for constructors
+	 we use a list for type args since we don't know what we're substituting yet
+	*/
 	@Nullable
 	public static MethodReference resolveGenericMethod(String name, Value on, List<Value> args, CallableReference from, boolean superCall, List<TypeReference> typeArgs){
 		var base = resolveMethod(name, on, args, from, superCall);
 		if(base == null)
 			return null;
 		if(typeArgs.isEmpty())
-			return base;
-		var newTarget = new ParameterizedMethodRef(base, typeArgs, null);
+			return base.isConcrete() ? base : base.erasure(); // TODO: type inference
+		// match typeArgs to the method's type parameters by index
+		var typeParams = base.typeParameters();
+		if(typeParams.size() != typeArgs.size())
+			return null; // don't throw yet, a pass expression could later resolve to a different method
+		var typeParamMap = new HashMap<TypeParameterReference, TypeReference>();
+		for(int i = 0; i < typeParams.size(); i++)
+			typeParamMap.put(typeParams.get(i), typeArgs.get(i));
+		var newTarget = new ParameterizedMethodRef(base, typeParamMap, null);
 		// check that its arguments are compatible with the type arguments
 		if(!newTarget.isVarargs() && newTarget.parameters().size() != args.size())
 			return null; // shouldn't happen

@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A reference to a parameterized type.
@@ -12,15 +14,15 @@ import java.util.List;
 public class ParameterizedTypeRef implements TypeReference{
 	
 	private TypeReference base;
-	private List<TypeReference> typeArguments;
+	private Map<TypeParameterReference, TypeReference> typeArguments;
 	
-	public ParameterizedTypeRef(@NotNull TypeReference base, @NotNull List<TypeReference> typeArguments){
+	public ParameterizedTypeRef(@NotNull TypeReference base, @NotNull Map<TypeParameterReference, TypeReference> typeArguments){
 		this.base = base;
 		this.typeArguments = typeArguments;
 	}
 	
 	public TypeReference resolve(@NotNull TypeParameterReference param){
-		return typeArguments.get(param.index());
+		return typeArguments.get(param);
 	}
 	
 	public String shortName(){
@@ -75,18 +77,38 @@ public class ParameterizedTypeRef implements TypeReference{
 		return base.erasure(); // type aliases might need multiple erasure steps
 	}
 	
-	public List<TypeReference> getTypeArguments(){
+	// ArrayList<String> actually implements List<String>
+	
+	@Nullable("null -> Object")
+	public TypeReference genericSuperClass(){
+		return GenericUtils.substitute(base.genericSuperClass(), getTypeArguments());
+	}
+	
+	public List<? extends TypeReference> genericSuperInterfaces(){
+		return base.genericSuperInterfaces().stream()
+				.map(x->GenericUtils.substitute(x, getTypeArguments()))
+				.toList();
+	}
+	
+	public Map<TypeParameterReference, TypeReference> getTypeArguments(){
 		return typeArguments;
 	}
 	
-	/**
-	 * Returns if this is a concrete parameterized type.
-	 * <p>True if none of the type arguments are type parameters.
-	 *
-	 * @return If this is a concrete parameterized type.
-	 */
+	public String toString(){
+		return fullyQualifiedName() +
+				"<" + typeArguments.values().stream()
+					.map(TypeReference::toString)
+					.collect(Collectors.joining(", ")) +
+				">";
+	}
+	
 	public boolean isConcrete(){
-		// TODO: consider wildcards
-		return typeArguments.stream().noneMatch(TypeParameterReference.class::isInstance);
+		return typeArguments.values().stream().allMatch(TypeReference::isConcrete);
+	}
+	
+	public boolean equals(Object obj){
+		return obj instanceof ParameterizedTypeRef t
+				&& t.fullyQualifiedName().equals(fullyQualifiedName())
+				&& t.getTypeArguments().equals(getTypeArguments());
 	}
 }

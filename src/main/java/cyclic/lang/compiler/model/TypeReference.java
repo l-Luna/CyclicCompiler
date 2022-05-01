@@ -27,7 +27,7 @@ import java.util.List;
  * @see CyclicTypeBuilder
  * @see TypeResolver
  */
-public interface TypeReference extends AnnotatableElement, GenericElement, MemberReference{
+public interface TypeReference extends AnnotatableElement, GenericElement<TypeReference>, MemberReference{
 	
 	/**
 	 * Returns the short name of this type. For example, the short name of <code>cyclic.lang.compiler.model.TypeReference</code>
@@ -69,7 +69,7 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	 *
 	 * @return A reference to this type's super class.
 	 */
-	@Nullable
+	@Nullable("null -> Object or primitives")
 	@Contract(pure = true)
 	TypeReference superClass();
 	
@@ -118,7 +118,8 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	
 	/**
 	 * Returns whether this is a reference to the same type as the given other type reference.
-	 * <p>Two references to the same type must have the same {@linkplain TypeReference#fullyQualifiedName()}.
+	 * <p>Two references to the same type must have the same {@linkplain TypeReference#fullyQualifiedName()}
+	 * and type arguments (if any).
 	 *
 	 * @return Whether this is a reference to the same type as the given type reference.
 	 */
@@ -264,14 +265,16 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 	 * For an array type, this is true if the target is <code>java.lang.Object</code>, or the target is an array and the
 	 * component type of this array is assignable to the other array's component type.
 	 * <p>
-	 * If the target is a generic type parameter, this is true if this is assignable to the type parameter's erasure.
+	 * If the target is a generic type parameter (i.e. unparameterized), this is true if this is assignable to the type
+	 * parameter's erasure.
 	 * <p>
-	 * If the target is a parameterized type, this is true if this is assignable to the erasure of the target.
-	 * If this is also a parameterized type, it is also required that the type parameters are equal.
+	 * If the target is a parameterized type and this type is not, this is true if this is assignable to the erasure of the target.
 	 * <p>
 	 * For any other reference type, this is true if the target has the same fully qualified name
-	 * (i.e. is the same type) as this, or any implemented interface is assignable to the target, or this type's superclass
-	 * is assignable to the target.
+	 * (i.e. is the same type) as this, or any implemented generic interface is assignable to the target, or this type's
+	 * generic superclass is assignable to the target.
+	 * <p>
+	 * If this is a parameterized type, it is also required that all type arguments are equal.
 	 * <p>
 	 * Note that this is always true if the target is a reference to <code>java.lang.Object</code> and this is a reference
 	 * type.
@@ -294,25 +297,53 @@ public interface TypeReference extends AnnotatableElement, GenericElement, Membe
 		if(target instanceof TypeParameterReference tpr)
 			return isAssignableTo(tpr.erasure());
 		
-		if(target instanceof ParameterizedTypeRef ptr){
-			if(this instanceof ParameterizedTypeRef thisPtr && ptr.isConcrete() && thisPtr.isConcrete())
-				return isAssignableTo(ptr.erasure()) && thisPtr.getTypeArguments().equals(ptr.getTypeArguments());
+		if(target instanceof ParameterizedTypeRef ptr && !(this instanceof ParameterizedTypeRef))
 			return isAssignableTo(ptr.erasure());
-		}
 		
 		// either we're the target, we're a subtype of the target, or we implement the target
-		if(fullyQualifiedName().equals(target.fullyQualifiedName()))
+		if(fullyQualifiedName().equals(target.fullyQualifiedName())){
+			if(this instanceof ParameterizedTypeRef thisPtr && target instanceof ParameterizedTypeRef targetPtr)
+				return thisPtr.getTypeArguments().equals(targetPtr.getTypeArguments());
 			return true;
+		}
 		
-		if(superClass() != null && superClass().isAssignableTo(target))
+		if(genericSuperClass() != null && genericSuperClass().isAssignableTo(target))
 			return true;
 		
 		if(target.kind() == TypeKind.INTERFACE)
-			for(TypeReference x : superInterfaces())
+			for(TypeReference x : genericSuperInterfaces())
 				if(x.isAssignableTo(target))
 					return true;
 		
 		return false;
+	}
+	
+	/**
+	 * Returns the superclass of this type, with type arguments supplied by this type.
+	 * Returns null if this is <code>java.lang.Object</code> or a primitive type.
+	 * <p>
+	 * <p/> Consider <code>class Sub&lt;T&gt; extends Super&lt;String, T&gt;</code>. Calling
+	 * {@linkplain TypeReference#superClass()} on Sub will return <code>Super</code>, while calling
+	 * this on Sub will return <code>Super&lt;java.lang.String, Sub/T&gt;</code>.
+	 *
+	 * @return The superclass of this type with type arguments, or <code>null</code> if this is <code>java.lang.Object</code>
+	 * or a primitive type.
+	 */
+	@Nullable("null -> Object or primitives")
+	@Contract(pure = true)
+	default TypeReference genericSuperClass(){
+		return superClass();
+	}
+	
+	/**
+	 * Returns a list of references to the types that this type implements, with type arguments supplied by this type.
+	 * For an interface, this will be the list of types it extends.
+	 * <p>See {@linkplain #genericSuperClass()} for more information.
+	 *
+	 * @return The types that this type implements.
+	 */
+	default List<? extends TypeReference> genericSuperInterfaces(){
+		return superInterfaces();
 	}
 	
 	default String elementType(){

@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.model.generic.ErasedMethodRef;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Method;
@@ -65,6 +66,16 @@ public class JdkMethodRef implements MethodReference{
 	
 	public Object defaultValueForAnnotation(){
 		return underlying.getDefaultValue();
+	}
+	
+	public List<? extends TypeParameterReference> typeParameters(){
+		return Arrays.stream(underlying.getTypeParameters())
+				.map(JdkTypeParamRef::new)
+				.toList();
+	}
+	
+	public MethodReference erasure(){
+		return new ErasedMethodRef(this);
 	}
 	
 	public String toString(){

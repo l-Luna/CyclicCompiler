@@ -452,7 +452,10 @@ public final class Operations{
 			};
 			
 			// narrow back if needed
+			// shush IJ
+			//noinspection ConstantConditions
 			if(value != null && value.type().equals(INT))
+				//noinspection ConstantConditions
 				if(!left.type().equals(INT) && !right.type().equals(INT))
 					if(left.type().equals(CHAR) || right.type().equals(CHAR))
 						return new Value.PrimitiveCastValue(value, PrimitiveTypeRef.Primitive.CHAR);

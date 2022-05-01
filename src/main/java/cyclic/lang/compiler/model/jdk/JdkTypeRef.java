@@ -1,8 +1,8 @@
 package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.*;
+import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -89,15 +89,22 @@ public class JdkTypeRef implements TypeReference{
 		return components;
 	}
 	
-	@SuppressWarnings({"unchecked", "rawtypes"}) // we know that the declaration is a Class
 	public List<? extends TypeParameterReference> typeParameters(){
 		return Arrays.stream(underlying.getTypeParameters())
-				.map(x -> new JdkTypeParamRef((TypeVariable)x))
+				.map(JdkTypeParamRef::new)
 				.toList();
 	}
 	
 	public Set<AnnotationTag> annotations(){
 		return Arrays.stream(underlying.getAnnotations()).map(k -> AnnotationTag.fromAnnotation(k, this)).collect(Collectors.toSet());
+	}
+	
+	@Nullable("null -> Object")
+	public TypeReference genericSuperClass(){
+		var clss = underlying.getGenericSuperclass();
+		if(clss == null)
+			return null;
+		return JdkUtils.fromReflectType(clss);
 	}
 	
 	public String toString(){

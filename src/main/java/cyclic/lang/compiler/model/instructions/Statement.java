@@ -105,6 +105,8 @@ public abstract class Statement{
 			boolean isFinal = decl.modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || typeName.equals("val");
 			boolean infer = typeName.equals("var") || typeName.equals("val");
 			Value initial = decl.value() != null ? Value.fromAst(decl.value(), in, type, callable) : null;
+			if(infer && initial == null)
+				throw new CompileTimeException("Can't infer the type of a variable without an initial value");
 			if(infer){
 				if(initial == null)
 					throw new CompileTimeException("Can't infer the type of a variable without an initial value");
@@ -135,15 +137,15 @@ public abstract class Statement{
 		}else if(uctx.forStatement() != null){
 			var f = uctx.forStatement();
 			Scope forScope = new Scope(in);
-			Statement setup = f.start != null ? fromAst(f.start, forScope, type, call(able) : new NoopStatement(in, call(able);
-			Statement increment = f.end != null ? fromAst(f.end, forScope, type, call(able) : new NoopStatement(in, callExable);
+			Statement setup = f.start != null ? fromAst(f.start, forScope, type, callable) : new NoopStatement(in, callable);
+			Statement increment = f.end != null ? fromAst(f.end, forScope, type, callable) : new NoopStatement(in, callable);
 			Value c = Value.fromAst(f.cond, forScope, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
 				throw new CompileTimeException("Expression " + uctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeName());
-			Statement success = fromAst(f.action, forScope, type, cable);
+			Statement success = fromAst(f.action, forScope, type, callable);
 			// could just implement it as synthetic block statements
-			result = new ForStatement(forScope, success, setup, increment, cond, cable, true);
+			result = new ForStatement(forScope, success, setup, increment, cond, callable, true);
 		}else if(uctx.doWhileStatement() != null){
 			Scope doScope = new Scope(in);
 			Value c = Value.fromAst(uctx.doWhileStatement().value(), in, type, callable);
@@ -190,6 +192,7 @@ public abstract class Statement{
 			boolean isSuperCall = uctx.ctorCall().SUPER() != null;
 			var t = callable.in();
 			TypeReference of = isSuperCall ? t.superClass() : t;
+			assert of != null; // only possible if we're inside of Object or a primitive, which is impossible
 			result = new CtorCallStatement(in, of, Utils.resolveConstructor(of, args, callable), args, callable);
 		}else if(uctx.tryStatement() != null){
 			var ts = uctx.tryStatement();
@@ -331,6 +334,8 @@ public abstract class Statement{
 			super(in, from);
 			this.returnValue = returnValue;
 			this.toReturn = toReturn;
+			if(returnValue != null && returnValue.fit(toReturn) == null)
+				throw new CompileTimeException("Can't return " + returnValue + " from " + from + "; not assignable to " + toReturn);
 		}
 		
 		public void write(MethodVisitor mv){
@@ -843,7 +848,7 @@ public abstract class Statement{
 				finallyStatement.write(mv);
 				mv.visitInsn(Opcodes.ATHROW);
 				
-				// returning, breaking, etc variants are created at their representative statements
+				// returning, breaking, etc. variants are created at their representative statements
 			}
 			mv.visitLabel(finallyEnd);
 		}

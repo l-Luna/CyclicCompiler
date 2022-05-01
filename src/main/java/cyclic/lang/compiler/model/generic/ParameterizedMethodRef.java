@@ -2,27 +2,29 @@ package cyclic.lang.compiler.model.generic;
 
 import cyclic.lang.compiler.model.AccessFlags;
 import cyclic.lang.compiler.model.MethodReference;
+import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.util.List;
+import java.util.Map;
 
 public class ParameterizedMethodRef implements MethodReference{
 	
 	private MethodReference base;
-	private List<TypeReference> typeParameters;
+	private Map<TypeParameterReference, TypeReference> typeArguments;
 	private TypeReference container;
 	
-	public ParameterizedMethodRef(MethodReference base, List<TypeReference> typeParameters, @Nullable TypeReference container){
+	public  ParameterizedMethodRef(MethodReference base, Map<TypeParameterReference, TypeReference> typeArguments, @Nullable TypeReference container){
 		this.base = base;
-		this.typeParameters = typeParameters;
+		this.typeArguments = typeArguments;
 		this.container = container;
 	}
 	
 	public List<TypeReference> parameters(){
-		return GenericUtils.withSubstitutions(base.parameters(), typeParameters);
+		return GenericUtils.withSubstitutions(base.parameters(), typeArguments);
 	}
 	
 	public List<String> parameterNames(){
@@ -50,7 +52,7 @@ public class ParameterizedMethodRef implements MethodReference{
 	}
 	
 	public TypeReference returns(){
-		return GenericUtils.substitute(base.returns(), typeParameters);
+		return GenericUtils.substitute(base.returns(), typeArguments);
 	}
 	
 	public boolean isNative(){
@@ -75,5 +77,15 @@ public class ParameterizedMethodRef implements MethodReference{
 	
 	public String descriptor(){
 		return base.descriptor(); // erase type parameters
+	}
+	
+	public MethodReference erasure(){
+		return base.erasure();
+	}
+	
+	public boolean isConcrete(){
+		return typeArguments.values().stream().allMatch(TypeReference::isConcrete)
+				&& parameters().stream().allMatch(TypeReference::isConcrete)
+				&& returns().isConcrete();
 	}
 }

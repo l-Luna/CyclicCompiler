@@ -6,12 +6,12 @@ import cyclic.lang.compiler.configuration.Dependency;
 import cyclic.lang.compiler.configuration.dependencies.CyclicDependency;
 import cyclic.lang.compiler.configuration.dependencies.JdkDependency;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
+import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Allows resolving types by name by checking all registered dependencies in order.
@@ -45,6 +45,7 @@ public final class TypeResolver{
 	 * @throws TypeNotFoundException
 	 * 		If the specified type doesn't exist.
 	 */
+	@NotNull
 	public static TypeReference resolveFq(String fqName){
 		return resolveFqOptional(fqName)
 				.orElseThrow(() -> new TypeNotFoundException(fqName));
@@ -65,6 +66,7 @@ public final class TypeResolver{
 	 * @throws TypeNotFoundException
 	 * 		If the specified type doesn't exist within the searched packages.
 	 */
+	@NotNull
 	public static TypeReference resolve(String name, List<String> imports, String currentPackage){
 		return resolveOptional(name, imports, currentPackage)
 				.orElseThrow(() -> new TypeNotFoundException(name + " was not found in imports [" + String.join(", ", imports) + "] or package " + currentPackage));
@@ -85,6 +87,7 @@ public final class TypeResolver{
 	 * @throws TypeNotFoundException
 	 * 		If the specified type doesn't exist within the searched packages.
 	 */
+	@NotNull
 	public static TypeReference resolve(CyclicLangParser.TypeContext name, List<String> imports, String currentPackage){
 		return resolveOptional(getBaseName(name), imports, currentPackage)
 				.map(t -> withTypeArguments(t, name.genericTypeUses(), imports, currentPackage))
@@ -176,9 +179,9 @@ public final class TypeResolver{
 		if(args == null)
 			return base;
 		
-		List<TypeReference> arguments = new ArrayList<>();
-		for(var arg : args.genericTypeUse())
-			arguments.add(resolve(arg.type(), imports, currentPackage));
+		Map<TypeParameterReference, TypeReference> arguments = new HashMap<>();
+		for(int i = 0; i < args.genericTypeUse().size(); i++)
+			arguments.put(base.typeParameters().get(i), resolve(args.genericTypeUse().get(i).type(), imports, currentPackage));
 		
 		if(!arguments.isEmpty())
 			return new ParameterizedTypeRef(base, arguments);

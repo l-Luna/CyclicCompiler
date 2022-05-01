@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * @see TypeReference
  * @see CallableReference
  */
-public interface MethodReference extends CallableReference, GenericElement{
+public interface MethodReference extends CallableReference, GenericElement<MethodReference>{
 	
 	/**
 	 * Returns the name of this method.
@@ -116,6 +116,14 @@ public interface MethodReference extends CallableReference, GenericElement{
 	 */
 	default Set<AnnotationTag> returnTypeAnnotations(){
 		return Collections.emptySet();
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	default boolean isConcrete(){
+		return parameters().stream().allMatch(TypeReference::isConcrete)
+				&& returns().isConcrete();
 	}
 	
 	/**

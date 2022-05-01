@@ -10,9 +10,10 @@ import java.util.List;
 
 public class ArrayTypeRef implements TypeReference{
 	
+	@NotNull
 	private TypeReference underlying;
 	
-	public ArrayTypeRef(TypeReference underlying){
+	public ArrayTypeRef(@NotNull TypeReference underlying){
 		this.underlying = underlying;
 	}
 	
@@ -74,7 +75,7 @@ public class ArrayTypeRef implements TypeReference{
 		return "[" + getComponent().descriptor();
 	}
 	
-	public TypeReference getComponent(){
+	public @NotNull TypeReference getComponent(){
 		return underlying;
 	}
 	
@@ -95,7 +96,7 @@ public class ArrayTypeRef implements TypeReference{
 	}
 	
 	public String toString(){
-		return getComponent().toString() + "[]";
+		return getComponent() + "[]";
 	}
 	
 	public boolean equals(Object o){

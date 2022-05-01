@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
@@ -18,7 +19,7 @@ public class Variable{
 	// scope end label is preferred by LVT to stop variables being dropped after use while still in scope
 	public Label start = null, end = null;
 	
-	public Variable(String name, TypeReference type, Scope in, Statement owner){
+	public Variable(String name, @NotNull TypeReference type, Scope in, Statement owner){
 		this.name = name;
 		this.type = type;
 		this.in = in;
@@ -35,6 +36,7 @@ public class Variable{
 		return Utils.adjustedIndex(this);
 	}
 	
+	@NotNull
 	public TypeReference type(){
 		return type;
 	}
