@@ -289,11 +289,15 @@ public final class Utils{
 		return current.toString();
 	}
 	
-	public static String format(ParserRuleContext ctx){
+	public static String position(ParserRuleContext ctx){
+		return "[%d:%d]".formatted(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine());
+	}
+	
+	public static String format(@NotNull ParserRuleContext ctx){
 		return format(getAllTokens(ctx));
 	}
 	
-	public static List<TerminalNode> getAllTokens(ParserRuleContext ctx){
+	public static List<TerminalNode> getAllTokens(@NotNull ParserRuleContext ctx){
 		var ret = new ArrayList<TerminalNode>();
 		if(ctx.children != null)
 			for(var child : ctx.children)

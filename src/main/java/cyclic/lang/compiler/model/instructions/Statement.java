@@ -20,6 +20,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -362,12 +363,10 @@ public abstract class Statement{
 		
 		public void write(MethodVisitor mv){
 			super.write(mv);
-			if(v.isFinal && this != v.owner)
-				throw new CompileTimeException(text, "Can't assign the value of a final local variable outside of its declaration!");
 			if(value != null){
 				var adjusted = value.fit(v.type);
 				if(adjusted == null)
-					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName() + "!");
+					throw new CompileTimeException(text, "Value of type " + value.type().fullyQualifiedName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName());
 				adjusted.write(mv);
 				if(CompilerLauncher.project.includeDebug){
 					Label label = new Label();
@@ -382,6 +381,17 @@ public abstract class Statement{
 		}
 		
 		public void simplify(){
+			// check final re-assignment
+			if(v.isFinal && this != v.owner && value != null){
+				Optional<Statement> occurrance = Flow.possibleOccurranceBefore(from.getBody(), this, Flow.willAssignToVariable(v), false);
+				if(occurrance.isPresent()){
+					ParserRuleContext targetText = occurrance.get().text;
+					if(targetText == null)
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + occurrance.get());
+					else
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + Utils.position(targetText) + "\n\t\t" + occurrance.get());
+				}
+			}
 			if(value != null)
 				value.simplify(this);
 		}

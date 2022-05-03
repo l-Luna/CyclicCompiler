@@ -518,7 +518,7 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			if(Utils.maxMethodParameterLocalIndex(in.from) <= localIdx)
-				if(Flow.minOccurrencesBefore(in.from.getBody(), in, x -> x instanceof Statement.VarStatement v && v.v.getAdjIndex() == localIdx && v.value != null, false) <= 0)
+				if(Flow.minOccurrencesBefore(in.from.getBody(), in, Flow.willAssignToIndex(localIdx).or(Flow.WILL_EXIT), false) <= 0)
 					throw new CompileTimeException(in.text, "Local variable \"" + localName + "\" must be assigned to before it is used");
 		}
 	}
