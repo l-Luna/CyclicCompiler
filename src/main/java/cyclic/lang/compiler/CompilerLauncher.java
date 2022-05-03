@@ -42,6 +42,9 @@ public final class CompilerLauncher{
 	/** The project currently being compiled. */
 	public static CyclicProject project;
 	
+	/** Errors that occurred during compilation that can be reported together. */
+	public static Set<Exception> compileErrors;
+	
 	public static void main(String... args){
 		if(args.length < 2){
 			System.out.println("""
@@ -96,18 +99,18 @@ public final class CompilerLauncher{
 				todo.add(file);
 		});
 		
-		// wrap in a try/catch to make errors look nicer
 		Map<String, byte[]> out;
 		try{
 			out = compileFileSet(todo, inputFolder);
 		}catch(SyntaxException | CompileTimeException | TypeNotFoundException e){
-			System.err.println("Error compiling files:\n" + e.getMessage());
-			System.err.println("\nStack trace:");
-			for(StackTraceElement traceElement : e.getStackTrace())
-				System.err.println("\tat " + traceElement);
+			// handle uncaught errors
+			System.err.println("Uncaught error compiling files:");
+			reportStackTrace(e);
 			System.exit(2);
 			return; // make definite assignment happy
 		}
+		
+		checkErrors();
 		
 		if(project.noOutput){
 			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");
@@ -168,6 +171,24 @@ public final class CompilerLauncher{
 		}
 	}
 	
+	private static void checkErrors(){
+		if(!compileErrors.isEmpty()){
+			System.err.println("Error compiling files:");
+			for(Exception e : compileErrors){
+				System.err.println(e.getMessage());
+				System.err.println();
+			}
+			System.exit(2);
+		}
+	}
+	
+	private static void reportStackTrace(Exception e){
+		System.err.println(e.getMessage());
+		System.err.println("\nStack trace:");
+		for(StackTraceElement traceElement : e.getStackTrace())
+			System.err.println("\tat " + traceElement);
+	}
+	
 	/**
 	 * Compiles a set of files into classes, returning every compiled class indexed by their fully-qualified names.
 	 * May return more classes than files if one file contains inner classes.
@@ -179,6 +200,7 @@ public final class CompilerLauncher{
 	 * @return A map containing the byte contents of compiled classes indexed by fully-qualified names.
 	 */
 	public static Map<String, byte[]> compileFileSet(@NotNull Set<File> files, @Nullable Path root){
+		compileErrors = new HashSet<>(files.size());
 		for(File file : files){
 			Path relative = root == null ? null : root.relativize(file.toPath());
 			if(file.getName().endsWith(".cyc")){
@@ -189,11 +211,15 @@ public final class CompilerLauncher{
 						toCompile.put(type.fullyQualifiedName(), type);
 				}catch(IOException e){
 					e.printStackTrace();
+				}catch(SyntaxException se){
+					compileErrors.add(se);
 				}
 			}else{
 				System.out.println("File \"" + (relative != null ? relative.toString() : file.getName()) + "\" was asked to be compiled, but does not have \".cyc\" extension and will be ignored.");
 			}
 		}
+		
+		checkErrors();
 		
 		TypeResolver.dependencies.forEach(Dependency::resolveRefs);
 		TypeResolver.dependencies.forEach(Dependency::resolveInheritance);
