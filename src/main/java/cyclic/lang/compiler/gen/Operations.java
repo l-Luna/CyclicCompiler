@@ -267,7 +267,7 @@ public final class Operations{
 	}
 	
 	public static Value resolveBinary(String symbol, Value left, Value right, @Nullable ParserRuleContext expr){
-		symbol = symbol.trim().replace(" ", ""); 
+		symbol = symbol.trim().replace(" ", ""); // normalize >> and <<
 		Op op = forSymbol(symbol);
 		for(var handler : handlers)
 			if(handler.handles().contains(op))
