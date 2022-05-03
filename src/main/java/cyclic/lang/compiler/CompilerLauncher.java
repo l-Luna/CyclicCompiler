@@ -8,6 +8,7 @@ import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.gen.asm.AsmCyclicCW;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.resolve.TypeNotFoundException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +96,18 @@ public final class CompilerLauncher{
 				todo.add(file);
 		});
 		
-		var out = compileFileSet(todo, inputFolder);
+		// wrap in a try/catch to make errors look nicer
+		Map<String, byte[]> out;
+		try{
+			out = compileFileSet(todo, inputFolder);
+		}catch(SyntaxException | CompileTimeException | TypeNotFoundException e){
+			System.err.println("Error compiling files:\n" + e.getMessage());
+			System.err.println("\nStack trace:");
+			for(StackTraceElement traceElement : e.getStackTrace())
+				System.err.println("\tat " + traceElement);
+			System.exit(2);
+			return; // make definite assignment happy
+		}
 		
 		if(project.noOutput){
 			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");

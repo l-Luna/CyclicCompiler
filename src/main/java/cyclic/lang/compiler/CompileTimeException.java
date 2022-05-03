@@ -46,14 +46,14 @@ public class CompileTimeException extends RuntimeException{
 			message += ", at " + c;
 		String details = super.getMessage();
 		if(details != null && !details.isBlank())
-			message += ":\n\t\t" + details;
+			message += "\n\t" + details;
 		return message;
 	}
 	
-	private record Context(String text, int line, int start){
+	public record Context(String text, int line, int start){
 		
 		public String toString(){
-			return "[%d:%d]\n\t\t\"%s\"".formatted(line(), start(), text());
+			return "[%d:%d]\n\t\t%s".formatted(line(), start(), text());
 		}
 	}
 }
