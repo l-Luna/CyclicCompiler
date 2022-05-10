@@ -88,7 +88,8 @@ public class ClassfileTypeRef implements TypeReference{
 	//
 	
 	public void resolveRefs(){
-		superClass = TypeResolver.resolveFq(superClassName.replace('/', '.'));
+		if(superClassName != null) // interfaces and module-info don't have a superclass
+			superClass = TypeResolver.resolveFq(superClassName.replace('/', '.'));
 		interfaces = interfaceNames.stream()
 				.map(x -> x.replace('/', '.'))
 				.map(TypeResolver::resolveFq)

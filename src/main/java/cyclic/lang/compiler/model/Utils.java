@@ -142,6 +142,25 @@ public final class Utils{
 		return result;
 	}
 	
+	public static String nextDescriptor(@NotNull String desc){
+		if(desc.startsWith("L"))
+			return "L" + desc.substring(1, desc.indexOf(";")) + ";";
+		if(desc.startsWith("["))
+			return "[" + nextDescriptor(desc.substring(1));
+		return switch(desc.charAt(0)){
+			case 'Z' -> "Z";
+			case 'B' -> "B";
+			case 'S' -> "S";
+			case 'I' -> "I";
+			case 'C' -> "C";
+			case 'J' -> "J";
+			case 'F' -> "F";
+			case 'D' -> "D";
+			case 'V' -> "V";
+			default -> throw new IllegalArgumentException("Descriptor " + desc + " is not a valid type descriptor");
+		};
+	}
+	
 	public static String nameFromDescriptor(@NotNull String desc){
 		if(desc.startsWith("L"))
 			return desc.substring(1, desc.indexOf(";"));
@@ -168,15 +187,9 @@ public final class Utils{
 		desc = desc.replace(")", "");
 		List<String> out = new ArrayList<>();
 		while(desc.length() > 0){
-			String p;
-			if(desc.startsWith("[") || desc.startsWith("L")){
-				p = nameFromDescriptor(desc);
-				out.add(p);
-			}else{
-				p = String.valueOf(desc.charAt(0));
-				out.add(nameFromDescriptor(p));
-			}
-			desc = desc.substring(p.length() > 1 ? p.length() + 2 : 1);
+			String p = nextDescriptor(desc);
+			desc = desc.substring(p.length());
+			out.add(nameFromDescriptor(p));
 		}
 		return out;
 	}
