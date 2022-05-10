@@ -172,14 +172,25 @@ public final class CompilerLauncher{
 	}
 	
 	private static void checkErrors(){
+		// TODO: unit testing mode?
 		if(!compileErrors.isEmpty()){
 			System.err.println("Error compiling files:");
 			for(Exception e : compileErrors){
 				System.err.println(e.getMessage());
 				System.err.println();
 			}
+			compileErrors.clear();
 			System.exit(2);
 		}
+	}
+	
+	private static void withErrorChecking(Runnable runnable){
+		try{
+			runnable.run();
+		}catch(CompileTimeException | TypeNotFoundException e){
+			compileErrors.add(e);
+		}
+		checkErrors();
 	}
 	
 	private static void reportStackTrace(Exception e){
@@ -221,9 +232,9 @@ public final class CompilerLauncher{
 		
 		checkErrors();
 		
-		TypeResolver.dependencies.forEach(Dependency::resolveRefs);
-		TypeResolver.dependencies.forEach(Dependency::resolveInheritance);
-		toCompile.values().forEach(CyclicType::resolveBodies);
+		withErrorChecking(() -> TypeResolver.dependencies.forEach(Dependency::resolveRefs));
+		withErrorChecking(() -> TypeResolver.dependencies.forEach(Dependency::resolveInheritance));
+		withErrorChecking(() -> toCompile.values().forEach(CyclicType::resolveBodies));
 		
 		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
 		
