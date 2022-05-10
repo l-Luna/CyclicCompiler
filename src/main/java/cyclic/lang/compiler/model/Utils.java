@@ -274,19 +274,26 @@ public final class Utils{
 		var current = new StringBuilder();
 		TerminalNode last = null;
 		int curLine = tokens.size() > 0 ? tokens.get(0).getSymbol().getLine() : 0;
+		// TODO: "\t".repeat(...) assumes that preceding whitespace is tabs
+		// check hidden channel tokens to actually find the correct indentation
 		for(TerminalNode token : tokens){
 			if(last != null){
-				int space = token.getSymbol().getStartIndex() - last.getSymbol().getStartIndex() - last.getText().length();
-				if(token.getSymbol().getLine() > curLine)
+				if(token.getSymbol().getLine() > curLine){
 					current.append("\n");
-				if(space > 0)
-					current.append(" ".repeat(space));
+					current.append("\t".repeat(token.getSymbol().getCharPositionInLine()));
+				}else{
+					int space = token.getSymbol().getCharPositionInLine() - last.getSymbol().getCharPositionInLine() - last.getText().length();
+					if(space > 0)
+						current.append(" ".repeat(space));
+				}
+			}else{
+				current.append("\t".repeat(token.getSymbol().getCharPositionInLine()));
 			}
 			current.append(token);
 			last = token;
 			curLine = last.getSymbol().getLine();
 		}
-		return current.toString();
+		return current.toString().replace("\t", "    ").stripIndent().indent(4).stripTrailing();
 	}
 	
 	public static String position(ParserRuleContext ctx){

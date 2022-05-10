@@ -53,7 +53,7 @@ public class CompileTimeException extends RuntimeException{
 	public record Context(String text, int line, int start){
 		
 		public String toString(){
-			return "[%d:%d]\n\t\t%s".formatted(line(), start(), text());
+			return "[%d:%d]\n%s".formatted(line(), start(), text());
 		}
 	}
 }
