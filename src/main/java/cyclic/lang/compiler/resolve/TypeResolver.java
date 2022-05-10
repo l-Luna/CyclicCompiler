@@ -137,7 +137,7 @@ public final class TypeResolver{
 		for(var im : imports){
 			if(im.endsWith(".*"))
 				candidates.add(im.substring(0, im.length() - 1) + name);
-			else if(im.endsWith(name))
+			else if(im.endsWith("." + name))
 				candidates.add(im);
 		}
 		
