@@ -13,6 +13,7 @@ import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
@@ -200,16 +201,20 @@ public abstract class Value{
 	 * @return An equivalent to this as the target, or null.
 	 */
 	public Value fit(TypeReference target){
-		if(type().isAssignableTo(target))
+		TypeReference myType = type();
+		if(myType == null)
+			return null;
+		
+		if(myType.isAssignableTo(target))
 			return this;
 		
 		Value ret = null;
 		// unboxing conversion
 		if(target instanceof PrimitiveTypeRef prim)
-			if(type().fullyQualifiedName().equals(prim.boxedTypeName()))
+			if(myType.fullyQualifiedName().equals(prim.boxedTypeName()))
 				ret = new UnboxValue(this, prim.type);
 		
-		if(type() instanceof PrimitiveTypeRef p){
+		if(myType instanceof PrimitiveTypeRef p){
 			// boxing conversion
 			if(p.boxedType().isAssignableTo(target) && p.type != PrimitiveTypeRef.Primitive.NULL && p.type != PrimitiveTypeRef.Primitive.VOID)
 				ret = new BoxValue(this, p.boxedType());
@@ -238,7 +243,14 @@ public abstract class Value{
 		return text != null ? Utils.format(text) : "<generated: " + getClass().getSimpleName() + ">";
 	}
 	
+	@Nullable("null if poly expression")
+	@Contract(pure = true)
 	public abstract TypeReference type();
+	
+	// null safe type().fullyQualifiedName()
+	public String typeName(){
+		return type() != null ? type().fullyQualifiedName() : "<unknown>";
+	}
 	
 	public static class NullLiteralValue extends Value{
 		
@@ -596,7 +608,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return target.returns();
+			return target != null ? target.returns() : null;
 		}
 		
 		public String toString(){
