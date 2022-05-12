@@ -2,6 +2,7 @@ package cyclic.lang.compiler;
 
 import cyclic.lang.compiler.model.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Stack;
 
@@ -11,8 +12,8 @@ import java.util.Stack;
 public class CompileTimeException extends RuntimeException{
 	
 	private static String curFile;
-	private static Stack<Context> curText = new Stack<>();
-	private Context ctx;
+	private static Stack<@NotNull Context> curText = new Stack<>();
+	private @NotNull Context ctx;
 	
 	public CompileTimeException(ParserRuleContext context, String message){
 		super(message);
@@ -30,7 +31,10 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public static void pushContext(ParserRuleContext context){
-		curText.push(context == null ? null : new Context(Utils.format(context), context.start.getLine(), context.start.getCharPositionInLine()));
+		curText.push(context == null ?
+				/* still need to show correct file */
+				new Context("", curFile, -1, -1) :
+				new Context(Utils.format(context), curFile, context.start.getLine(), context.start.getCharPositionInLine()));
 	}
 	
 	public static void popContext(){
@@ -38,11 +42,9 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public String getMessage(){
-		var message = "Error in class \"" + curFile + "\"";
 		Context c = ctx;
-		if(c == null && curText.size() > 0)
-			c = curText.peek();
-		if(c != null)
+		var message = "Error in class \"" + c.filename + "\"";
+		if(c.line > -1)
 			message += ", at " + c;
 		String details = super.getMessage();
 		if(details != null && !details.isBlank())
@@ -50,7 +52,7 @@ public class CompileTimeException extends RuntimeException{
 		return message;
 	}
 	
-	public record Context(String text, int line, int start){
+	public record Context(String text, String filename, int line, int start){
 		
 		public String toString(){
 			return "[%d:%d]\n%s".formatted(line(), start(), text());

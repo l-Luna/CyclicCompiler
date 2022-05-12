@@ -180,8 +180,8 @@ public class CyclicConstructor implements CyclicCallable{
 			if(!isCanonRecordCtor
 					&& in.kind() != TypeKind.ENUM
 					&& in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-				System.out.println(in.superClass().constructors());
-				in.superClass().constructors().forEach(x -> System.out.println(x.parameters().size()));
+				in.superClass().constructors().forEach(x -> System.out.println(x.summary()));
+				System.out.println(in.fullyQualifiedName());
 				throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
 			}
 			if(in.kind() == TypeKind.RECORD && !(isGeneratedRecordCtor || isCanonRecordCtor || isInitBlock))
