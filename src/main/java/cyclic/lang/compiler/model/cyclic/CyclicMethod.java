@@ -46,7 +46,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	public Statement body;
 	public Scope methodScope = new Scope();
 	
-	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in, boolean abstractByDefault, boolean staticByDefault){
+	public CyclicMethod(CyclicLangParser.FunctionContext ctx, CyclicType in, boolean interfaceMethod, boolean staticByDefault){
 		name = ctx.idPart().getText();
 		text = ctx;
 		this.in = in;
@@ -66,8 +66,8 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		}else
 			blockStatement = ctx.functionBlock().block();
 		
-		if(abstractByDefault && arrowStatement == null && arrowVal == null && blockStatement == null)
-			flags = new AccessFlags(flags.visibility(), true, flags.isFinal());
+		if(interfaceMethod && arrowStatement == null && arrowVal == null && blockStatement == null)
+			flags = new AccessFlags(Visibility.PUBLIC, true, flags.isFinal());
 		
 		if(staticByDefault)
 			isSt = true;

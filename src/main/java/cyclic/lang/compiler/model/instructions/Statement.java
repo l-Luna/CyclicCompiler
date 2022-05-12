@@ -444,7 +444,7 @@ public abstract class Statement{
 		
 		public void simplify(){
 			if(target == null)
-				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(this);
 			args.forEach(value -> value.simplify(this));
@@ -476,7 +476,7 @@ public abstract class Statement{
 		public void simplify(){
 			if(target == null){
 				String candidates = of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", "));
-				String types = args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::typeName).collect(Collectors.joining(", "));
 				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
 			}
 			args.forEach(value -> value.simplify(this));

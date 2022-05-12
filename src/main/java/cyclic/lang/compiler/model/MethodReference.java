@@ -121,7 +121,8 @@ public interface MethodReference extends CallableReference{
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), in().kind() == TypeKind.INTERFACE);
 		else{
 			boolean isInterface = in().kind() == TypeKind.INTERFACE;
-			mv.visitMethodInsn(isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isInterface);
+			// TODO: ugly, fix later
+			mv.visitMethodInsn(name().equals("<init>") ? Opcodes.INVOKESPECIAL : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isInterface);
 		}
 	}
 	
