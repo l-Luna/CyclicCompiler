@@ -32,7 +32,8 @@ public class CyclicProject{
 	
 	public boolean includeDebug = true,
 	               includeCyclicLibRefs = true,
-	               noOutput = false;
+	               noOutput = false,
+	               internal = false;
 	
 	public List<String> defaultImports = new ArrayList<>();
 	

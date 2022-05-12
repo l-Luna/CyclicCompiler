@@ -14,7 +14,7 @@ public class MultiFileProjectTest extends ProjectTestCase{
 				
 				jdk: 17
 				
-				includeCyclicLibRefs: false
+				internal: true
 				""");
 		
 		addCyclicFile("cyclic/SimpleFile1", """

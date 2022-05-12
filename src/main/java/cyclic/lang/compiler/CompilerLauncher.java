@@ -40,6 +40,9 @@ public final class CompilerLauncher{
 	/** Whether line mappings and parameter names will be emitted in output class files in the next run. */
 	public static boolean includeDebugInfo = true;
 	
+	/** Whether to end the program if a compilation error occurs, rather than throwing an exception. */
+	public static boolean exitOnError = false;
+	
 	/** The project currently being compiled. */
 	public static CyclicProject project;
 	
@@ -71,7 +74,7 @@ public final class CompilerLauncher{
 				project = CyclicProject.parse(projectPath);
 			}catch(Exception e){
 				System.err.println("Invalid project file: " + e);
-				System.exit(1);
+				throwOrExit(1);
 			}
 		}else{
 			project = new CyclicProject();
@@ -84,6 +87,7 @@ public final class CompilerLauncher{
 		
 		project.validate();
 		includeDebugInfo = project.includeDebug;
+		exitOnError = !project.internal;
 		
 		// load any dependencies
 		for(CyclicPackage dependency : project.dependencies)
@@ -107,7 +111,7 @@ public final class CompilerLauncher{
 			// handle uncaught errors
 			System.err.println("Uncaught error compiling files:");
 			reportStackTrace(e);
-			System.exit(2);
+			throwOrExit(2);
 			return; // make definite assignment happy
 		}
 		
@@ -181,7 +185,7 @@ public final class CompilerLauncher{
 				System.err.println();
 			}
 			compileErrors.clear();
-			System.exit(2);
+			throwOrExit(2);
 		}
 	}
 	
@@ -200,6 +204,13 @@ public final class CompilerLauncher{
 		System.err.println("\nStack trace:");
 		for(StackTraceElement traceElement : e.getStackTrace())
 			System.err.println("\tat " + traceElement);
+	}
+	
+	private static void throwOrExit(int exitCode){
+		if(exitOnError)
+			System.exit(exitCode);
+		else
+			throw new RuntimeException("Compilation failed");
 	}
 	
 	/**
