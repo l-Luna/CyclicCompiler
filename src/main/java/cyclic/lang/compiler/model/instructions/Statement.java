@@ -177,6 +177,7 @@ public abstract class Statement{
 				var catchVar = new Variable(varName, catchType, catchScope, null);
 				Statement catchBody = fromBlockAst(aCatch.block(), catchScope, type, callable);
 				catchVar.owner = catchBody;
+				catchVar.fakeAssigned = true;
 				return new TryCatchStatement.CatchStatement(catchType, varName, catchBody, catchScope, catchVar);
 			}).toList();
 			

@@ -1,7 +1,10 @@
 package cyclic.lang.compiler;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
 
 public class CyclicAssertions{
 	
@@ -39,9 +42,15 @@ public class CyclicAssertions{
 		}
 	}
 	
-	public static void assertEquals(Object expected, String sourceToEvaluate){
+	public static void assertEquals(@Nullable Object expected, String sourceToEvaluate){
 		Object actual = evaluate(sourceToEvaluate);
-		if(!expected.equals(actual))
+		if(!Objects.equals(expected, actual))
 			throw new RuntimeException("Expected " + expected + " but got " + actual);
+	}
+	
+	public static void assertInstanceof(Class<?> expected, String sourceToEvaluate){
+		Object actual = evaluate(sourceToEvaluate);
+		if(!expected.isInstance(actual))
+			throw new RuntimeException("Expected object of type " + expected + " but got " + actual);
 	}
 }

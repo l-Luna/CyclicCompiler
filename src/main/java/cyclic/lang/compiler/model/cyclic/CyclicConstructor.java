@@ -189,10 +189,14 @@ public class CyclicConstructor implements CyclicCallable{
 	}
 	
 	public void addParamVars(){
-		if(!isStatic())
-			new Variable("this", in(), scope, null);
-		for(int i = 0; i < parameters.size(); i++)
-			new Variable(paramNames.get(i), parameters.get(i), scope, null);
+		if(!isStatic()){
+			Variable self = new Variable("this", in(), scope, null);
+			self.fakeAssigned = true;
+		}
+		for(int i = 0; i < parameters.size(); i++){
+			Variable param = new Variable(paramNames.get(i), parameters.get(i), scope, null);
+			param.fakeAssigned = true;
+		}
 	}
 	
 	public Optional<Statement> explicitCtorCall(){

@@ -145,10 +145,14 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	}
 	
 	public void resolveBody(){
-		if(!isStatic())
-			new Variable("this", in(), methodScope, null);
-		for(int i = 0; i < parameters.size(); i++)
-			new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
+		if(!isStatic()){
+			Variable self = new Variable("this", in(), methodScope, null);
+			self.fakeAssigned = true;
+		}
+		for(int i = 0; i < parameters.size(); i++){
+			Variable param = new Variable(paramNames.get(i), parameters.get(i), methodScope, null);
+			param.fakeAssigned = true;
+		}
 		
 		if(body == null){
 			if(blockStatement != null){

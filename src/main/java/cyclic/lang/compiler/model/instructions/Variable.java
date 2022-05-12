@@ -11,7 +11,7 @@ public class Variable{
 	TypeReference type;
 	Scope in;
 	Statement owner;
-	public boolean isFinal = false;
+	public boolean isFinal = false, /* parameter, catch block */ fakeAssigned = false;
 	private int index;
 	
 	// we track variable end labels for plugins (eventually)
