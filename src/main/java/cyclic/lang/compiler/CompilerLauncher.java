@@ -22,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.spi.ToolProvider;
 
 /**
@@ -184,13 +185,14 @@ public final class CompilerLauncher{
 		}
 	}
 	
-	private static void withErrorChecking(Runnable runnable){
-		try{
-			runnable.run();
-		}catch(CompileTimeException | TypeNotFoundException e){
-			compileErrors.add(e);
-		}
-		checkErrors();
+	private static <T> Consumer<T> withErrorChecking(Consumer<T> cons){
+		return it -> {
+			try{
+				cons.accept(it);
+			}catch(CompileTimeException | TypeNotFoundException e){
+				compileErrors.add(e);
+			}
+		};
 	}
 	
 	private static void reportStackTrace(Exception e){
@@ -228,21 +230,24 @@ public final class CompilerLauncher{
 			}else{
 				System.out.println("File \"" + (relative != null ? relative.toString() : file.getName()) + "\" was asked to be compiled, but does not have \".cyc\" extension and will be ignored.");
 			}
-		}
+		} checkErrors();
 		
-		checkErrors();
-		
-		withErrorChecking(() -> TypeResolver.dependencies.forEach(Dependency::resolveRefs));
-		withErrorChecking(() -> TypeResolver.dependencies.forEach(Dependency::resolveInheritance));
-		withErrorChecking(() -> toCompile.values().forEach(CyclicType::resolveBodies));
+		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveRefs));          checkErrors();
+		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveInheritance));   checkErrors();
+		toCompile.values().forEach(withErrorChecking(CyclicType::resolveBodies));               checkErrors();
 		
 		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
 		
 		for(var type : toCompile.values()){
 			CompileTimeException.setFile(type.fullyQualifiedName());
 			ClassWriter writer = new AsmCyclicCW(ClassWriter.COMPUTE_FRAMES);
-			CyclicClassWriter.writeClass(writer, type);
+			try{
+				CyclicClassWriter.writeClass(writer, type);
+			}catch(CompileTimeException e){
+				compileErrors.add(e);
+			}
 			ret.put(type.fullyQualifiedName(), writer.toByteArray());
+			checkErrors();
 		}
 		
 		System.out.println("Compiled " + toCompile.size() + " classes.");

@@ -459,7 +459,7 @@ public abstract class Value{
 					.filter(x -> x.name().equals(fieldName))
 					.filter(x -> Visibility.visibleFrom(x, method == null ? mIn : method))
 					.findFirst()
-					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
+					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName()));
 		}
 		
 		public FieldValue(FieldReference ref){
@@ -821,7 +821,7 @@ public abstract class Value{
 			if(casting.type() instanceof PrimitiveTypeRef from){
 				List<Integer> opcodes = from.narrowingOpcodes(to);
 				if(opcodes == null)
-					throw new CompileTimeException(text, "Can't convert from " + from.type + " to " + to + " by narrowing!");
+					throw new CompileTimeException(text, "Can't convert from " + from.type + " to " + to + " by narrowing");
 				for(var op : opcodes)
 					mv.visitInsn(op);
 			}
@@ -867,12 +867,12 @@ public abstract class Value{
 			this.array = array;
 			this.index = index.fit(PlatformDependency.INT);
 			if(this.index == null){
-				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer!");
+				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer");
 			}
 			if(array.type() instanceof ArrayTypeRef a)
 				arrayType = a;
 			else
-				throw new CompileTimeException(text, "Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array!");
+				throw new CompileTimeException(text, "Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array");
 		}
 		
 		public void write(MethodVisitor mv){
