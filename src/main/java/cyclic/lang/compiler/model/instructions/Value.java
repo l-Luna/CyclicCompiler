@@ -257,14 +257,14 @@ public abstract class Value{
 	@Contract(pure = true)
 	public abstract TypeReference type();
 	
+	// null-safe type().toString() for display
+	public String typeName(){
+		return type() != null ? type().toString() : "<unknown>";
+	}
+	
 	// null-safe type().isAssignableTo()
 	public boolean typeAssignableTo(TypeReference target){
 		return type() != null && type().isAssignableTo(target);
-	}
-	
-	// null-safe type().toString() for display
-	public String typeDisplayName(){
-		return type() != null ? type().toString() : "<unknown>";
 	}
 	
 	public static class NullLiteralValue extends Value{
@@ -621,7 +621,7 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			if(target == null)
-				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeDisplayName).collect(Collectors.joining(", ", "[", "]")));
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
@@ -754,7 +754,7 @@ public abstract class Value{
 		public void simplify(Statement in){
 			if(ctor == null){
 				String candidates = of.constructors().stream().map(CallableReference::summary).collect(Collectors.joining(", "));
-				String types = args.stream().map(Value::typeDisplayName).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::typeName).collect(Collectors.joining(", "));
 				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
 			}
 			args.forEach(value -> value.simplify(in));
@@ -891,12 +891,12 @@ public abstract class Value{
 			this.array = array;
 			this.index = index.fit(PlatformDependency.INT);
 			if(this.index == null){
-				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.typeDisplayName() + ", which cannot be fit to an integer!");
+				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.typeName() + ", which cannot be fit to an integer!");
 			}
 			if(array.type() instanceof ArrayTypeRef a)
 				arrayType = a;
 			else
-				throw new CompileTimeException(text, "Tried to index a value of type " + array.typeDisplayName() + ", which is not an array!");
+				throw new CompileTimeException(text, "Tried to index a value of type " + array.typeName() + ", which is not an array!");
 		}
 		
 		public void write(MethodVisitor mv){

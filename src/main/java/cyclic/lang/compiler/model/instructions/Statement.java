@@ -79,7 +79,7 @@ public abstract class Statement{
 			if(!Visibility.visibleFrom(target, callable))
 				throw new CompileTimeException("Variable type not visible here");
 			if(initial != null && initial.fit(target) == null)
-				throw new CompileTimeException("Value of type " + initial.typeDisplayName() + " can't be assigned to " + target);
+				throw new CompileTimeException("Value of type " + initial.typeName() + " can't be assigned to " + target);
 			result = new VarStatement(in, decl.idPart().getText(), target, initial, true, isFinal, callable);
 		}else if(ctx.varAssignment() != null){
 			Value left = Value.fromAst(ctx.varAssignment().value(0), in, type, callable);
@@ -105,7 +105,7 @@ public abstract class Statement{
 			Value c = Value.fromAst(ctx.ifStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
-				throw new CompileTimeException("Expression " + ctx.ifStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeDisplayName());
+				throw new CompileTimeException("Expression " + ctx.ifStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeName());
 			Statement success = fromAst(ctx.ifStatement().statement(), in, type, callable);
 			Statement fail = ctx.ifStatement().elseStatement() == null ? null : fromAst(ctx.ifStatement().elseStatement().statement(), in, type, callable);
 			result = new IfStatement(in, success, fail, cond, callable);
@@ -113,7 +113,7 @@ public abstract class Statement{
 			Value c = Value.fromAst(ctx.whileStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
-				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeDisplayName());
+				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeName());
 			Statement success = fromAst(ctx.whileStatement().statement(), in, type, callable);
 			result = new WhileStatement(in, success, cond, callable);
 		}else if(ctx.forStatement() != null){
@@ -124,7 +124,7 @@ public abstract class Statement{
 			Value c = Value.fromAst(f.cond, forScope, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
-				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeDisplayName());
+				throw new CompileTimeException("Expression " + ctx.whileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeName());
 			Statement success = fromAst(f.action, forScope, type, callable);
 			// could just implement it as synthetic block statements
 			result = new ForStatement(forScope, success, setup, increment, cond, callable, true);
@@ -133,7 +133,7 @@ public abstract class Statement{
 			Value c = Value.fromAst(ctx.doWhileStatement().value(), in, type, callable);
 			Value cond = c.fit(PlatformDependency.BOOLEAN);
 			if(cond == null)
-				throw new CompileTimeException("Expression " + ctx.doWhileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeDisplayName());
+				throw new CompileTimeException("Expression " + ctx.doWhileStatement().value().getText() + " cannot be converted to boolean - it is " + c.typeName());
 			Statement success = fromAst(ctx.doWhileStatement().statement(), doScope, type, callable);
 			result = new DoWhileStatement(doScope, success, cond, callable, true);
 		}else if(ctx.foreachStatement() != null){
@@ -150,7 +150,7 @@ public abstract class Statement{
 					break;
 				}
 			if(result == null)
-				throw new CompileTimeException("Value of type \"" + iterating.typeDisplayName() + "\" cannot be iterated on");
+				throw new CompileTimeException("Value of type \"" + iterating.typeName() + "\" cannot be iterated on");
 		}else if(ctx.throwStatement() != null){
 			Value toThrow = Value.fromAst(ctx.throwStatement().value(), in, type, callable);
 			result = new ThrowStatement(toThrow, in, callable);
@@ -165,7 +165,7 @@ public abstract class Statement{
 				if(value == null)
 					throw new CompileTimeException("Return statement in non-void method must return a value");
 				if(toReturn.fit(returnType) == null)
-					throw new CompileTimeException("Cannot return value of type \"" + toReturn.typeDisplayName() + "\" from method with return type \"" + returnType.fullyQualifiedName() + "\"");
+					throw new CompileTimeException("Cannot return value of type \"" + toReturn.typeName() + "\" from method with return type \"" + returnType.fullyQualifiedName() + "\"");
 			}
 			result = new ReturnStatement(toReturn, in, returnType, callable);
 		}else if(ctx.ctorCall() != null){
@@ -303,7 +303,7 @@ public abstract class Statement{
 			if(returnValue != null){
 				var adjusted = returnValue.fit(toReturn);
 				if(adjusted == null)
-					throw new CompileTimeException(text, "Value of type \"" + returnValue.typeDisplayName() + "\" cannot be returned from method \"" + from.summary() + "\"");
+					throw new CompileTimeException(text, "Value of type \"" + returnValue.typeName() + "\" cannot be returned from method \"" + from.summary() + "\"");
 				adjusted.write(mv);
 			}
 			
@@ -338,7 +338,7 @@ public abstract class Statement{
 			
 			var adjusted = exceptionValue.fit(TypeResolver.resolveFq(THROWABLE));
 			if(adjusted == null)
-				throw new CompileTimeException(text, "Value of type " + exceptionValue.typeDisplayName() + " cannot be thrown");
+				throw new CompileTimeException(text, "Value of type " + exceptionValue.typeName() + " cannot be thrown");
 			
 			adjusted.write(mv);
 			mv.visitInsn(Opcodes.ATHROW);
@@ -385,7 +385,7 @@ public abstract class Statement{
 			if(value != null){
 				var adjusted = value.fit(v.type);
 				if(adjusted == null)
-					throw new CompileTimeException(text, "Value of type " + value.typeDisplayName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName());
+					throw new CompileTimeException(text, "Value of type " + value.typeName() + " cannot be assigned to local variable of type " + v.type.fullyQualifiedName());
 				adjusted.write(mv);
 				if(CompilerLauncher.project.includeDebug){
 					Label label = new Label();
@@ -451,7 +451,7 @@ public abstract class Statement{
 		
 		public void simplify(){
 			if(target == null)
-				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeDisplayName).collect(Collectors.joining(", ", "[", "]")));
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(this);
 			args.forEach(value -> value.simplify(this));
@@ -483,7 +483,7 @@ public abstract class Statement{
 		public void simplify(){
 			if(target == null){
 				String candidates = of.constructors().stream().map(CallableReference::descriptor).collect(Collectors.joining(", "));
-				String types = args.stream().map(Value::typeDisplayName).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::typeName).collect(Collectors.joining(", "));
 				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
 			}
 			args.forEach(value -> value.simplify(this));

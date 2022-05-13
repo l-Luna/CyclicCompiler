@@ -277,7 +277,7 @@ public final class Operations{
 						v.operation = op;
 					return ret;
 				}
-		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.typeDisplayName() + " and " + right.typeDisplayName() + "!");
+		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.typeName() + " and " + right.typeName() + "!");
 	}
 	
 	public static Value resolvePrefix(String symbol, Value value){
@@ -296,7 +296,7 @@ public final class Operations{
 			});
 		else if(symbol.equals("++") || symbol.equals("--"))
 			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
-		throw new IllegalStateException("Unable to apply prefix operator " + symbol + " to value of type " + value.typeDisplayName() + "!");
+		throw new IllegalStateException("Unable to apply prefix operator " + symbol + " to value of type " + value.typeName() + "!");
 	}
 	
 	public static Value resolvePostfix(String symbol, Value value){
@@ -307,7 +307,7 @@ public final class Operations{
 			inlineAssign.target = value;
 			return inlineAssign;
 		}
-		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.typeDisplayName() + "!");
+		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.typeName() + "!");
 	}
 	
 	public enum Op{
