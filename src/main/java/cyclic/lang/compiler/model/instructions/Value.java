@@ -99,7 +99,7 @@ public abstract class Value{
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
-				CallableReference target = Utils.resolveConstructor(of, args, method);
+				ConstructorReference target = Utils.resolveConstructor(of, args, method);
 				// pass expressions won't save you here, safe to eagerly throw
 				if(target != null){
 					if(target.in().kind() == TypeKind.ENUM)
@@ -601,7 +601,7 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			if(target == null)
-				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", ", "[", "]")));
+				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "[", "]")));
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
@@ -704,13 +704,13 @@ public abstract class Value{
 	
 	public static class InitializationValue extends Value{
 		public List<Value> args;
-		public CallableReference ctor;
+		public ConstructorReference ctor;
 		
 		// for pass expressions
 		public TypeReference of;
 		public MemberReference from;
 		
-		public InitializationValue(List<Value> args, CallableReference ctor, TypeReference of, MemberReference from){
+		public InitializationValue(List<Value> args, ConstructorReference ctor, TypeReference of, MemberReference from){
 			this.args = args;
 			this.ctor = ctor;
 			this.of = of;
@@ -730,7 +730,7 @@ public abstract class Value{
 		public void simplify(Statement in){
 			if(ctor == null){
 				String candidates = of.constructors().stream().map(CallableReference::summary).collect(Collectors.joining(", "));
-				String types = args.stream().map(Value::type).map(TypeReference::fullyQualifiedName).collect(Collectors.joining(", "));
+				String types = args.stream().map(Value::typeName).collect(Collectors.joining(", "));
 				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
 			}
 			args.forEach(value -> value.simplify(in));
@@ -867,12 +867,12 @@ public abstract class Value{
 			this.array = array;
 			this.index = index.fit(PlatformDependency.INT);
 			if(this.index == null){
-				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.type().fullyQualifiedName() + ", which cannot be fit to an integer");
+				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.typeName() + ", which cannot be fit to an integer");
 			}
 			if(array.type() instanceof ArrayTypeRef a)
 				arrayType = a;
 			else
-				throw new CompileTimeException(text, "Tried to index a value of type " + array.type().fullyQualifiedName() + ", which is not an array");
+				throw new CompileTimeException(text, "Tried to index a value of type " + array.typeName() + ", which is not an array");
 		}
 		
 		public void write(MethodVisitor mv){

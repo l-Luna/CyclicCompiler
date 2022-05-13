@@ -159,7 +159,7 @@ public class CyclicType implements TypeReference{
 		return fieldsAndInherited;
 	}
 	
-	public List<? extends CallableReference> constructors(){
+	public List<? extends ConstructorReference> constructors(){
 		return constructors;
 	}
 	

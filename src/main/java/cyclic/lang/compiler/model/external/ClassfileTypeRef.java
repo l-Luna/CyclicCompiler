@@ -25,7 +25,7 @@ public class ClassfileTypeRef implements TypeReference{
 	
 	protected List<ClassfileMember.Field> fields = new ArrayList<>();
 	protected List<ClassfileMember.Method> methods = new ArrayList<>();
-	protected List<ClassfileMember.Method> constructors = new ArrayList<>();
+	protected List<ClassfileMember.Constructor> constructors = new ArrayList<>();
 	protected Set<ClassfileAnnotationPrototype> annotationPtts = new HashSet<>();
 	
 	private TypeReference superClass;
@@ -77,7 +77,7 @@ public class ClassfileTypeRef implements TypeReference{
 		return fields;
 	}
 	
-	public List<? extends CallableReference> constructors(){
+	public List<? extends ConstructorReference> constructors(){
 		return constructors;
 	}
 	

@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CyclicConstructor implements CyclicCallable{
+public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	
 	CyclicType in;
 	AccessFlags flags;

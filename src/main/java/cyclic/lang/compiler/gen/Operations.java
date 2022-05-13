@@ -162,13 +162,6 @@ public final class Operations{
 				Set.of(Op.RIGHTSHIFT), Set.of(LONG),
 				(l, r) -> new BinaryOpValue(LONG, Opcodes.LSHR, l, r)));
 		
-		/*handlers.add(new TypeSetOpHandler(
-				Set.of(Op.ULSHIFT), Set.of(INT),
-				(l, r) -> new BinaryOpValue(INT, Opcodes.IUSHR, l, new UnaryOpValue(INT, r, Opcodes.INEG))));
-		handlers.add(new TypeSetOpHandler(
-				Set.of(Op.ULSHIFT), Set.of(LONG),
-				(l, r) -> new BinaryOpValue(LONG, Opcodes.LUSHR, l, new UnaryOpValue(LONG, r, Opcodes.LNEG))));*/
-		
 		handlers.add(new TypeSetOpHandler(
 				Set.of(Op.URSHIFT), Set.of(INT),
 				(l, r) -> new BinaryOpValue(INT, Opcodes.IUSHR, l, r)));
@@ -283,7 +276,7 @@ public final class Operations{
 						v.operation = op;
 					return ret;
 				}
-		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.type().fullyQualifiedName() + " and " + right.type().fullyQualifiedName() + "!");
+		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.typeName() + " and " + right.typeName() + "!");
 	}
 	
 	public static Value resolvePrefix(String symbol, Value value){
@@ -302,7 +295,7 @@ public final class Operations{
 			});
 		else if(symbol.equals("++") || symbol.equals("--"))
 			return Value.createInlineAssignValue(value, resolveBinary(symbol.substring(1), value, new Value.IntLiteralValue(1), null));
-		throw new IllegalStateException("Unable to apply prefix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
+		throw new IllegalStateException("Unable to apply prefix operator " + symbol + " to value of type " + value.typeName() + "!");
 	}
 	
 	public static Value resolvePostfix(String symbol, Value value){
@@ -313,7 +306,7 @@ public final class Operations{
 			inlineAssign.target = value;
 			return inlineAssign;
 		}
-		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.type().fullyQualifiedName() + "!");
+		throw new IllegalStateException("Unable to apply postfix operator " + symbol + " to value of type " + value.typeName() + "!");
 	}
 	
 	public enum Op{

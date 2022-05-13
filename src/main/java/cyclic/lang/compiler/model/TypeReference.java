@@ -108,7 +108,7 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 *
 	 * @return The constructors of this type.
 	 */
-	List<? extends CallableReference> constructors();
+	List<? extends ConstructorReference> constructors();
 	
 	/**
 	 * Returns whether this is a reference to the same type as the given other type reference.

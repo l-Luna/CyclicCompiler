@@ -1,9 +1,6 @@
 package cyclic.lang.compiler.model.external;
 
-import cyclic.lang.compiler.model.AccessFlags;
-import cyclic.lang.compiler.model.FieldReference;
-import cyclic.lang.compiler.model.MethodReference;
-import cyclic.lang.compiler.model.TypeReference;
+import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.ArrayList;
@@ -105,6 +102,55 @@ import java.util.stream.Collectors;
 		
 		public void resolveRefs(){
 			returns = TypeResolver.resolveFq(returnsName.replace('/', '.'));
+			paramTypes = paramTypeNames.stream()
+					.map(x -> x.replace('/', '.'))
+					.map(TypeResolver::resolveFq)
+					.collect(Collectors.toList());
+		}
+	}
+	
+	final class Constructor implements ConstructorReference, ClassfileMember{
+		
+		TypeReference in;
+		List<String> paramTypeNames = new ArrayList<>();
+		List<TypeReference> paramTypes;
+		boolean isVarargs;
+		AccessFlags flags;
+		
+		static Constructor fromMethod(Method m){
+			Constructor c = new Constructor();
+			c.in = m.in;
+			c.paramTypeNames = m.paramTypeNames;
+			c.flags = m.flags;
+			c.isVarargs = m.isVarargs;
+			return c;
+		}
+		
+		public List<TypeReference> parameters(){
+			return paramTypes;
+		}
+		
+		public List<String> parameterNames(){
+			return List.of();
+		}
+		
+		public boolean isStatic(){
+			return false; // we don't track external static ctors, they're an implementation detail
+		}
+		
+		public boolean isVarargs(){
+			return isVarargs;
+		}
+		
+		public TypeReference in(){
+			return in;
+		}
+		
+		public AccessFlags flags(){
+			return flags;
+		}
+		
+		public void resolveRefs(){
 			paramTypes = paramTypeNames.stream()
 					.map(x -> x.replace('/', '.'))
 					.map(TypeResolver::resolveFq)

@@ -225,7 +225,7 @@ public final class Utils{
 		return MethodResolver.best(candidates, args);
 	}
 	
-	public static CallableReference resolveConstructor(TypeReference of, List<Value> args, MemberReference from){
+	public static ConstructorReference resolveConstructor(TypeReference of, List<Value> args, MemberReference from){
 		var candidates = of.constructors().stream()
 				.filter(x -> Visibility.visibleFrom(x, from))
 				.toList();

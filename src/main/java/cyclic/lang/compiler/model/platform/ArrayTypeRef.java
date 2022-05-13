@@ -61,7 +61,7 @@ public class ArrayTypeRef implements TypeReference{
 		return Collections.singletonList(new ArrayLengthField(this));
 	}
 	
-	public List<? extends CallableReference> constructors(){
+	public List<? extends ConstructorReference> constructors(){
 		return Collections.emptyList();
 	}
 	

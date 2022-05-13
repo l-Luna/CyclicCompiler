@@ -93,6 +93,7 @@ public interface MethodReference extends CallableReference{
 	default String summary(){
 		// TODO: consider cases where multiple types have the same short name
 		//  and use summarized package names (e.g. j.u.List vs j.a.List) when that occurs
+		// TODO: exclude synthetic parameters?
 		return "%s %s(%s)".formatted(
 				returns().shortName(),
 				name(),
@@ -121,8 +122,7 @@ public interface MethodReference extends CallableReference{
 			mv.visitMethodInsn(Opcodes.INVOKESTATIC, in().internalName(), name(), descriptor(), in().kind() == TypeKind.INTERFACE);
 		else{
 			boolean isInterface = in().kind() == TypeKind.INTERFACE;
-			// TODO: ugly, fix later
-			mv.visitMethodInsn(name().equals("<init>") ? Opcodes.INVOKESPECIAL : isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isInterface);
+			mv.visitMethodInsn(isInterface ? Opcodes.INVOKEINTERFACE : Opcodes.INVOKEVIRTUAL, in().internalName(), name(), descriptor(), isInterface);
 		}
 	}
 	

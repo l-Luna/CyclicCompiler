@@ -63,7 +63,7 @@ import static org.objectweb.asm.Opcodes.*;
 		for(int i = 0; i < parts.size() - 1; i++)
 			m.paramTypeNames.add(parts.get(i));
 		if(name.equals("<init>"))
-			fill.constructors.add(m);
+			fill.constructors.add(ClassfileMember.Constructor.fromMethod(m));
 		else
 			fill.methods.add(m);
 		// we don't really care about annotations or extra attributes yet

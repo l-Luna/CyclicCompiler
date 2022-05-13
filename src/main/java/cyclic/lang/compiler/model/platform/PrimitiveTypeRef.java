@@ -19,7 +19,7 @@ public class PrimitiveTypeRef implements TypeReference{
 	}
 	
 	public enum Primitive{
-		BYTE, SHORT, INT, BOOLEAN, LONG, FLOAT, DOUBLE, CHAR, VOID, NULL;
+		BYTE, SHORT, INT, BOOLEAN, LONG, FLOAT, DOUBLE, CHAR, VOID, NULL
 	}
 	
 	public String shortName(){
@@ -66,7 +66,7 @@ public class PrimitiveTypeRef implements TypeReference{
 		return Collections.emptyList();
 	}
 	
-	public List<? extends CallableReference> constructors(){
+	public List<? extends ConstructorReference> constructors(){
 		return Collections.emptyList();
 	}
 	
