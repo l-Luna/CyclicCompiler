@@ -118,6 +118,8 @@ public abstract class Statement{
 			TypeReference target = infer ? initial.type() : TypeResolver.resolve(decl.typeOrInferred().type(), imports, type.packageName());
 			if(!Visibility.visibleFrom(target, callable))
 				throw new CompileTimeException("Variable type not visible here");
+			if(initial != null && initial.fit(target) == null)
+				throw new CompileTimeException("Value of type " + initial.typeName() + " can't be assigned to " + target);
 			result = new VarStatement(in, decl.idPart().getText(), target, initial, true, isFinal, callable);
 		}else if(uctx.ifStatement() != null){
 			Value c = Value.fromAst(uctx.ifStatement().value(), in, type, callable);

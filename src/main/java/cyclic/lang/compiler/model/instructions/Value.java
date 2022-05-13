@@ -305,7 +305,6 @@ public abstract class Value{
 		return text;
 	}
 	
-	
 	public static class NullLiteralValue extends Value{
 		
 		public TypeReference type(){
