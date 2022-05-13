@@ -72,7 +72,7 @@ public class JdkTypeRef implements TypeReference{
 		return fields;
 	}
 	
-	public List<? extends CallableReference> constructors(){
+	public List<? extends ConstructorReference> constructors(){
 		return ctors;
 	}
 	

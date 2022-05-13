@@ -50,3 +50,4 @@ There are a few other attributes that can be specified:
 - `includeCyclicLibRefs`: Whether to include references to the Cyclic library in compiled code, `true` by default. When compiling without a Cyclic library dependency or types present, the compiler may crash if this is not `true`. When enabled, Cyclic features that depend on standard library types may not be available.
 - `defaultImports`: A list of imports to be considered in every file of this project, such as `java.lang.*` or `cyclic.lang.CyclicFile`. Empty by default. (Note: `java.lang.*` is always considered a default import regardless of the values of this list.)
 - `noOutput`: Whether to skip writing compiled classes to the output folder and produce any packages, `false` by default.
+- `internal`: Causes the compiler to throw an exception when a compilation error occurs instead of exiting gracefully, for testing purposes. `false` by default.

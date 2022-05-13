@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.model.jdk;
 
 import cyclic.lang.compiler.model.AccessFlags;
-import cyclic.lang.compiler.model.CallableReference;
+import cyclic.lang.compiler.model.ConstructorReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // An instance constructor for a system type
-public class JdkCtorRef implements CallableReference{
+public class JdkCtorRef implements ConstructorReference{
 	Constructor<?> underlying;
 	
 	public JdkCtorRef(Constructor<?> underlying){

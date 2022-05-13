@@ -108,7 +108,7 @@ public abstract class Value{
 			case CyclicLangParser.InitialisationValueContext init -> {
 				List<Value> args = init.initialisation().arguments().value().stream().map(x -> Value.fromAst(x, scope, type, method)).toList();
 				TypeReference of = TypeResolver.resolve(init.initialisation().type(), type.imports, type.packageName());
-				CallableReference target = Utils.resolveConstructor(of, args, method);
+				ConstructorReference target = Utils.resolveConstructor(of, args, method);
 				// pass expressions won't save you here, safe to eagerly throw
 				if(target != null){
 					if(target.in().kind() == TypeKind.ENUM)
@@ -475,7 +475,7 @@ public abstract class Value{
 					.filter(x -> x.name().equals(fieldName))
 					.filter(x -> Visibility.visibleFrom(x, method == null ? mIn : method))
 					.findFirst()
-					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName() + "!"));
+					.orElseThrow(() -> new CompileTimeException(text, "Could not find visible field of name " + fieldName + " in type " + from.type().fullyQualifiedName()));
 		}
 		
 		public FieldValue(FieldReference ref){
@@ -512,7 +512,7 @@ public abstract class Value{
 		int localIdx;
 		TypeReference type;
 		
-		// for computing range of local variable
+		// for computing range of local variable & knowing that e.g. catch block parameters are assigned
 		Variable variable;
 		
 		public LocalVarValue(Variable local){
@@ -546,8 +546,8 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
-			if(Utils.maxMethodParameterLocalIndex(in.from) <= localIdx)
-				if(Flow.minOccurrencesBefore(in.from.getBody(), in, x -> x instanceof Statement.VarStatement v && v.v.getAdjIndex() == localIdx && v.value != null, false) <= 0)
+			if((variable == null && Utils.maxMethodParameterLocalIndex(in.from) <= localIdx) || (variable != null && !variable.fakeAssigned))
+				if(Flow.minOccurrencesBefore(in.from.getBody(), in, Flow.willAssignToIndex(localIdx).or(Flow.WILL_EXIT), false) <= 0)
 					throw new CompileTimeException(in.text, "Local variable \"" + localName + "\" must be assigned to before it is used");
 		}
 	}
@@ -728,13 +728,13 @@ public abstract class Value{
 	
 	public static class InitializationValue extends Value{
 		public List<Value> args;
-		public CallableReference ctor;
+		public ConstructorReference ctor;
 		
 		// for pass expressions
 		public TypeReference of;
 		public MemberReference from;
 		
-		public InitializationValue(List<Value> args, CallableReference ctor, TypeReference of, MemberReference from){
+		public InitializationValue(List<Value> args, ConstructorReference ctor, TypeReference of, MemberReference from){
 			this.args = args;
 			this.ctor = ctor;
 			this.of = of;
@@ -845,7 +845,7 @@ public abstract class Value{
 			if(casting.type() instanceof PrimitiveTypeRef from){
 				List<Integer> opcodes = from.narrowingOpcodes(to);
 				if(opcodes == null)
-					throw new CompileTimeException(text, "Can't convert from " + from.type + " to " + to + " by narrowing!");
+					throw new CompileTimeException(text, "Can't convert from " + from.type + " to " + to + " by narrowing");
 				for(var op : opcodes)
 					mv.visitInsn(op);
 			}
@@ -891,12 +891,12 @@ public abstract class Value{
 			this.array = array;
 			this.index = index.fit(PlatformDependency.INT);
 			if(this.index == null){
-				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.typeName() + ", which cannot be fit to an integer!");
+				throw new CompileTimeException(text, "Cannot index an array using an index of type " + index.typeName() + ", which cannot be fit to an integer");
 			}
 			if(array.type() instanceof ArrayTypeRef a)
 				arrayType = a;
 			else
-				throw new CompileTimeException(text, "Tried to index a value of type " + array.typeName() + ", which is not an array!");
+				throw new CompileTimeException(text, "Tried to index a value of type " + array.typeName() + ", which is not an array");
 		}
 		
 		public void write(MethodVisitor mv){

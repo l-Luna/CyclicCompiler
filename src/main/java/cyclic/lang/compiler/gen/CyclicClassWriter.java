@@ -14,7 +14,7 @@ import java.lang.annotation.RetentionPolicy;
 
 public final class CyclicClassWriter{
 	
-	public static int outputClassfileVersion = Opcodes.V16;
+	public static int outputClassfileVersion = Opcodes.V17;
 	public static CallableReference currentMethod = null;
 	
 	public static void writeClass(ClassWriter writer, CyclicType type){

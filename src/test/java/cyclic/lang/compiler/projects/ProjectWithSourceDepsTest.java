@@ -14,7 +14,7 @@ public class ProjectWithSourceDepsTest extends ProjectTestCase{
 				
 				jdk: 17
 				
-				includeCyclicLibRefs: false
+				internal: true
 				
 				dependencies:
 				- location: "dependency"

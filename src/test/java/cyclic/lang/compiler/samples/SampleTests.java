@@ -433,6 +433,16 @@ public class SampleTests{
 				}
 				""");
 		
+		CyclicAssertions.assertInstanceof(IllegalStateException.class, """
+				static Exception test(){
+					try{
+						throw new IllegalStateException();
+					}catch(IllegalStateException e){
+						return e;
+					}
+				}
+				""");
+		
 		CyclicAssertions.assertEquals(List.of(1, 3, 2), """
 				static List test(){
 					var collected = new ArrayList();

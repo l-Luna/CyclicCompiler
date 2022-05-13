@@ -143,6 +143,25 @@ public final class Utils{
 		return result;
 	}
 	
+	public static String nextDescriptor(@NotNull String desc){
+		if(desc.startsWith("L"))
+			return "L" + desc.substring(1, desc.indexOf(";")) + ";";
+		if(desc.startsWith("["))
+			return "[" + nextDescriptor(desc.substring(1));
+		return switch(desc.charAt(0)){
+			case 'Z' -> "Z";
+			case 'B' -> "B";
+			case 'S' -> "S";
+			case 'I' -> "I";
+			case 'C' -> "C";
+			case 'J' -> "J";
+			case 'F' -> "F";
+			case 'D' -> "D";
+			case 'V' -> "V";
+			default -> throw new IllegalArgumentException("Descriptor " + desc + " is not a valid type descriptor");
+		};
+	}
+	
 	public static String nameFromDescriptor(@NotNull String desc){
 		if(desc.startsWith("L"))
 			return desc.substring(1, desc.indexOf(";"));
@@ -169,15 +188,9 @@ public final class Utils{
 		desc = desc.replace(")", "");
 		List<String> out = new ArrayList<>();
 		while(desc.length() > 0){
-			String p;
-			if(desc.startsWith("[") || desc.startsWith("L")){
-				p = nameFromDescriptor(desc);
-				out.add(p);
-			}else{
-				p = String.valueOf(desc.charAt(0));
-				out.add(nameFromDescriptor(p));
-			}
-			desc = desc.substring(p.length() > 1 ? p.length() + 2 : 1);
+			String p = nextDescriptor(desc);
+			desc = desc.substring(p.length());
+			out.add(nameFromDescriptor(p));
 		}
 		return out;
 	}
@@ -319,26 +332,37 @@ public final class Utils{
 		var current = new StringBuilder();
 		TerminalNode last = null;
 		int curLine = tokens.size() > 0 ? tokens.get(0).getSymbol().getLine() : 0;
+		// TODO: "\t".repeat(...) assumes that preceding whitespace is tabs
+		// check hidden channel tokens to actually find the correct indentation
 		for(TerminalNode token : tokens){
 			if(last != null){
-				int space = token.getSymbol().getStartIndex() - last.getSymbol().getStartIndex() - last.getText().length();
-				if(token.getSymbol().getLine() > curLine)
+				if(token.getSymbol().getLine() > curLine){
 					current.append("\n");
-				if(space > 0)
-					current.append(" ".repeat(space));
+					current.append("\t".repeat(token.getSymbol().getCharPositionInLine()));
+				}else{
+					int space = token.getSymbol().getCharPositionInLine() - last.getSymbol().getCharPositionInLine() - last.getText().length();
+					if(space > 0)
+						current.append(" ".repeat(space));
+				}
+			}else{
+				current.append("\t".repeat(token.getSymbol().getCharPositionInLine()));
 			}
 			current.append(token);
 			last = token;
 			curLine = last.getSymbol().getLine();
 		}
-		return current.toString();
+		return current.toString().replace("\t", "    ").stripIndent().indent(4).stripTrailing();
 	}
 	
-	public static String format(ParserRuleContext ctx){
+	public static String position(ParserRuleContext ctx){
+		return "[%d:%d]".formatted(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine());
+	}
+	
+	public static String format(@NotNull ParserRuleContext ctx){
 		return format(getAllTokens(ctx));
 	}
 	
-	public static List<TerminalNode> getAllTokens(ParserRuleContext ctx){
+	public static List<TerminalNode> getAllTokens(@NotNull ParserRuleContext ctx){
 		var ret = new ArrayList<TerminalNode>();
 		if(ctx.children != null)
 			for(var child : ctx.children)

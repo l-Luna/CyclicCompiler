@@ -50,4 +50,10 @@ public class CyclicAssertions{
 		if(!Objects.equals(expected, actual))
 			throw new RuntimeException("Expected " + expected + " but got " + actual);
 	}
+	
+	public static void assertInstanceof(Class<?> expected, String sourceToEvaluate){
+		Object actual = evaluate(sourceToEvaluate);
+		if(!expected.isInstance(actual))
+			throw new RuntimeException("Expected object of type " + expected + " but got " + actual);
+	}
 }

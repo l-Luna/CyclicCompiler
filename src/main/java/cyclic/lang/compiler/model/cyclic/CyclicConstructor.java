@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CyclicConstructor implements CyclicCallable{
+public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	
 	CyclicType in;
 	AccessFlags flags;
@@ -178,10 +178,9 @@ public class CyclicConstructor implements CyclicCallable{
 			}
 		}else{
 			if(!isCanonRecordCtor
+					&& !isStatic()
 					&& in.kind() != TypeKind.ENUM
 					&& in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-				System.out.println(in.superClass().constructors());
-				in.superClass().constructors().forEach(x -> System.out.println(x.parameters().size()));
 				throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
 			}
 			if(in.kind() == TypeKind.RECORD && !(isGeneratedRecordCtor || isCanonRecordCtor || isInitBlock))
@@ -190,10 +189,14 @@ public class CyclicConstructor implements CyclicCallable{
 	}
 	
 	public void addParamVars(){
-		if(!isStatic())
-			new Variable("this", in(), scope, null);
-		for(int i = 0; i < parameters.size(); i++)
-			new Variable(paramNames.get(i), parameters.get(i), scope, null);
+		if(!isStatic()){
+			Variable self = new Variable("this", in(), scope, null);
+			self.fakeAssigned = true;
+		}
+		for(int i = 0; i < parameters.size(); i++){
+			Variable param = new Variable(paramNames.get(i), parameters.get(i), scope, null);
+			param.fakeAssigned = true;
+		}
 	}
 	
 	public Optional<Statement> explicitCtorCall(){

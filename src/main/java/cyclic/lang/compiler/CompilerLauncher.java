@@ -8,6 +8,7 @@ import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.gen.asm.AsmCyclicCW;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.resolve.TypeNotFoundException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.spi.ToolProvider;
 
 /**
@@ -38,8 +40,14 @@ public final class CompilerLauncher{
 	/** Whether line mappings and parameter names will be emitted in output class files in the next run. */
 	public static boolean includeDebugInfo = true;
 	
+	/** Whether to end the program if a compilation error occurs, rather than throwing an exception. */
+	public static boolean exitOnError = false;
+	
 	/** The project currently being compiled. */
 	public static CyclicProject project;
+	
+	/** Errors that occurred during compilation that can be reported together. */
+	public static Set<Exception> compileErrors;
 	
 	public static void main(String... args){
 		if(args.length < 2){
@@ -66,7 +74,7 @@ public final class CompilerLauncher{
 				project = CyclicProject.parse(projectPath);
 			}catch(Exception e){
 				System.err.println("Invalid project file: " + e);
-				System.exit(1);
+				throwOrExit(1);
 			}
 		}else{
 			project = new CyclicProject();
@@ -79,6 +87,7 @@ public final class CompilerLauncher{
 		
 		project.validate();
 		includeDebugInfo = project.includeDebug;
+		exitOnError = !project.internal;
 		
 		// load any dependencies
 		for(CyclicPackage dependency : project.dependencies)
@@ -95,7 +104,18 @@ public final class CompilerLauncher{
 				todo.add(file);
 		});
 		
-		var out = compileFileSet(todo, inputFolder);
+		Map<String, byte[]> out;
+		try{
+			out = compileFileSet(todo, inputFolder);
+		}catch(SyntaxException | CompileTimeException | TypeNotFoundException e){
+			// handle uncaught errors
+			System.err.println("Uncaught error compiling files:");
+			reportStackTrace(e);
+			throwOrExit(2);
+			return; // make definite assignment happy
+		}
+		
+		checkErrors();
 		
 		if(project.noOutput){
 			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");
@@ -156,6 +176,43 @@ public final class CompilerLauncher{
 		}
 	}
 	
+	private static void checkErrors(){
+		// TODO: unit testing mode?
+		if(!compileErrors.isEmpty()){
+			System.err.println("Error compiling files:");
+			for(Exception e : compileErrors){
+				System.err.println(e.getMessage());
+				System.err.println();
+			}
+			compileErrors.clear();
+			throwOrExit(2);
+		}
+	}
+	
+	private static <T> Consumer<T> withErrorChecking(Consumer<T> cons){
+		return it -> {
+			try{
+				cons.accept(it);
+			}catch(CompileTimeException | TypeNotFoundException e){
+				compileErrors.add(e);
+			}
+		};
+	}
+	
+	private static void reportStackTrace(Exception e){
+		System.err.println(e.getMessage());
+		System.err.println("\nStack trace:");
+		for(StackTraceElement traceElement : e.getStackTrace())
+			System.err.println("\tat " + traceElement);
+	}
+	
+	private static void throwOrExit(int exitCode){
+		if(exitOnError)
+			System.exit(exitCode);
+		else
+			throw new RuntimeException("Compilation failed");
+	}
+	
 	/**
 	 * Compiles a set of files into classes, returning every compiled class indexed by their fully-qualified names.
 	 * May return more classes than files if one file contains inner classes.
@@ -167,6 +224,7 @@ public final class CompilerLauncher{
 	 * @return A map containing the byte contents of compiled classes indexed by fully-qualified names.
 	 */
 	public static Map<String, byte[]> compileFileSet(@NotNull Set<File> files, @Nullable Path root){
+		compileErrors = new HashSet<>(files.size());
 		for(File file : files){
 			Path relative = root == null ? null : root.relativize(file.toPath());
 			if(file.getName().endsWith(".cyc")){
@@ -177,23 +235,30 @@ public final class CompilerLauncher{
 						toCompile.put(type.fullyQualifiedName(), type);
 				}catch(IOException e){
 					e.printStackTrace();
+				}catch(SyntaxException se){
+					compileErrors.add(se);
 				}
 			}else{
 				System.out.println("File \"" + (relative != null ? relative.toString() : file.getName()) + "\" was asked to be compiled, but does not have \".cyc\" extension and will be ignored.");
 			}
-		}
+		} checkErrors();
 		
-		TypeResolver.dependencies.forEach(Dependency::resolveRefs);
-		TypeResolver.dependencies.forEach(Dependency::resolveInheritance);
-		toCompile.values().forEach(CyclicType::resolveBodies);
+		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveRefs));          checkErrors();
+		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveInheritance));   checkErrors();
+		toCompile.values().forEach(withErrorChecking(CyclicType::resolveBodies));               checkErrors();
 		
 		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
 		
 		for(var type : toCompile.values()){
 			CompileTimeException.setFile(type.fullyQualifiedName());
 			ClassWriter writer = new AsmCyclicCW(ClassWriter.COMPUTE_FRAMES);
-			CyclicClassWriter.writeClass(writer, type);
+			try{
+				CyclicClassWriter.writeClass(writer, type);
+			}catch(CompileTimeException e){
+				compileErrors.add(e);
+			}
 			ret.put(type.fullyQualifiedName(), writer.toByteArray());
+			checkErrors();
 		}
 		
 		System.out.println("Compiled " + toCompile.size() + " classes.");

@@ -93,6 +93,7 @@ public interface MethodReference extends CallableReference, GenericElement<Metho
 	default String summary(){
 		// TODO: consider cases where multiple types have the same short name
 		//  and use summarized package names (e.g. j.u.List vs j.a.List) when that occurs
+		// TODO: exclude synthetic parameters?
 		return "%s %s(%s)".formatted(
 				returns().shortName(),
 				name(),
