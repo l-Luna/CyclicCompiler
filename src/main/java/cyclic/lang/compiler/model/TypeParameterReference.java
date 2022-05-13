@@ -81,7 +81,7 @@ public interface TypeParameterReference extends TypeReference{
 	}
 	
 	// a type parameter has no constructors
-	default List<? extends CallableReference> constructors(){
+	default List<? extends ConstructorReference> constructors(){
 		return List.of();
 	}
 	

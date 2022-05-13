@@ -69,7 +69,7 @@ public class ParameterizedTypeRef implements TypeReference{
 		return base.fields();
 	}
 	
-	public List<? extends CallableReference> constructors(){
+	public List<? extends ConstructorReference> constructors(){
 		return base.constructors();
 	}
 	
