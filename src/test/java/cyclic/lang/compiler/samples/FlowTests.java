@@ -72,6 +72,32 @@ public class FlowTests{
 				class Holder{
 					void test(boolean def){
 						int a;
+						if(def)
+							a = 1;
+						else
+							return;
+						System.out.println(a);
+					}
+				}
+				""");
+		
+		CompilerLauncher.compileString("""
+				class Holder{
+					void test(boolean def){
+						int a;
+						if(def)
+							a = 1;
+						else
+							throw new IllegalStateException();
+						System.out.println(a);
+					}
+				}
+				""");
+		
+		CompilerLauncher.compileString("""
+				class Holder{
+					void test(boolean def){
+						int a;
 						if(def){
 							a = 1;
 							System.out.println(a);
