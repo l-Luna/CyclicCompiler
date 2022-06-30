@@ -1,10 +1,10 @@
 package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.compiler.model.AnnotatableElement;
+import cyclic.lang.compiler.model.AnnotationTag;
 
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static cyclic.lang.compiler.Constants.SUPPRESS_WARNINGS;
 
@@ -19,11 +19,21 @@ public interface CyclicMember extends AnnotatableElement{
 	}
 	
 	default Set<String> findSuppressedWarnings(){
-		return annotations().stream()
-				.filter(x -> x.annotationType().fullyQualifiedName().equals(SUPPRESS_WARNINGS))
-				.map(x -> (Object[])x.arguments().get("value"))
-				.flatMap(Arrays::stream)
-				.map(String.class::cast)
-				.collect(Collectors.toSet());
+		Set<String> set = new HashSet<>();
+		for(AnnotationTag x : annotations()){
+			if(x.annotationType().fullyQualifiedName().equals(SUPPRESS_WARNINGS)){
+				Object arg = x.arguments().get("value");
+				if(arg instanceof String s){
+					set.add(s);
+					continue;
+				}
+				Object[] values = (Object[])arg;
+				for(Object o : values){
+					String s = (String)o;
+					set.add(s);
+				}
+			}
+		}
+		return set;
 	}
 }
