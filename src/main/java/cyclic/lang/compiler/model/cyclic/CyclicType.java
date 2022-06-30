@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 import static cyclic.lang.compiler.Constants.*;
 
 // A type that will be compiled this run.
-public class CyclicType implements TypeReference{
+public class CyclicType implements TypeReference, CyclicMember{
 	
 	private String name, packageName;
 	private TypeKind kind;
@@ -439,20 +439,9 @@ public class CyclicType implements TypeReference{
 	}
 	
 	private Set<String> suppresses = null;
-	
-	private Set<String> suppressedWarns(){
+	public Set<String> suppressedWarnings(){
 		if(suppresses != null)
 			return suppresses;
-		
-		return suppresses = annotations().stream()
-				.filter(x -> x.annotationType().fullyQualifiedName().equals(SUPPRESS_WARNINGS))
-				.map(x -> (Object[])x.arguments().get("value"))
-				.flatMap(Arrays::stream)
-				.map(String.class::cast)
-				.collect(Collectors.toSet());
-	}
-	
-	public boolean isWarningSuppressed(String warning){
-		return suppressedWarns().contains(warning);
+		return suppresses = findSuppressedWarnings();
 	}
 }

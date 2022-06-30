@@ -238,4 +238,11 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	public String toString(){
 		return "Cyclic: " + summary();
 	}
+	
+	private Set<String> suppresses = null;
+	public Set<String> suppressedWarnings(){
+		if(suppresses != null)
+			return suppresses;
+		return suppresses = findSuppressedWarnings();
+	}
 }

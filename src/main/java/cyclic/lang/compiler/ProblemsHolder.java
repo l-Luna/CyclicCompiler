@@ -13,8 +13,7 @@ public class ProblemsHolder{
 	
 	public static void warnFrom(String id, String warning, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(in != null){
-			var type = in.from.in();
-			if(type instanceof CyclicType cyc && cyc.isWarningSuppressed(id))
+			if(in.from.suppressedWarnings().contains(id) || in.from.in() instanceof CyclicType cyc && cyc.suppressedWarnings().contains(id))
 				return;
 		}
 		warn(warning, location);

@@ -216,4 +216,11 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	public Statement getBody(){
 		return body;
 	}
+	
+	private Set<String> suppresses = null;
+	public Set<String> suppressedWarnings(){
+		if(suppresses != null)
+			return suppresses;
+		return suppresses = findSuppressedWarnings();
+	}
 }
