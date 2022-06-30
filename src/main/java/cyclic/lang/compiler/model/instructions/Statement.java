@@ -450,6 +450,7 @@ public abstract class Statement{
 				on.simplify(this);
 			args.forEach(value -> value.simplify(this));
 			ProblemsHolder.checkReference(target, this, text);
+			ProblemsHolder.checkMustUse(target, this, text);
 		}
 	}
 	

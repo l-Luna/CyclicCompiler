@@ -1,0 +1,20 @@
+package cyclic.lang.annotations;
+
+import java.lang.annotation.*;
+
+// Indicates that the return value of the annotated method must be used.
+// The method may:
+//  - have no side-effects.
+//  - act on and return immutable data (like Strings).
+//  - return a success value that must always be acted on.
+// in which cases, ignoring the return value is always incorrect.
+
+// This should not be used on getters (where it is obvious), or methods where ignoring the success value
+// is allowed (e.g. List::put).
+
+// The compiler will issue a warning if the value is ignored. If `value` is not empty, it will be included
+// in the warning.
+public annotation MustUse{
+
+	String value() -> "";
+}

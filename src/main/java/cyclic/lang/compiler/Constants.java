@@ -56,6 +56,8 @@ public final class Constants{
 	public static final String FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 	public static final String SAFE_VARARGS = "java.lang.SafeVarargs";
 	
+	public static final String MUST_USE = "cyclic.lang.annotations.MustUse";
+	
 	public static final String SUPPRESS_WARNINGS = "java.lang.SuppressWarnings";
 	
 	public static final String REPEATABLE = "java.lang.annotation.Repeatable";
@@ -63,7 +65,8 @@ public final class Constants{
 	public static final String TARGET = "java.lang.annotation.Target";
 	
 	// SuppressWarnings IDs
-	public static final String SUPPRESS_DEPRECTAED = "deprecation";
+	public static final String SUPPRESS_DEPRECATED = "deprecation";
+	public static final String SUPPRESS_MUST_USE = "must_use";
 	
 	// Cyclic lib types
 	public static final String CYCLIC_ANNOTATION_CAN_IMPLEMENT = "cyclic.lang.AnnotationCanImplement";

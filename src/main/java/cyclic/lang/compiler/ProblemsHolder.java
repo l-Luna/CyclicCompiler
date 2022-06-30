@@ -35,10 +35,19 @@ public class ProblemsHolder{
 	}
 	
 	public static void checkReference(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
-		if(ref instanceof AnnotatableElement ae
-				&& ae.annotations().stream().anyMatch(u -> u.annotationType().fullyQualifiedName().equals(Constants.DEPRECATED))){
-			warnFrom(Constants.SUPPRESS_DEPRECTAED, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
-		}
+		if(ref instanceof AnnotatableElement ae && ae.getAnnotationByName(Constants.DEPRECATED).isPresent())
+			warnFrom(Constants.SUPPRESS_DEPRECATED, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
+	}
+	
+	public static void checkMustUse(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
+		if(ref instanceof AnnotatableElement ae)
+			ae.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
+				String warning = "Ignored return value must be used";
+				var value = tag.arguments().get("value");
+				if(value instanceof String s && !s.isBlank())
+					warning += ", because \"" + s + "\"";
+				warnFrom(Constants.SUPPRESS_MUST_USE, warning, in, location);
+			});
 	}
 	
 	private static String nameForWarning(MemberReference ref){
