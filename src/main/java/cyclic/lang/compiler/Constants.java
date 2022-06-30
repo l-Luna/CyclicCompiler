@@ -67,6 +67,7 @@ public final class Constants{
 	// SuppressWarnings IDs
 	public static final String SUPPRESS_DEPRECATED = "deprecation";
 	public static final String SUPPRESS_MUST_USE = "must_use";
+	public static final String SUPPRESS_IMPOSSIBLE_MUST_USE = "impossible_must_use";
 	
 	// Cyclic lib types
 	public static final String CYCLIC_ANNOTATION_CAN_IMPLEMENT = "cyclic.lang.AnnotationCanImplement";

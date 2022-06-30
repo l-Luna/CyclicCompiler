@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.ProblemsHolder;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
@@ -142,6 +143,8 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 			typeAnnotations.add(AnnotationTag.fromAst(annotation, this, in));
 		for(List<CyclicLangParser.AnnotationContext> paramAnnotations : paramsAnnotationNames)
 			paramTypeAnnotations.add(paramAnnotations.stream().map(x -> AnnotationTag.fromAst(x, this, in)).collect(Collectors.toSet()));
+		
+		ProblemsHolder.checkImpossibleMustUse(this);
 	}
 	
 	public void resolveBody(){

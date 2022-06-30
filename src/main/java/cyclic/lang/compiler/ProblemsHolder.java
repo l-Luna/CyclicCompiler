@@ -1,6 +1,8 @@
 package cyclic.lang.compiler;
 
+import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.*;
+import cyclic.lang.compiler.model.cyclic.CyclicMember;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.instructions.Statement;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -14,11 +16,13 @@ public class ProblemsHolder{
 	// TODO: store warnings for later
 	public static int numWarnings = 0;
 	
-	public static void warnFrom(String id, String warning, @Nullable Statement in, @Nullable ParserRuleContext location){
-		if(in != null){
-			if(in.from.suppressedWarnings().contains(id) || in.from.in() instanceof CyclicType cyc && cyc.suppressedWarnings().contains(id))
-				return;
-		}
+	public static void warnFrom(String id, String warning, @Nullable Object in, @Nullable ParserRuleContext location){
+		if(in instanceof Statement st)
+			in = st.from;
+		if(in instanceof CyclicMember st
+				&& (st.suppressedWarnings().contains(id)
+				|| st.in() instanceof CyclicType cyc && cyc.suppressedWarnings().contains(id)))
+			return;
 		warn(warning, location);
 	}
 	
@@ -48,6 +52,13 @@ public class ProblemsHolder{
 					warning += ", because \"" + s + "\"";
 				warnFrom(Constants.SUPPRESS_MUST_USE, warning, in, location);
 			});
+	}
+	
+	public static void checkImpossibleMustUse(MethodReference ref){
+		ref.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
+			if(ref.returns().equals(PlatformDependency.VOID))
+				warnFrom(Constants.SUPPRESS_IMPOSSIBLE_MUST_USE, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
+		});
 	}
 	
 	private static String nameForWarning(MemberReference ref){

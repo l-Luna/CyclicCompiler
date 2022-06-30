@@ -2,13 +2,14 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.compiler.model.AnnotatableElement;
 import cyclic.lang.compiler.model.AnnotationTag;
+import cyclic.lang.compiler.model.MemberReference;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import static cyclic.lang.compiler.Constants.SUPPRESS_WARNINGS;
 
-public interface CyclicMember extends AnnotatableElement{
+public interface CyclicMember extends AnnotatableElement, MemberReference{
 	
 	default void resolve(){}
 	
