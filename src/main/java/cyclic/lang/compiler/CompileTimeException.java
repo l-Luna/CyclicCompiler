@@ -30,6 +30,10 @@ public class CompileTimeException extends RuntimeException{
 		curFile = filename;
 	}
 	
+	public static String getFile(){
+		return curFile;
+	}
+	
 	public static void pushContext(ParserRuleContext context){
 		curText.push(context == null ?
 				/* still need to show correct file */

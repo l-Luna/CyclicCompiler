@@ -55,11 +55,15 @@ public final class Constants{
 	public static final String DEPRECATED = "java.lang.Deprecated";
 	public static final String FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 	public static final String SAFE_VARARGS = "java.lang.SafeVarargs";
+	
 	public static final String SUPPRESS_WARNINGS = "java.lang.SuppressWarnings";
 	
 	public static final String REPEATABLE = "java.lang.annotation.Repeatable";
 	public static final String RETENTION = "java.lang.annotation.Retention";
 	public static final String TARGET = "java.lang.annotation.Target";
+	
+	// SuppressWarnings IDs
+	public static final String SUPPRESS_DEPRECTAED = "deprecation";
 	
 	// Cyclic lib types
 	public static final String CYCLIC_ANNOTATION_CAN_IMPLEMENT = "cyclic.lang.AnnotationCanImplement";

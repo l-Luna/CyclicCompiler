@@ -10,9 +10,7 @@ import cyclic.lang.compiler.model.instructions.Variable;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CyclicConstructor implements ConstructorReference, CyclicCallable{
@@ -31,14 +29,18 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	public Statement body = null;
 	public Scope scope = new Scope();
 	
+	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
+	private Set<AnnotationTag> annotations = new HashSet<>();
+	
 	public boolean isGeneratedRecordCtor = false;
 	public boolean isCanonRecordCtor = false;
 	public boolean isInitBlock = false;
 	
 	// for explicit constructors
 	public CyclicConstructor(CyclicLangParser.ConstructorContext ctx, CyclicType in){
-		this.in = in;
 		text = ctx;
+		this.in = in;
+		this.unresolvedAnnotations = ctx.annotation();
 		flags = Utils.fromModifiers(ctx.modifiers());
 		flags = new AccessFlags(flags.visibility(), false, false); // no final or abstract constructors
 		if(!ctx.idPart().getText().equals(in.shortName()))
@@ -104,6 +106,10 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 		
 		if(isVarargs())
 			parameters.set(parameters.size() - 1, new ArrayTypeRef(parameters.get(parameters.size() - 1)));
+		
+		if(unresolvedAnnotations != null)
+			for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
+				annotations.add(AnnotationTag.fromAst(annotation, this, in));
 	}
 	
 	public TypeReference in(){
@@ -201,6 +207,10 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	
 	public Optional<Statement> explicitCtorCall(){
 		return Flow.firstMatching(body, Statement.CtorCallStatement.class::isInstance);
+	}
+	
+	public Set<AnnotationTag> annotations(){
+		return annotations;
 	}
 	
 	public Statement getBody(){

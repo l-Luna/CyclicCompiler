@@ -452,7 +452,7 @@ public class CyclicType implements TypeReference{
 				.collect(Collectors.toSet());
 	}
 	
-	private boolean isWarningSuppressed(String warning){
+	public boolean isWarningSuppressed(String warning){
 		return suppressedWarns().contains(warning);
 	}
 }

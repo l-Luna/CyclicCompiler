@@ -8,6 +8,9 @@ import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CyclicField implements FieldReference, CyclicMember{
@@ -28,6 +31,9 @@ public class CyclicField implements FieldReference, CyclicMember{
 	
 	public Value defaultVal;
 	
+	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
+	private Set<AnnotationTag> annotations = new HashSet<>();
+	
 	// used by record components
 	public CyclicField(CyclicType in, String name, AccessFlags flags, TypeReference type){
 		this(in, name, flags, false, false, type);
@@ -46,6 +52,7 @@ public class CyclicField implements FieldReference, CyclicMember{
 	public CyclicField(CyclicLangParser.VarDeclContext ctx, CyclicType in, boolean isPsfRequired, boolean staticByDefault){
 		name = ctx.idPart().getText();
 		this.in = in;
+		this.unresolvedAnnotations = ctx.annotation();
 		text = ctx;
 		flags = Utils.fromModifiers(ctx.modifiers(), modifier -> {
 			isS |= modifier.equals("static");
@@ -87,6 +94,10 @@ public class CyclicField implements FieldReference, CyclicMember{
 			throw new CompileTimeException(enumConstantArgs, "Enum constant arguments not allowed here");
 		if(enumConstantArgs != null && defaultValText != null)
 			throw new CompileTimeException(text, "Cannot have constant arguments and a field initializer");
+		
+		if(unresolvedAnnotations != null)
+			for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
+				annotations.add(AnnotationTag.fromAst(annotation, this, in));
 	}
 	
 	public TypeReference in(){
@@ -145,5 +156,9 @@ public class CyclicField implements FieldReference, CyclicMember{
 			return ret;
 		}
 		return null;
+	}
+	
+	public Set<AnnotationTag> annotations(){
+		return annotations;
 	}
 }
