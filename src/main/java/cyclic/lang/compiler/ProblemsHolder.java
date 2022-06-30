@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProblemsHolder{
 	
+	// TODO: store warnings for later
+	public static int numWarnings = 0;
+	
 	public static void warnFrom(String id, String warning, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(in != null){
 			if(in.from.suppressedWarnings().contains(id) || in.from.in() instanceof CyclicType cyc && cyc.suppressedWarnings().contains(id))
@@ -28,6 +31,7 @@ public class ProblemsHolder{
 			message += "\n\t" + warning;
 		
 		System.err.println(message);
+		numWarnings++;
 	}
 	
 	public static void checkReference(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){

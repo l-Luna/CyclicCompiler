@@ -261,7 +261,10 @@ public final class CompilerLauncher{
 			checkErrors();
 		}
 		
-		System.out.println("Compiled " + toCompile.size() + " classes.");
+		if(ProblemsHolder.numWarnings == 0)
+			System.out.println("Compiled " + toCompile.size() + " classes.");
+		else
+			System.out.println("Compiled " + toCompile.size() + " classes, with " + ProblemsHolder.numWarnings + " warnings.");
 		
 		toCompile.clear();
 		return ret;
