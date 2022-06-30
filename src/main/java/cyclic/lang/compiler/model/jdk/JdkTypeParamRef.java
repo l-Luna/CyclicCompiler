@@ -15,7 +15,6 @@ public class JdkTypeParamRef implements TypeParameterReference{
 	
 	TypeVariable<?> underlying;
 	
-	// TODO: remove Class<?> requirement
 	public JdkTypeParamRef(TypeVariable<?> underlying){
 		this.underlying = underlying;
 	}
