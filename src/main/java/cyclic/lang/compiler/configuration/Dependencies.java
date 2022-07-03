@@ -3,6 +3,7 @@ package cyclic.lang.compiler.configuration;
 import cyclic.lang.compiler.configuration.dependencies.CompiledClassesDependency;
 import cyclic.lang.compiler.configuration.dependencies.JarDependency;
 import cyclic.lang.compiler.configuration.dependencies.SourceFolderDependency;
+import cyclic.lang.compiler.configuration.dependencies.WebJarDependency;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +17,8 @@ public final class Dependencies{
 		TYPES.put("jar", (dep, project) -> new JarDependency(project.fileFromRoot(dep.location)));
 		TYPES.put("classFolder", (dep, project) -> new CompiledClassesDependency(project.fileFromRoot(dep.location)));
 		TYPES.put("sourceFolder", (dep, project) -> new SourceFolderDependency(project.fileFromRoot(dep.location)));
-		// TODO: jmod dependencies for other JDKs; mavenJar, ghReleasesJar
+		TYPES.put("webJar", (dep, project) -> new WebJarDependency(dep.location, project));
+		// TODO: jmod dependencies for other JDKs; mavenJar, ghReleasesJar...
 	}
 	
 	public static Dependency create(CyclicPackage dep, CyclicProject project){

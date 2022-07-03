@@ -37,6 +37,7 @@ For a dependency, the following `type`s are supported:
 - `jar`: A JAR file.
 - `classFolder`: A folder containing compiled classes.
 - `sourceFolder`: A folder containing source files.
+- `webJar`: A JAR file on the internet; `location` should be a URL.
 
 For a package, only the `jar` type is supported.
 
