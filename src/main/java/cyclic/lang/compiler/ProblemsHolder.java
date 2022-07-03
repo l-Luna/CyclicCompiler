@@ -3,10 +3,12 @@ package cyclic.lang.compiler;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicMember;
-import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.instructions.Statement;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Handles non-fatal issues in code.
@@ -15,14 +17,16 @@ public class ProblemsHolder{
 	
 	// TODO: store warnings for later
 	public static int numWarnings = 0;
+	public static Set<String> suppressIds = new HashSet<>();
 	
 	public static void warnFrom(String id, String warning, @Nullable Object in, @Nullable ParserRuleContext location){
 		if(in instanceof Statement st)
 			in = st.from;
 		if(in instanceof CyclicMember st
 				&& (st.suppressedWarnings().contains(id)
-				|| st.in() instanceof CyclicType cyc && cyc.suppressedWarnings().contains(id)))
+				|| st.in() instanceof CyclicMember cyc && cyc.suppressedWarnings().contains(id)))
 			return;
+		suppressIds.add(id);
 		warn(warning, location);
 	}
 	

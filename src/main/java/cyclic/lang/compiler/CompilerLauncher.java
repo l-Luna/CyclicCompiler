@@ -337,4 +337,9 @@ public final class CompilerLauncher{
 		var holder = compileClass(text, defineWith);
 		return holder.getDeclaredMethods()[0];
 	}
+	
+	public static Method compileSingleMethod(@NotNull String text, @NotNull String methodName, @NotNull MethodHandles.Lookup defineWith) throws IllegalAccessException{
+		var holder = compileClass(text, defineWith);
+		return Arrays.stream(holder.getDeclaredMethods()).filter(u -> u.getName().equals(methodName)).findFirst().orElseThrow();
+	}
 }

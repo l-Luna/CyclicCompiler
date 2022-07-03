@@ -686,6 +686,7 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			underlying.simplify(in);
+			ProblemsHolder.checkReference(substitute, in, text);
 		}
 		
 		public TypeReference type(){
