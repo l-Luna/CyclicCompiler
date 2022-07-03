@@ -99,4 +99,8 @@ public class WarningsTests{
 				}
 				""");
 	}
+	
+	// TODO: test @MustUse
+	//  - requires adding stdlib to tests
+	//  - could add pretend types, would be better to make fully available for other tests though
 }
