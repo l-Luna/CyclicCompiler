@@ -106,7 +106,7 @@
           },
           "location": {
             "type": "string",
-            "description": "Where to find this dependency; a relative path from this file."
+            "description": "Where to find this dependency; a relative path from this file, or a URL, depending on type."
           }
         },
         "additionalProperties": false,
