@@ -47,7 +47,7 @@ There are a few other attributes that can be specified:
 - `jdk`: The major JDK version that this project should be compiled on, equal to the compiler's JDK version by default. Since the compiler always compiles against the version of the JDK it's running on, the compiler will simply refuse to compile a project with a mismatching JDK version.
 - `includeDebug`: Whether to include debug symbols (parameter names and line numbers) in compiled code, `true` by default. (Note: This may become a package-specific option in the future.)
 - `cyclicLib`: The version of the Cyclic library to compile against, equal to `jdk` by default. *This currently has no effect*, and you must specify a Cyclic library dependency yourself.
-- `includeCyclicLibRefs`: Whether to include references to the Cyclic library in compiled code, `true` by default. When compiling without a Cyclic library dependency or types present, the compiler may crash if this is not `true`. When enabled, Cyclic features that depend on standard library types may not be available.
-- `defaultImports`: A list of imports to be considered in every file of this project, such as `java.lang.*` or `cyclic.lang.CyclicFile`. Empty by default. (Note: `java.lang.*` is always considered a default import regardless of the values of this list.)
-- `noOutput`: Whether to skip writing compiled classes to the output folder and produce any packages, `false` by default.
+- `includeCyclicLibRefs`: Whether to include references to the Cyclic library in compiled code, `true` by default. When disabled, Cyclic features that depend on standard library types may not be available.
+- `defaultImports`: A list of imports to be considered in every file of this project, such as `java.lang.*` or `cyclic.lang.annotations.MustUse`. Empty by default. (Note: `java.lang.*` is always considered a default import regardless of the values of this list.)
+- `noOutput`: Whether to skip writing compiled classes to the output folder and produce no packages, `false` by default.
 - `internal`: Causes the compiler to throw an exception when a compilation error occurs instead of exiting gracefully, for testing purposes. `false` by default.
