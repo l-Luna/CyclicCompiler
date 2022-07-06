@@ -47,9 +47,9 @@ public class ProblemsHolder{
 			warnFrom(Constants.DEPRECATED_ID, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
 	}
 	
-	public static void checkMustUse(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
-		if(ref instanceof AnnotatableElement ae)
-			ae.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
+	public static void checkMustUse(MethodReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
+		if(!ref.returns().equals(PlatformDependency.VOID))
+			ref.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
 				String warning = "Ignored return value must be used";
 				var value = tag.arguments().get("value");
 				if(value instanceof String s && !s.isBlank())
