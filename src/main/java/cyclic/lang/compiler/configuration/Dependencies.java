@@ -24,7 +24,7 @@ public final class Dependencies{
 	public static Dependency create(CyclicPackage dep, CyclicProject project){
 		var function = TYPES.get(dep.type);
 		if(function == null)
-			throw new IllegalArgumentException("Unknown dependency type: \"" + dep.type + "\"; supported types: " + TYPES.keySet());
+			throw new ConfigurationException("Unknown dependency type: \"" + dep.type + "\"; supported types: " + TYPES.keySet());
 		return function.apply(dep, project);
 	}
 }
