@@ -124,8 +124,8 @@ public final class Flow{
 			case IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
 			// only guaranteed if guaranteed in try block and all catch blocks OR in finally block
 			case TryCatchStatement s -> (guaranteedToRun(s.tryStatement, condition) && s.catchStatements.stream()
-					.allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
-			                            || (s.finallyStatement != null && guaranteedToRun(s.finallyStatement, condition));
+			              .allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
+			                         || (s.finallyStatement != null && guaranteedToRun(s.finallyStatement, condition));
 		};
 	}
 	
@@ -138,11 +138,9 @@ public final class Flow{
 	}
 	
 	public static Predicate<Statement> willAssignToVariable(Variable v){
-		return x -> {
-			return x instanceof VarStatement vs
-					&& vs.value != null
-					&& vs.v.equals(v);
-		};
+		return x -> x instanceof VarStatement vs
+				&& vs.value != null
+				&& vs.v.equals(v);
 	}
 	
 	public static int minOccurrencesBefore(Statement body, Statement before, Predicate<Statement> condition, boolean forceEnter){
