@@ -867,6 +867,7 @@ public abstract class Value{
 		public void simplify(Statement in){
 			casting.simplify(in);
 			ProblemsHolder.checkReference(target, in, text);
+			ProblemsHolder.checkImpossibleCast(casting.type(), target, in, text);
 		}
 		
 		public TypeReference type(){

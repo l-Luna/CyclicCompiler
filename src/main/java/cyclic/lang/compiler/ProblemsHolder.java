@@ -44,7 +44,7 @@ public class ProblemsHolder{
 	
 	public static void checkReference(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(ref instanceof AnnotatableElement ae && ae.getAnnotationByName(Constants.DEPRECATED).isPresent())
-			warnFrom(Constants.SUPPRESS_DEPRECATED, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
+			warnFrom(Constants.DEPRECATED_ID, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
 	}
 	
 	public static void checkMustUse(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
@@ -54,15 +54,20 @@ public class ProblemsHolder{
 				var value = tag.arguments().get("value");
 				if(value instanceof String s && !s.isBlank())
 					warning += ", because \"" + s + "\"";
-				warnFrom(Constants.SUPPRESS_MUST_USE, warning, in, location);
+				warnFrom(Constants.MUST_USE_ID, warning, in, location);
 			});
 	}
 	
 	public static void checkImpossibleMustUse(MethodReference ref){
 		ref.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
 			if(ref.returns().equals(PlatformDependency.VOID))
-				warnFrom(Constants.SUPPRESS_IMPOSSIBLE_MUST_USE, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
+				warnFrom(Constants.IMPOSSIBLE_MUST_USE_ID, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
 		});
+	}
+	
+	public static void checkImpossibleCast(TypeReference obj, TypeReference target, @Nullable Statement in, @Nullable ParserRuleContext location){
+		if(!obj.isAssignableTo(target) && !target.isAssignableTo(obj))
+			warnFrom(Constants.IMPOSSIBLE_CAST_ID, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
 	}
 	
 	private static String nameForWarning(MemberReference ref){

@@ -65,9 +65,10 @@ public final class Constants{
 	public static final String TARGET = "java.lang.annotation.Target";
 	
 	// SuppressWarnings IDs
-	public static final String SUPPRESS_DEPRECATED = "deprecation";
-	public static final String SUPPRESS_MUST_USE = "must_use";
-	public static final String SUPPRESS_IMPOSSIBLE_MUST_USE = "impossible_must_use";
+	public static final String DEPRECATED_ID = "deprecation";
+	public static final String MUST_USE_ID = "must_use";
+	public static final String IMPOSSIBLE_MUST_USE_ID = "impossible_must_use";
+	public static final String IMPOSSIBLE_CAST_ID = "impossible_cast";
 	
 	// Cyclic lib types
 	public static final String CYCLIC_ANNOTATION_CAN_IMPLEMENT = "cyclic.lang.AnnotationCanImplement";
