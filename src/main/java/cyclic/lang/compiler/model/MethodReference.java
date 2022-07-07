@@ -75,7 +75,11 @@ public interface MethodReference extends CallableReference{
 	 * @return The descriptor of this method.
 	 */
 	default String descriptor(){
-		return "(" + parameters().stream().map(TypeReference::descriptor).collect(Collectors.joining()) + ")" + returns().descriptor();
+		return parameterDescriptor() + returns().descriptor();
+	}
+	
+	default String parameterDescriptor(){
+		return "(" + parameters().stream().map(TypeReference::descriptor).collect(Collectors.joining()) + ")";
 	}
 	
 	/**

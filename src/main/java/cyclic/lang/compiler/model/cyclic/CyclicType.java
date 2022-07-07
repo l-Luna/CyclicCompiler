@@ -365,7 +365,8 @@ public class CyclicType implements TypeReference, CyclicMember{
 					if(x.overrides(method)){
 						overrides = x;
 						break;
-					}
+					}else if(x.name().equals(method.name()) && x.parameters().equals(method.parameters()))
+						throw new CompileTimeException(null, "Method " + x.summary() + " cannot have its return type changed.");
 				if(overrides == null){
 					if(method.flags().isAbstract() && !flags.isAbstract())
 						throw new CompileTimeException(null, "Abstract supertype method " + method.summary() + " must be overridden in concrete subclass");
@@ -377,6 +378,18 @@ public class CyclicType implements TypeReference, CyclicMember{
 						throw new CompileTimeException(null, "Method " + method.summary() + " cannot have its visibility narrowed");
 				}
 			}
+		
+		// get rid of duplicates of the same method from the same class (inherited from multiple interfaces inheriting from the same type)
+		// TODO: this is ugly, but sets & distinct don't allow for custom equality otherwise
+		record EqWrapper(MethodReference mref){
+			public boolean equals(Object obj){ return obj instanceof EqWrapper ew && ew.summary().equals(summary()); }
+			public int hashCode(){ return summary().hashCode(); }
+			String summary(){ return mref().nameAndDescriptor() + mref().in().fullyQualifiedName(); }
+		}
+		methodsAndInherited = methodsAndInherited.stream().map(EqWrapper::new).distinct().map(EqWrapper::mref).toList();
+		
+		// if we didn't error earlier, its due to inheritance
+		Utils.checkDuplicates(methodsAndInherited, "inherited method", method -> method.name() + method.parameterDescriptor(), MethodReference::summary);
 		
 		for(FieldReference field : superType.fields())
 			if(field.flags().visibility() != Visibility.PRIVATE){

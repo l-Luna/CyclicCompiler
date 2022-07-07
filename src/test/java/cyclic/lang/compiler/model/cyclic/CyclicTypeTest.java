@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.CyclicAssertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -79,5 +80,91 @@ class CyclicTypeTest{
 				
 				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("record T extends Object;"))
 		);
+	}
+	
+	@Test
+	void testInvalidOverrides(){
+		CyclicAssertions.assertDoesntCompile("""
+				abstract class Super{
+					abstract int a();
+				}
+				class Sub extends Super{
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				abstract class Super{
+					abstract int a();
+				}
+				class Sub extends Super{
+					int a() -> 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				abstract class Super{
+					abstract int a();
+				}
+				class Sub extends Super{
+					Integer a() -> 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				abstract class Super{
+					int a() -> 0;
+				}
+				class Sub extends Super{
+					Integer a() -> 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				interface IA{
+					int a();
+				}
+				interface IB extends IA{
+					int a() -> 0;
+				}
+				interface IC extends IB{
+					String a() -> "";
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				interface IA{
+					int a() -> 0;
+				}
+				interface IB{
+					String a() -> "";
+				}
+				class Sub implements IA, IB{
+				
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				interface IA{
+					Long a() -> 0;
+				}
+				interface IB{
+					String a() -> "";
+				}
+				class Sub implements IA, IB{
+				
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				interface IA{
+					IA a() -> null;
+				}
+				interface IB{
+					IB a() -> null;
+				}
+				class Sub implements IA, IB{
+					Sub a() -> null;
+				}
+				""");
 	}
 }

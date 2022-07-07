@@ -1,6 +1,7 @@
 package cyclic.lang.compiler;
 
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Assertions;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
@@ -87,5 +88,9 @@ public class CyclicAssertions{
 		compile(sourceToEvaluate);
 		if(lastSuppressedWarns.contains(warningId))
 			throw new RuntimeException("Expected warning \"" + warningId + "\" not to be issued");
+	}
+	
+	public static void assertDoesntCompile(String sourceToCompile){
+		Assertions.assertThrows(CompileTimeException.class, () -> compile(sourceToCompile));
 	}
 }
