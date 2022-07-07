@@ -16,7 +16,6 @@ import java.util.stream.Stream;
 
 import static cyclic.lang.compiler.Constants.*;
 
-// A type that will be compiled this run.
 public class CyclicType implements TypeReference, CyclicMember{
 	
 	private String name, packageName;
@@ -404,6 +403,29 @@ public class CyclicType implements TypeReference, CyclicMember{
 		CompileTimeException.setFile(fullyQualifiedName());
 		
 		members.forEach(CyclicMember::resolveBody);
+		
+		// check assignment to final fields
+		for(CyclicField field : fields)
+			if(field.defaultVal == null && field.defaultValText == null)
+				if(field.isStatic()){
+					// a static final must have a guaranteed assignment in exactly one static block,
+					// and no possible ones in any
+					boolean foundDefinite = false;
+					for(CyclicConstructor block : initBlocks){
+						if(block.isStatic()){
+							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field))){
+								if(foundDefinite)
+									throw new CompileTimeException(null, "Static final field " + field.name() + " can only be assigned in one static block");
+								foundDefinite = true;
+							}else if(Flow.firstMatching(block.getBody(), Flow.willAssignToField(field)).isPresent())
+								throw new CompileTimeException(null, "Static final field " + field.name() + " must either be definitely assigned or definitely unassigned after static block");
+						}
+					}
+					if(!foundDefinite)
+						throw new CompileTimeException(null, "Static final field " + field.name() + " must have a default value, or assignment in static block");
+				}else{
+				
+				}
 		
 		for(CyclicField field : fields){
 			var assign = field.assign();

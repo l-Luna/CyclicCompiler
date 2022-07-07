@@ -385,13 +385,13 @@ public abstract class Statement{
 		public void simplify(){
 			// check final re-assignment
 			if(v.isFinal && this != v.owner && value != null){
-				Optional<Statement> occurrance = Flow.possibleOccurranceBefore(from.getBody(), this, Flow.willAssignToVariable(v), false);
-				if(occurrance.isPresent()){
-					ParserRuleContext targetText = occurrance.get().text;
+				Optional<Statement> occurrence = Flow.possibleOccurranceBefore(from.getBody(), this, Flow.willAssignToVariable(v), false);
+				if(occurrence.isPresent()){
+					ParserRuleContext targetText = occurrence.get().text;
 					if(targetText == null)
-						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + occurrance.get());
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + occurrence.get());
 					else
-						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + Utils.position(targetText) + "\n\t\t" + occurrance.get());
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + Utils.position(targetText) + "\n\t\t" + occurrence.get());
 				}
 			}
 			if(value != null)
@@ -488,7 +488,7 @@ public abstract class Statement{
 	}
 	
 	public static class AssignFieldStatement extends Statement{
-		FieldReference fieldRef;
+		public FieldReference fieldRef;
 		Value on;
 		Value toSet;
 		
@@ -515,6 +515,18 @@ public abstract class Statement{
 			if(on != null)
 				on.simplify(this);
 			toSet.simplify(this);
+			
+			if(fieldRef.flags().isFinal()){
+				Optional<Statement> occurrence = Flow.possibleOccurranceBefore(from.getBody(), this, Flow.willAssignToField(fieldRef), false);
+				if(occurrence.isPresent()){
+					ParserRuleContext targetText = occurrence.get().text;
+					if(targetText == null)
+						throw new CompileTimeException(text, "Can't reassign the value of a final field - first assigned at " + occurrence.get());
+					else
+						throw new CompileTimeException(text, "Can't reassign the value of a final field - first assigned at " + Utils.position(targetText) + "\n\t\t" + occurrence.get());
+				}
+			}
+			
 			ProblemsHolder.checkReference(fieldRef, this, text);
 		}
 	}

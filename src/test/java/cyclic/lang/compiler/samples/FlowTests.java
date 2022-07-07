@@ -2,6 +2,7 @@ package cyclic.lang.compiler.samples;
 
 import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.CyclicAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -9,7 +10,6 @@ public class FlowTests{
 	
 	@Test
 	void testDefiniteAssignment(){
-		
 		CompilerLauncher.compileString("""
 				class Holder{
 					void test(){
@@ -173,5 +173,56 @@ public class FlowTests{
 					}
 				}
 				"""));
+	}
+	
+	@Test
+	void testFinalFieldAssignment(){
+		CyclicAssertions.compile("""
+				static final int i = 0;
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				static final int i;
+				""");
+		
+		CyclicAssertions.compile("""
+				static final int i;
+				static{
+					i = 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				static final int i;
+				static{
+					i = 0;
+					i = 1;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				static final int i;
+				static{
+					i = 0;
+				}
+				static{
+					i = 1;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				static final int i;
+				static{
+					if(Math.random() > 0.5)
+						i = 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				static final int i = 0;
+				static void u(){
+					i = 0;
+				}
+				""");
 	}
 }

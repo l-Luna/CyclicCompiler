@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Handles non-fatal issues in code.
+ * Handles non-fatal issues.
  */
 public class ProblemsHolder{
 	

@@ -167,18 +167,20 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 			Statement.CtorCallStatement ctorCall = (Statement.CtorCallStatement)cCallOpt.get();
 			// simplify should be idempotent, make sure it's a valid call
 			ctorCall.simplify();
+			boolean isSuperCall = !ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName());
+			
 			if(!(body instanceof Statement.CtorCallStatement))
 				if(!(body instanceof Statement.BlockStatement block && block.contains.get(0) instanceof Statement.CtorCallStatement))
 					throw new CompileTimeException(cCallText, "Must have an explicit constructor call first");
 			if(in.kind() == TypeKind.RECORD){
 				if(isCanonRecordCtor)
 					throw new CompileTimeException(cCallText, "Canonical record constructors must not have an explicit constructor call");
-				else if(!ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName()))
+				else if(isSuperCall)
 					// no super()s in records
 					throw new CompileTimeException(cCallText, "Record constructors cannot call a super-constructor");
 			}
 			if(in.kind() == TypeKind.ENUM){
-				if(!ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName()))
+				if(isSuperCall)
 					// no super()s in enums
 					throw new CompileTimeException(cCallText, "Enum constructors cannot call a super-constructor");
 			}

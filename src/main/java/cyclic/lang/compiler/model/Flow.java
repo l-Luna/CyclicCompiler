@@ -143,6 +143,11 @@ public final class Flow{
 				&& vs.v.equals(v);
 	}
 	
+	public static Predicate<Statement> willAssignToField(FieldReference v){
+		return x -> x instanceof AssignFieldStatement afs
+				&& afs.fieldRef.equals(v);
+	}
+	
 	public static int minOccurrencesBefore(Statement body, Statement before, Predicate<Statement> condition, boolean forceEnter){
 		return switch(body){
 			case default -> body != before && condition.test(body) ? 1 : 0;
@@ -206,10 +211,6 @@ public final class Flow{
 				// take all statements until the statement containing the `before` statement
 				// forceEnter for the statement containing the `before` statement to narrow down checking within
 				var cont = new AtomicBoolean(true);
-				for(Statement contain : s.contains){
-					System.out.println(contain + " " + possibleOccurranceBefore(contain, before, condition, forceEnter));
-				}
-				System.out.println();
 				yield s.contains.stream()
 						.takeWhile(x -> cont.get() && (firstMatching(x, y -> y == before).isEmpty() || cont.getAndSet(false)))
 						.map(k -> possibleOccurranceBefore(k, before, condition, !cont.get()))
