@@ -178,6 +178,92 @@ public class FlowTests{
 	@Test
 	void testFinalFieldAssignment(){
 		CyclicAssertions.compile("""
+				final int i = 0;
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i;
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i;
+				Holder(){}
+				""");
+		
+		CyclicAssertions.compile("""
+				final int i;
+				Holder(){
+					i = 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i;
+				Holder(){
+					i = 0;
+					i = 1;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i;
+				Holder(){
+					i = 0;
+					if(Math.random() > 0.5)
+						i = 1;
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				final int i;
+				Holder(){
+					i = 0;
+				}
+				Holder(int dummy){
+					i = 1;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i;
+				Holder(){
+					i = 0;
+				}
+				Holder(int dummy){
+					this();
+					i = 1;
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				final int i;
+				Holder(){
+					i = 0;
+				}
+				Holder(int dummy){
+					this();
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i;
+				Holder(){
+					if(Math.random() > 0.5)
+						i = 0;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				final int i = 0;
+				void u(){
+					i = 0;
+				}
+				""");
+	}
+	
+	@Test
+	void testStaticFinalFieldAssignment(){
+		CyclicAssertions.compile("""
 				static final int i = 0;
 				""");
 		

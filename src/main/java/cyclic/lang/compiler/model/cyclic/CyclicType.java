@@ -406,26 +406,56 @@ public class CyclicType implements TypeReference, CyclicMember{
 		
 		// check assignment to final fields
 		for(CyclicField field : fields)
-			if(field.defaultVal == null && field.defaultValText == null)
+			if(field.defaultVal == null && field.defaultValText == null){
+				boolean foundDefinite = false;
 				if(field.isStatic()){
 					// a static final must have a guaranteed assignment in exactly one static block,
 					// and no possible ones in any
-					boolean foundDefinite = false;
-					for(CyclicConstructor block : initBlocks){
-						if(block.isStatic()){
+					for(CyclicConstructor block : initBlocks)
+						if(block.isStatic())
 							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field))){
 								if(foundDefinite)
 									throw new CompileTimeException(null, "Static final field " + field.name() + " can only be assigned in one static block");
 								foundDefinite = true;
 							}else if(Flow.firstMatching(block.getBody(), Flow.willAssignToField(field)).isPresent())
 								throw new CompileTimeException(null, "Static final field " + field.name() + " must either be definitely assigned or definitely unassigned after static block");
-						}
-					}
 					if(!foundDefinite)
 						throw new CompileTimeException(null, "Static final field " + field.name() + " must have a default value, or assignment in static block");
 				}else{
-				
+					// an instance final must be assigned in one init block (following static final rules)
+					// OR be definitely assigned in every constructor that does not call this()
+					for(CyclicConstructor block : initBlocks)
+						if(!block.isStatic())
+							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field))){
+								if(foundDefinite)
+									throw new CompileTimeException(null, "Final field " + field.name() + " can only be assigned in one init block");
+								foundDefinite = true;
+							}else if(Flow.firstMatching(block.getBody(), Flow.willAssignToField(field)).isPresent())
+								throw new CompileTimeException(null, "Final field " + field.name() + " must either be definitely assigned or definitely unassigned after an init block");
+					
+					for(CyclicConstructor constructor : constructors)
+						if(!constructor.isStatic())
+							if(Flow.guaranteedToRun(constructor.getBody(), Flow.willAssignToField(field))){
+								if(foundDefinite)
+									throw new CompileTimeException(null, "Final field " + field.name() + " has already been assigned in init block and cannot be assigned in constructor");
+								else{
+									constructor.explicitCtorCall().ifPresent(call -> {
+										if(call instanceof Statement.CtorCallStatement ccs && ccs.target.in().equals(this))
+											throw new CompileTimeException(null, "Final field " + field.name() + " cannot be assigned in constructor that already defers to a constructor that assigns it");
+									});
+								}
+							}else if(Flow.firstMatching(constructor.getBody(), Flow.willAssignToField(field)).isPresent()){
+								throw new CompileTimeException(null, "Final field " + field.name() + " must either be definitely assigned or definitely unassigned after a constructor");
+							}else if(!foundDefinite){
+								Optional<Statement> cc = constructor.explicitCtorCall();
+								if(cc.isEmpty() || (cc.get() instanceof Statement.CtorCallStatement ccs && !ccs.target.in().equals(this)))
+									throw new CompileTimeException(null, "Constructors must assign to final field " + field.name() + ", or defer to other constructor");
+							}
+					
+					if(!foundDefinite && constructors.size() == 0)
+						throw new CompileTimeException(null, "Final field " + field.name() + " must be given a default value or assigned in a constructor or init block");
 				}
+			}
 		
 		for(CyclicField field : fields){
 			var assign = field.assign();
