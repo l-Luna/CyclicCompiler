@@ -18,16 +18,16 @@ public final class ProblemsHolder{
 	
 	// TODO: store warnings for later
 	public static int numWarnings = 0;
-	public static Set<String> suppressIds = new HashSet<>();
+	public static Set<ProblemType> warned = new HashSet<>();
 	
-	public static void warnFrom(String id, String warning, @Nullable Object in, @Nullable ParserRuleContext location){
+	public static void warnFrom(ProblemType type, String warning, @Nullable Object in, @Nullable ParserRuleContext location){
 		if(in instanceof Statement st)
 			in = st.from;
 		if(in instanceof CyclicMember st
-				&& (st.suppressedWarnings().contains(id)
-				|| st.in() instanceof CyclicMember cyc && cyc.suppressedWarnings().contains(id)))
+				&& (st.suppressedWarnings().contains(type.ID)
+				|| st.in() instanceof CyclicMember cyc && cyc.suppressedWarnings().contains(type.ID)))
 			return;
-		suppressIds.add(id);
+		warned.add(type);
 		warn(warning, location);
 	}
 	
@@ -45,7 +45,7 @@ public final class ProblemsHolder{
 	
 	public static void checkReference(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(ref instanceof AnnotatableElement ae && ae.getAnnotationByName(Constants.DEPRECATED).isPresent())
-			warnFrom(ProblemIds.DEPRECATED_ID, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
+			warnFrom(ProblemType.DEPRECATION, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
 	}
 	
 	public static void checkMustUse(MethodReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
@@ -55,20 +55,20 @@ public final class ProblemsHolder{
 				var value = tag.arguments().get("value");
 				if(value instanceof String s && !s.isBlank())
 					warning += ", because \"" + s + "\"";
-				warnFrom(ProblemIds.MUST_USE_ID, warning, in, location);
+				warnFrom(ProblemType.MUST_USE, warning, in, location);
 			});
 	}
 	
 	public static void checkImpossibleMustUse(MethodReference ref){
 		ref.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
 			if(ref.returns().equals(PlatformDependency.VOID))
-				warnFrom(ProblemIds.IMPOSSIBLE_MUST_USE_ID, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
+				warnFrom(ProblemType.IMPOSSIBLE_MUST_USE, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
 		});
 	}
 	
 	public static void checkImpossibleCast(TypeReference obj, TypeReference target, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(!obj.isAssignableTo(target) && !target.isAssignableTo(obj))
-			warnFrom(ProblemIds.IMPOSSIBLE_CAST_ID, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
+			warnFrom(ProblemType.IMPOSSIBLE_CAST, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
 	}
 	
 	private static String nameForWarning(MemberReference ref){

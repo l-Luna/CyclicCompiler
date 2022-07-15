@@ -1,6 +1,7 @@
 package cyclic.lang.compiler;
 
 import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.ProblemType;
 import cyclic.lang.compiler.problems.ProblemsHolder;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
@@ -14,7 +15,7 @@ import java.util.Set;
 public class CyclicAssertions{
 	
 	private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-	private static Set<String> lastSuppressedWarns;
+	private static Set<ProblemType> lastSuppressedWarns;
 	
 	public static Object evaluate(String sourceToEvaluate, @Nullable String methodName){
 		String wrapped =
@@ -30,8 +31,8 @@ public class CyclicAssertions{
 		}catch(IllegalAccessException | InvocationTargetException e){
 			throw new RuntimeException(e);
 		}finally{
-			lastSuppressedWarns = new HashSet<>(ProblemsHolder.suppressIds);
-			ProblemsHolder.suppressIds.clear();
+			lastSuppressedWarns = new HashSet<>(ProblemsHolder.warned);
+			ProblemsHolder.warned.clear();
 		}
 	}
 	
@@ -45,8 +46,8 @@ public class CyclicAssertions{
 		try{
 			CompilerLauncher.compileString(wrapped);
 		}finally{
-			lastSuppressedWarns = new HashSet<>(ProblemsHolder.suppressIds);
-			ProblemsHolder.suppressIds.clear();
+			lastSuppressedWarns = new HashSet<>(ProblemsHolder.warned);
+			ProblemsHolder.warned.clear();
 		}
 	}
 	
@@ -80,16 +81,16 @@ public class CyclicAssertions{
 			throw new RuntimeException("Expected object of type " + expected + " but got " + actual);
 	}
 	
-	public static void assertWarns(String warningId, String sourceToEvaluate){
+	public static void assertWarns(ProblemType warningType, String sourceToEvaluate){
 		compile(sourceToEvaluate);
-		if(!lastSuppressedWarns.contains(warningId))
-			throw new RuntimeException("Expected warning \"" + warningId + "\" to be issued");
+		if(!lastSuppressedWarns.contains(warningType))
+			throw new RuntimeException("Expected warning \"" + warningType.ID + "\" to be issued");
 	}
 	
-	public static void assertDoesNotWarn(String warningId, String sourceToEvaluate){
+	public static void assertDoesNotWarn(ProblemType warningType, String sourceToEvaluate){
 		compile(sourceToEvaluate);
-		if(lastSuppressedWarns.contains(warningId))
-			throw new RuntimeException("Expected warning \"" + warningId + "\" not to be issued");
+		if(lastSuppressedWarns.contains(warningType))
+			throw new RuntimeException("Expected warning \"" + warningType.ID + "\" not to be issued");
 	}
 	
 	public static void assertDoesntCompile(String sourceToCompile){
