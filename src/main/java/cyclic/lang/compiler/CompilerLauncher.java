@@ -10,6 +10,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.problems.ProblemsHolder;
+import cyclic.lang.compiler.problems.SyntaxException;
 import cyclic.lang.compiler.resolve.TypeNotFoundException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
