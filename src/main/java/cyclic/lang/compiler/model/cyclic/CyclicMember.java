@@ -3,6 +3,8 @@ package cyclic.lang.compiler.model.cyclic;
 import cyclic.lang.compiler.model.AnnotatableElement;
 import cyclic.lang.compiler.model.AnnotationTag;
 import cyclic.lang.compiler.model.MemberReference;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,6 +16,11 @@ public interface CyclicMember extends AnnotatableElement, MemberReference{
 	default void resolve(){}
 	
 	default void resolveBody(){}
+	
+	@Nullable
+	default ParserRuleContext nameToken(){
+		return null;
+	}
 	
 	default Set<String> suppressedWarnings(){
 		return Set.of();

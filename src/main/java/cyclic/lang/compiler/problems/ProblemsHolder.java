@@ -65,8 +65,10 @@ public final class ProblemsHolder{
 	
 	public static void checkImpossibleMustUse(MethodReference ref){
 		ref.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
-			if(ref.returns().equals(PlatformDependency.VOID))
-				warnFrom(WarningType.IMPOSSIBLE_MUST_USE, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
+			if(ref.returns().equals(PlatformDependency.VOID)){
+				var at = ref instanceof CyclicMember cm ? cm.nameToken() : null;
+				warnFrom(WarningType.IMPOSSIBLE_MUST_USE, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, at);
+			}
 		});
 	}
 	

@@ -11,6 +11,8 @@ import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.problems.ProblemsHolder;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -247,5 +249,9 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		if(suppresses != null)
 			return suppresses;
 		return suppresses = findSuppressedWarnings();
+	}
+	
+	public @Nullable ParserRuleContext nameToken(){
+		return text != null ? text.idPart() : null;
 	}
 }

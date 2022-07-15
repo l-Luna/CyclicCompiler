@@ -150,7 +150,6 @@ public final class CompilerLauncher{
 			Yaml yaml = new Yaml(options);
 			yaml.setBeanAccess(BeanAccess.FIELD);
 			String yamlOut = yaml.dump(new ArrayList<>(ProblemsHolder.problems));
-			System.out.println("wo:\n" + yamlOut);
 			Path path = Path.of(diagnosticsTarget).toAbsolutePath().normalize();
 			try{
 				if(!path.getParent().toFile().exists() && !path.getParent().toFile().mkdirs())
