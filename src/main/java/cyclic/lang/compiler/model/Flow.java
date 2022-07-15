@@ -26,6 +26,7 @@ public final class Flow{
 	 */
 	public static final Object NULL_MARKER = new Object();
 	
+	public static final Predicate<Statement> THROWS = ThrowStatement.class::isInstance;
 	public static final Predicate<Statement> WILL_EXIT = x -> x instanceof ReturnStatement || x instanceof ThrowStatement;
 	
 	/**

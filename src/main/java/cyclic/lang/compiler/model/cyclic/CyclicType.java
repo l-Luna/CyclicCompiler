@@ -406,7 +406,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 					// and no possible ones in any
 					for(CyclicConstructor block : initBlocks)
 						if(block.isStatic())
-							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field))){
+							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field).or(Flow.THROWS))){
 								if(foundDefinite)
 									throw new CompileTimeException(null, "Static final field " + field.name() + " can only be assigned in one static block");
 								foundDefinite = true;
@@ -419,7 +419,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 					// OR be definitely assigned in every constructor that does not call this()
 					for(CyclicConstructor block : initBlocks)
 						if(!block.isStatic())
-							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field))){
+							if(Flow.guaranteedToRun(block.getBody(), Flow.willAssignToField(field).or(Flow.THROWS))){
 								if(foundDefinite)
 									throw new CompileTimeException(null, "Final field " + field.name() + " can only be assigned in one init block");
 								foundDefinite = true;
