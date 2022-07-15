@@ -1,8 +1,8 @@
 package cyclic.lang.compiler;
 
 import cyclic.lang.compiler.problems.CompileTimeException;
-import cyclic.lang.compiler.problems.ProblemType;
 import cyclic.lang.compiler.problems.ProblemsHolder;
+import cyclic.lang.compiler.problems.WarningType;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 
@@ -15,7 +15,7 @@ import java.util.Set;
 public class CyclicAssertions{
 	
 	private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-	private static Set<ProblemType> lastSuppressedWarns;
+	private static Set<WarningType> lastSuppressedWarns;
 	
 	public static Object evaluate(String sourceToEvaluate, @Nullable String methodName){
 		String wrapped =
@@ -81,13 +81,13 @@ public class CyclicAssertions{
 			throw new RuntimeException("Expected object of type " + expected + " but got " + actual);
 	}
 	
-	public static void assertWarns(ProblemType warningType, String sourceToEvaluate){
+	public static void assertWarns(WarningType warningType, String sourceToEvaluate){
 		compile(sourceToEvaluate);
 		if(!lastSuppressedWarns.contains(warningType))
 			throw new RuntimeException("Expected warning \"" + warningType.ID + "\" to be issued");
 	}
 	
-	public static void assertDoesNotWarn(ProblemType warningType, String sourceToEvaluate){
+	public static void assertDoesNotWarn(WarningType warningType, String sourceToEvaluate){
 		compile(sourceToEvaluate);
 		if(lastSuppressedWarns.contains(warningType))
 			throw new RuntimeException("Expected warning \"" + warningType.ID + "\" not to be issued");

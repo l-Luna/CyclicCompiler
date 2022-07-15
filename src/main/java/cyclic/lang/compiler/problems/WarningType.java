@@ -1,6 +1,6 @@
 package cyclic.lang.compiler.problems;
 
-public enum ProblemType{
+public enum WarningType{
 	DEPRECATION("deprecation"),
 	MUST_USE("must_use"),
 	IMPOSSIBLE_MUST_USE("impossible_must_use"),
@@ -8,7 +8,7 @@ public enum ProblemType{
 	
 	public final String ID;
 	
-	ProblemType(String id){
+	WarningType(String id){
 		ID = id;
 	}
 }

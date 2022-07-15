@@ -46,6 +46,9 @@ public final class CompilerLauncher{
 	/** Whether to end the program if a compilation error occurs, rather than throwing an exception. */
 	public static boolean exitOnError = false;
 	
+	/** The path to write diagnostics (errors and warnings) to, in a machine-readable format. */
+	public static String diagnosticsTarget = null;
+	
 	/** The project currently being compiled. */
 	public static CyclicProject project;
 	
@@ -83,9 +86,24 @@ public final class CompilerLauncher{
 			project = new CyclicProject();
 			project.sourcePath = Path.of(args[0]);
 			project.outputPath = Path.of(args[1]);
-			if(args.length >= 3)
-				includeDebugInfo = Boolean.parseBoolean(args[2]);
 			project.includeCyclicLibRefs = false;
+		}
+		
+		if(args.length >= 3){
+			boolean debugSetter = false, diagnosticsSetter = false;
+			for(int i = 2; i < args.length; i++){
+				String arg = args[i];
+				if(arg.equals("--debug"))
+					debugSetter = true;
+				else if(arg.equals("--diagnostics"))
+					diagnosticsSetter = true;
+				else if(arg.equals("--noOutput"))
+					project.noOutput = true;
+				else if(debugSetter)
+					project.includeDebug = Boolean.parseBoolean(arg);
+				else if(diagnosticsSetter)
+					diagnosticsTarget = arg;
+			}
 		}
 		
 		project.validate();
