@@ -16,9 +16,13 @@ import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.introspector.BeanAccess;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -137,6 +141,25 @@ public final class CompilerLauncher{
 		}
 		
 		checkErrors();
+		
+		if(diagnosticsTarget != null){
+			System.out.println("Outputting diagnostics (\"--diagnostics\" was set) to \"" + diagnosticsTarget + "\"");
+			DumperOptions options = new DumperOptions();
+			options.setWidth(999);
+			options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+			Yaml yaml = new Yaml(options);
+			yaml.setBeanAccess(BeanAccess.FIELD);
+			String yamlOut = yaml.dump(new ArrayList<>(ProblemsHolder.problems));
+			System.out.println("wo:\n" + yamlOut);
+			Path path = Path.of(diagnosticsTarget).toAbsolutePath().normalize();
+			try{
+				if(!path.getParent().toFile().exists() && !path.getParent().toFile().mkdirs())
+					throw new IllegalStateException();
+				Files.writeString(path, yamlOut);
+			}catch(IOException e){
+				throw new UncheckedIOException(e);
+			}
+		}
 		
 		if(project.noOutput){
 			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");

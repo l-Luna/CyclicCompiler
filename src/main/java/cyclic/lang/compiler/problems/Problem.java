@@ -23,7 +23,7 @@ public sealed interface Problem{
 			return new Source(
 					Position.fromToken(ctx.start),
 					Position.fromTokenEnd(ctx.stop),
-					Utils.format(ctx),
+					Utils.format(ctx).stripIndent(),
 					null
 			);
 		}
