@@ -1,14 +1,14 @@
 package cyclic.lang.compiler.samples;
 
-import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.CyclicAssertions;
+import cyclic.lang.compiler.problems.ProblemIds;
 import org.junit.jupiter.api.Test;
 
 public class WarningsTests{
 	
 	@Test
 	void testDeprecated(){
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				static String s;
 				
@@ -17,7 +17,7 @@ public class WarningsTests{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesNotWarn(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertDoesNotWarn(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				static String s;
 				
@@ -27,7 +27,7 @@ public class WarningsTests{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesNotWarn(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertDoesNotWarn(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				static String s;
 				
@@ -37,49 +37,49 @@ public class WarningsTests{
 				}
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				static String s;
 				
 				static String test() -> return s = "";
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				class T;
 				
 				static Object test() -> T.class;
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				static void bad();
 				
 				static void test() -> bad();
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				static Object bad() -> null;
 				
 				static Object test() -> return bad();
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				class T;
 				
 				static Object test() -> (T)null;
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				@Deprecated
 				class T;
 				
 				static Object test() -> (T)(new Object());
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				class T{
 					@Deprecated
 					public T();
@@ -88,7 +88,7 @@ public class WarningsTests{
 				static Object test() -> new T();
 				""");
 		
-		CyclicAssertions.assertWarns(Constants.DEPRECATED_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.DEPRECATED_ID, """
 				class T{
 					@Deprecated
 					public T();
@@ -102,26 +102,26 @@ public class WarningsTests{
 	
 	@Test
 	void testImpossibleCast(){
-		CyclicAssertions.assertWarns(Constants.IMPOSSIBLE_CAST_ID, """
+		CyclicAssertions.assertWarns(ProblemIds.IMPOSSIBLE_CAST_ID, """
 				static Integer zero() -> 0;
 				
 				static String test() -> (String)zero();
 				""");
 		
-		CyclicAssertions.assertDoesNotWarn(Constants.IMPOSSIBLE_CAST_ID, """
+		CyclicAssertions.assertDoesNotWarn(ProblemIds.IMPOSSIBLE_CAST_ID, """
 				static Integer zero() -> 0;
 				
 				@SuppressWarnings("impossible_cast")
 				static String test() -> (String)zero();
 				""");
 		
-		CyclicAssertions.assertDoesNotWarn(Constants.IMPOSSIBLE_CAST_ID, """
+		CyclicAssertions.assertDoesNotWarn(ProblemIds.IMPOSSIBLE_CAST_ID, """
 				static Object zero() -> (Integer)0;
 				
 				static String test() -> (String)zero();
 				""");
 		
-		CyclicAssertions.assertDoesNotWarn(Constants.IMPOSSIBLE_CAST_ID, """
+		CyclicAssertions.assertDoesNotWarn(ProblemIds.IMPOSSIBLE_CAST_ID, """
 				static ArrayList empty() -> new ArrayList();
 				
 				static List test() -> (List)empty();

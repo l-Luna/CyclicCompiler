@@ -1,8 +1,8 @@
 package cyclic.lang.compiler.samples;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.CyclicAssertions;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +11,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
+
+import static cyclic.lang.compiler.CyclicAssertions.*;
+import static java.lang.invoke.MethodHandles.Lookup;
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 public class SampleTests{
 	
@@ -51,57 +56,41 @@ public class SampleTests{
 	@Test
 	void testSimpleMethods(){
 		try{
-			MethodHandles.Lookup lookup = MethodHandles.lookup();
+			Lookup lookup = lookup();
 			
 			CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static void test() -> System.out.println("Hello from Cyclic! (1/2)");
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static void test() -> System.out.println("Hello from Cyclic! (1/2)");
+					}
+					""", lookup)
 					.invoke(null);
 			
 			CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static void test(){
-									System.out.println("Hello from Cyclic! (2/2)");
-								}
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static void test(){
+							System.out.println("Hello from Cyclic! (2/2)");
+						}
+					}
+					""", lookup)
 					.invoke(null);
 			
-			Assertions.assertEquals(1, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static int test() -> 1;
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals(1, """
+					static int test() -> 1;
+					""");
 			
-			Assertions.assertEquals("1", CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static String test() -> "1";
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals("1", """
+					static String test() -> "1";
+					""");
 			
-			Assertions.assertEquals(4, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static int test() -> (1 + 1) + (1 + 1);
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals(4, """
+					static int test() -> (1 + 1) + (1 + 1);
+					""");
 			
-			Assertions.assertEquals(0, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static int test() -> (1 + 1) - (1 + 1);
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals(0, """
+					static int test() -> (1 + 1) - (1 + 1);
+					""");
 			
 			Method oneOrTwo = CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
@@ -161,28 +150,28 @@ public class SampleTests{
 					""", lookup);
 			Assertions.assertEquals(207, loops.invoke(null, 100));
 			
-			CyclicAssertions.compile("""
+			compile("""
 					static void test(){
 						for(int i : new int[]{ 0, 1, 2, 3 }){
 						}
 					}
 					""");
 			
-			CyclicAssertions.assertDoesntCompile("""
+			assertDoesntCompile("""
 					static void test(){
 						for(String s : new int[]{ 0, 1, 2, 3 }){
 						}
 					}
 					""");
 			
-			CyclicAssertions.assertDoesntCompile("""
+			assertDoesntCompile("""
 					static void test(){
 						for(String s : java.util.List.of(new Object())){
 						}
 					}
 					""");
 			
-			CyclicAssertions.assertEquals(12, """
+			assertEquals(12, """
 					static int test(){
 						int i = 0;
 						for(var e : java.lang.annotation.ElementType){
@@ -192,136 +181,116 @@ public class SampleTests{
 					}
 					""");
 			
-			Assertions.assertEquals("12", CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static String test() -> "1" + "2";
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals("12", """
+					static String test() -> "1" + "2";
+					""");
 			
 			Assertions.assertEquals("1k2345k", CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static String test(String obj) -> "1" + obj + "2" + "3" + "4" + "5" + obj;
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static String test(String obj) -> "1" + obj + "2" + "3" + "4" + "5" + obj;
+					}
+					""", lookup)
 					.invoke(null, "k"));
 			
-			Assertions.assertEquals("12345", CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static String test() -> ("1" + "2") + ("3" + "4" + 5);
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals("12345", """
+					static String test() -> ("1" + "2") + ("3" + "4" + 5);
+					""");
 			
 			Assertions.assertEquals("k".repeat(14 * 21), CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static String repetition(String obj) -> obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-																+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj;
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static String repetition(String obj) -> obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj;
+					}
+					""", lookup)
 					.invoke(null, "k"));
 			
 			Assertions.assertEquals(26f, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static float test(int obj) -> (float)(obj + 1) + 1;
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static float test(int obj) -> (float)(obj + 1) + 1;
+					}
+					""", lookup)
 					.invoke(null, 24));
 			
-			Assertions.assertArrayEquals(new int[]{24}, (int[])CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static int[] test(int obj) -> new int[]{obj};
-							}
-							""", lookup)
+			assertArrayEquals(new int[]{24}, (int[])CompilerLauncher.compileSingleMethod("""
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int[] test(int obj) -> new int[]{obj};
+					}
+					""", lookup)
 					.invoke(null, 24));
 			
 			Assertions.assertEquals(1, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static int test(int obj) -> new int[]{obj}.length;
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static int test(int obj) -> new int[]{obj}.length;
+					}
+					""", lookup)
 					.invoke(null, 0));
 			
 			CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static void test(){
-									boolean z = false;
-									z = true;
-									byte b = 0;
-									b = 1;
-									short s = 0;
-									s = ((byte)1);
-									s = 1;
-									int i = 0;
-									i = 1;
-									i = -1;
-									i = 3;
-									i = 4;
-									i = 5;
-									i = 20;
-									i = 12345678;
-									i = 32766;
-									i = 2147483646;
-									long l = 0;
-									l = 1;
-									float f = 0;
-									f = 1;
-									double d = 0;
-									d = 1;
-									Object k = new Object();
-									k = null;
-									String str = "";
-									str = null;
-									Integer in = 5;
-									int ini = in;
-								}
-							}
-							""", lookup)
+					package cyclic.lang.compiler.samples;
+					class Holder{
+						static void test(){
+							boolean z = false;
+							z = true;
+							byte b = 0;
+							b = 1;
+							short s = 0;
+							s = ((byte)1);
+							s = 1;
+							int i = 0;
+							i = 1;
+							i = -1;
+							i = 3;
+							i = 4;
+							i = 5;
+							i = 20;
+							i = 12345678;
+							i = 32766;
+							i = 2147483646;
+							long l = 0;
+							l = 1;
+							float f = 0;
+							f = 1;
+							double d = 0;
+							d = 1;
+							Object k = new Object();
+							k = null;
+							String str = "";
+							str = null;
+							Integer in = 5;
+							int ini = in;
+						}
+					}
+					""", lookup)
 					.invoke(null);
 			
-			Assertions.assertEquals(Integer.class, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static Object test() -> Integer.class;
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals(Integer.class, """
+					static Object test() -> Integer.class;
+					""");
 			
-			Assertions.assertEquals(int.class, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static Object test() -> int.class;
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals(int.class, """
+					static Object test() -> int.class;
+					""");
 			
-			Assertions.assertEquals(void.class, CompilerLauncher.compileSingleMethod("""
-							package cyclic.lang.compiler.samples;
-							class Holder{
-								static Object test() -> void.class;
-							}
-							""", lookup)
-					.invoke(null));
+			assertEquals(void.class, """
+					static Object test() -> void.class;
+					""");
 			
 			CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;

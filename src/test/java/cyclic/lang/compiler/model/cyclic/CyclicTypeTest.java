@@ -1,90 +1,92 @@
 package cyclic.lang.compiler.model.cyclic;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
-import cyclic.lang.compiler.CyclicAssertions;
+import cyclic.lang.compiler.problems.CompileTimeException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static cyclic.lang.compiler.CyclicAssertions.assertDoesntCompile;
+import static cyclic.lang.compiler.CyclicAssertions.compile;
+import static org.junit.jupiter.api.Assertions.assertAll;
 
 class CyclicTypeTest{
 	
 	@Test
 	void testDefinitions(){
 		assertAll(
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class T{}")),
+				() -> compile("class T{}"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("interface T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("@interface T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("record T(int component);")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("single T;")),
+				() -> compile("class T;"),
+				() -> compile("interface T;"),
+				() -> compile("enum T;"),
+				() -> compile("@interface T;"),
+				() -> Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T;")),
+				() -> compile("record T(int component);"),
+				() -> compile("single T;"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class permits;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation annotation;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class out;")),
+				() -> compile("class permits;"),
+				() -> Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation annotation;")),
+				() -> compile("class out;"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class T<A, in B, out C, in class D, out class E>;")),
+				() -> compile("class T<A, in B, out C, in class D, out class E>;"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class T extends Object;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("class T implements Cloneable, java.io.Serializable;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("interface T extends Cloneable, java.io.Serializable;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("sealed class T permits F { final class F extends T; }")),
+				() -> compile("class T extends Object;"),
+				() -> compile("class T implements Cloneable, java.io.Serializable;"),
+				() -> compile("interface T extends Cloneable, java.io.Serializable;"),
+				() -> compile("sealed class T permits F { final class F extends T; }"),
 				
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("class T(Object component);")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("record T(Object component) { Object field; }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("record T(Object component) { static Object template; Object component() -> component; }")),
+				() -> assertDoesntCompile("class T(Object component);"),
+				() -> assertDoesntCompile("record T(Object component) { Object field; }"),
+				() -> compile("record T(Object component) { static Object template; Object component() -> component; }"),
 				
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("class E{ val A; val B; val C; }")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("class E{ int A(3); }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum E{ val A; val B; val C; }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum E{ val A(); }")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("enum E{ val A; static E X = new E(); }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum E{ val A(3); E(int i){  } }")),
+				() -> assertDoesntCompile("class E{ val A; val B; val C; }"),
+				() -> assertDoesntCompile("class E{ int A(3); }"),
+				() -> compile("enum E{ val A; val B; val C; }"),
+				() -> compile("enum E{ val A(); }"),
+				() -> assertDoesntCompile("enum E{ val A; static E X = new E(); }"),
+				() -> compile("enum E{ val A(3); E(int i){  } }"),
 				
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("class T{ U(); }")),
+				() -> assertDoesntCompile("class T{ U(); }"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("single S{ }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("single S{ private S(){ } }")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("single S{ S(int i); }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("single S{ S(int i); S(){ this(0); } }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("single S{ S(); void test(){ System.out.println(S); } }")),
+				() -> compile("single S{ }"),
+				() -> compile("single S{ private S(){ } }"),
+				() -> assertDoesntCompile("single S{ S(int i); }"),
+				() -> compile("single S{ S(int i); S(){ this(0); } }"),
+				() -> compile("single S{ S(); void test(){ System.out.println(S); } }"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("static single S{ }")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("static single S{ String text = \"\"; void test(){ System.out.println(text); } }")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("static abstract single S{  }"))
+				() -> compile("static single S{ }"),
+				() -> compile("static single S{ String text = \"\"; void test(){ System.out.println(text); } }"),
+				() -> assertDoesntCompile("static abstract single S{  }")
 		);
 	}
 	
 	@Test
 	void testSupertypeValidation(){
 		assertAll(
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("class T extends String;")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("class T extends java.util.List;")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("interface T implements java.util.List;")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("interface T extends Object;")),
+				() -> assertDoesntCompile("class T extends String;"),
+				() -> assertDoesntCompile("class T extends java.util.List;"),
+				() -> assertDoesntCompile("interface T implements java.util.List;"),
+				() -> assertDoesntCompile("interface T extends Object;"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T extends Object;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T implements java.lang.annotation.Annotation;")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("annotation T extends F { class F; }")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("annotation T implements java.io.Serializable;")),
+				() -> Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T;")),
+				() -> Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T extends Object;")),
+				() -> Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileString("annotation T implements java.lang.annotation.Annotation;")),
+				() -> Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("annotation T extends F { class F; }")),
+				() -> Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("annotation T implements java.io.Serializable;")),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum T;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum T extends Object;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum T extends Enum;")),
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("enum T implements java.io.Serializable;")),
-				() -> assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("enum T extends F { class F; }")),
+				() -> compile("enum T;"),
+				() -> compile("enum T extends Object;"),
+				() -> compile("enum T extends Enum;"),
+				() -> compile("enum T implements java.io.Serializable;"),
+				() -> assertDoesntCompile("enum T extends F { class F; }"),
 				
-				() -> assertDoesNotThrow(() -> CompilerLauncher.compileString("record T extends Object;"))
+				() -> compile("record T extends Object;")
 		);
 	}
 	
 	@Test
 	void testInvalidOverrides(){
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				abstract class Super{
 					abstract int a();
 				}
@@ -92,7 +94,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.compile("""
+		compile("""
 				abstract class Super{
 					abstract int a();
 				}
@@ -101,7 +103,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				abstract class Super{
 					abstract int a();
 				}
@@ -110,7 +112,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				abstract class Super{
 					int a() -> 0;
 				}
@@ -119,7 +121,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				interface IA{
 					int a();
 				}
@@ -131,7 +133,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				interface IA{
 					int a() -> 0;
 				}
@@ -143,7 +145,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				interface IA{
 					int a() -> 0;
 				}
@@ -155,7 +157,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				interface IA{
 					Long a() -> 0;
 				}
@@ -167,7 +169,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.compile("""
+		compile("""
 				interface IA{
 					IA a() -> null;
 				}
@@ -179,7 +181,7 @@ class CyclicTypeTest{
 				}
 				""");
 		
-		CyclicAssertions.assertDoesntCompile("""
+		assertDoesntCompile("""
 				class A{
 					void a();
 				}
@@ -190,7 +192,7 @@ class CyclicTypeTest{
 				class D extends C;
 				""");
 		
-		CyclicAssertions.compile("""
+		compile("""
 				interface IF{
 					boolean a();
 				}
@@ -200,7 +202,7 @@ class CyclicTypeTest{
 				abstract class Sub extends Super implements IF{}
 				""");
 		
-		CyclicAssertions.compile("""
+		compile("""
 				interface IF{
 					boolean a();
 				}

@@ -1,5 +1,6 @@
-package cyclic.lang.compiler;
+package cyclic.lang.compiler.problems;
 
+import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicMember;
@@ -13,7 +14,7 @@ import java.util.Set;
 /**
  * Handles non-fatal issues.
  */
-public class ProblemsHolder{
+public final class ProblemsHolder{
 	
 	// TODO: store warnings for later
 	public static int numWarnings = 0;
@@ -44,7 +45,7 @@ public class ProblemsHolder{
 	
 	public static void checkReference(MemberReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(ref instanceof AnnotatableElement ae && ae.getAnnotationByName(Constants.DEPRECATED).isPresent())
-			warnFrom(Constants.DEPRECATED_ID, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
+			warnFrom(ProblemIds.DEPRECATED_ID, "Use of deprecated member \"" + nameForWarning(ref) + "\"", in, location);
 	}
 	
 	public static void checkMustUse(MethodReference ref, @Nullable Statement in, @Nullable ParserRuleContext location){
@@ -54,20 +55,20 @@ public class ProblemsHolder{
 				var value = tag.arguments().get("value");
 				if(value instanceof String s && !s.isBlank())
 					warning += ", because \"" + s + "\"";
-				warnFrom(Constants.MUST_USE_ID, warning, in, location);
+				warnFrom(ProblemIds.MUST_USE_ID, warning, in, location);
 			});
 	}
 	
 	public static void checkImpossibleMustUse(MethodReference ref){
 		ref.getAnnotationByName(Constants.MUST_USE).ifPresent(tag -> {
 			if(ref.returns().equals(PlatformDependency.VOID))
-				warnFrom(Constants.IMPOSSIBLE_MUST_USE_ID, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
+				warnFrom(ProblemIds.IMPOSSIBLE_MUST_USE_ID, "@MustUse annotation cannot be fulfilled for void method \"" + nameForWarning(ref) + "\"", ref, null);
 		});
 	}
 	
 	public static void checkImpossibleCast(TypeReference obj, TypeReference target, @Nullable Statement in, @Nullable ParserRuleContext location){
 		if(!obj.isAssignableTo(target) && !target.isAssignableTo(obj))
-			warnFrom(Constants.IMPOSSIBLE_CAST_ID, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
+			warnFrom(ProblemIds.IMPOSSIBLE_CAST_ID, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
 	}
 	
 	private static String nameForWarning(MemberReference ref){

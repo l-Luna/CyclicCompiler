@@ -1,12 +1,12 @@
 package cyclic.lang.compiler.model.instructions;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.cyclic.CyclicCallable;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.Opcodes;

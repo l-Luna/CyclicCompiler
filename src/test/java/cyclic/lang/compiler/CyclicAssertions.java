@@ -1,5 +1,7 @@
 package cyclic.lang.compiler;
 
+import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.ProblemsHolder;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 

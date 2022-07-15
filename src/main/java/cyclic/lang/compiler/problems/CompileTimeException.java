@@ -1,4 +1,4 @@
-package cyclic.lang.compiler;
+package cyclic.lang.compiler.problems;
 
 import cyclic.lang.compiler.model.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;

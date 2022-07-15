@@ -1,9 +1,10 @@
 package cyclic.lang.compiler.model.cyclic;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.junit.jupiter.api.Test;
 
+import static cyclic.lang.compiler.CyclicAssertions.compile;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -25,10 +26,10 @@ class CyclicConstructorTest{
 				}
 				"""));
 		
-		assertDoesNotThrow(() -> CompilerLauncher.compileString("""
+		compile("""
 				class T implements Cloneable{
 					public T(){  }
 				}
-				"""));
+				""");
 	}
 }
