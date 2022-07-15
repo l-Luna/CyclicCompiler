@@ -20,6 +20,8 @@ import org.objectweb.asm.Opcodes;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utility methods used within the compiler for parsing ASTs, text, and bitfields.
@@ -332,5 +334,20 @@ public final class Utils{
 		return method.parameters().stream()
 				.mapToInt(x -> x.equals(PlatformDependency.LONG) || x.equals(PlatformDependency.DOUBLE) ? 2 : 1)
 				.sum() + (method.isStatic() ? 0 : 1);
+	}
+	
+	public static <T, Eq> Stream<T> distinctStreamByEq(Stream<T> in, Function<T, Eq> eq){
+		record Shell<T, Eq>(T t, Eq eq){
+			public boolean equals(Object obj){ return obj instanceof Shell<?,?> sh && sh.eq().equals(eq()); }
+			public int hashCode(){ return eq().hashCode(); }
+		}
+		
+		return in.map(it -> new Shell<>(it, eq.apply(it)))
+				.distinct()
+				.map(Shell::t);
+	}
+	
+	public static <T, Eq> List<T> distinctListByEq(List<T> in, Function<T, Eq> eq){
+		return distinctStreamByEq(in.stream(), eq).collect(Collectors.toCollection(ArrayList::new));
 	}
 }

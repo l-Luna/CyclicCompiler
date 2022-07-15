@@ -136,6 +136,18 @@ class CyclicTypeTest{
 					int a() -> 0;
 				}
 				interface IB{
+					int a() -> 1;
+				}
+				class Sub implements IA, IB{
+				
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				interface IA{
+					int a() -> 0;
+				}
+				interface IB{
 					String a() -> "";
 				}
 				class Sub implements IA, IB{
@@ -165,6 +177,27 @@ class CyclicTypeTest{
 				class Sub implements IA, IB{
 					Sub a() -> null;
 				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				class A{
+					void a();
+				}
+				abstract class B extends A{
+					abstract void a();
+				}
+				abstract class C extends B;
+				class D extends C;
+				""");
+		
+		CyclicAssertions.compile("""
+				interface IF{
+					boolean a();
+				}
+				class Super{
+					boolean a() -> false;
+				}
+				abstract class Sub extends Super implements IF{}
 				""");
 		
 		CyclicAssertions.compile("""

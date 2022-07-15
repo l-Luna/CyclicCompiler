@@ -12,7 +12,6 @@ import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static cyclic.lang.compiler.Constants.*;
 
@@ -379,17 +378,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 			}
 		
 		// get rid of duplicates of the same method from the same class (inherited from multiple interfaces inheriting from the same type)
-		// TODO: this is ugly, but sets & distinct don't allow for custom equality otherwise
-		record EqWrapper(MethodReference mref){
-			public boolean equals(Object obj){ return obj instanceof EqWrapper ew && ew.summary().equals(summary()); }
-			public int hashCode(){ return summary().hashCode(); }
-			String summary(){ return mref().nameAndDescriptor() + mref().in().fullyQualifiedName(); }
-		}
-		methodsAndInherited = methodsAndInherited.stream()
-				.map(EqWrapper::new)
-				.distinct()
-				.map(EqWrapper::mref)
-				.collect(Collectors.toCollection(ArrayList::new));
+		methodsAndInherited = Utils.distinctListByEq(methodsAndInherited, x -> x.nameAndDescriptor() + x.in().fullyQualifiedName());
 		
 		// if we didn't error earlier, its due to inheritance
 		Utils.checkDuplicates(methodsAndInherited, "inherited method", method -> method.name() + method.parameterDescriptor(), MethodReference::summary);
@@ -500,11 +489,18 @@ public class CyclicType implements TypeReference, CyclicMember{
 		return fullyQualifiedName().hashCode();
 	}
 	
-	private List<MethodReference> inheritedMethods(){
-		return Stream.concat(
-				superType.methods().stream(),
-				interfaces.stream().flatMap(x -> x.methods().stream())
-		).filter(k -> k.flags().visibility() != Visibility.PRIVATE).toList();
+	private List<? extends MethodReference> inheritedMethods(){
+		List<MethodReference> interfaceMethods = interfaces.stream()
+				.flatMap(x -> x.methods().stream())
+				.filter(k -> k.flags().visibility() != Visibility.PRIVATE)
+				.collect(Collectors.toCollection(ArrayList::new));
+		// superclass methods "override" interface methods
+		if(superType != null)
+			for(MethodReference method : superType.methods()){
+				interfaceMethods.removeIf(method::overrides);
+				interfaceMethods.add(method);
+			}
+		return interfaceMethods;
 	}
 	
 	private Set<String> suppresses = null;
