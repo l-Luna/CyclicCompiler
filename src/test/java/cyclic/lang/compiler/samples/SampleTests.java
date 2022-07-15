@@ -161,6 +161,27 @@ public class SampleTests{
 					""", lookup);
 			Assertions.assertEquals(207, loops.invoke(null, 100));
 			
+			CyclicAssertions.compile("""
+					static void test(){
+						for(int i : new int[]{ 0, 1, 2, 3 }){
+						}
+					}
+					""");
+			
+			CyclicAssertions.assertDoesntCompile("""
+					static void test(){
+						for(String s : new int[]{ 0, 1, 2, 3 }){
+						}
+					}
+					""");
+			
+			CyclicAssertions.assertDoesntCompile("""
+					static void test(){
+						for(String s : java.util.List.of(new Object())){
+						}
+					}
+					""");
+			
 			CyclicAssertions.assertEquals(12, """
 					static int test(){
 						int i = 0;
