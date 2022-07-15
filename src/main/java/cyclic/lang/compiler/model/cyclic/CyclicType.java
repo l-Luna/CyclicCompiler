@@ -385,7 +385,11 @@ public class CyclicType implements TypeReference, CyclicMember{
 			public int hashCode(){ return summary().hashCode(); }
 			String summary(){ return mref().nameAndDescriptor() + mref().in().fullyQualifiedName(); }
 		}
-		methodsAndInherited = methodsAndInherited.stream().map(EqWrapper::new).distinct().map(EqWrapper::mref).toList();
+		methodsAndInherited = methodsAndInherited.stream()
+				.map(EqWrapper::new)
+				.distinct()
+				.map(EqWrapper::mref)
+				.collect(Collectors.toCollection(ArrayList::new));
 		
 		// if we didn't error earlier, its due to inheritance
 		Utils.checkDuplicates(methodsAndInherited, "inherited method", method -> method.name() + method.parameterDescriptor(), MethodReference::summary);
@@ -406,7 +410,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		
 		// check assignment to final fields
 		for(CyclicField field : fields)
-			if(field.defaultVal == null && field.defaultValText == null){
+			if(field.flags().isFinal() && field.defaultVal == null && field.defaultValText == null && !field.isEnumDefinition()){
 				boolean foundDefinite = false;
 				if(field.isStatic()){
 					// a static final must have a guaranteed assignment in exactly one static block,

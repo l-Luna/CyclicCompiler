@@ -166,5 +166,15 @@ class CyclicTypeTest{
 					Sub a() -> null;
 				}
 				""");
+		
+		CyclicAssertions.compile("""
+				interface IF{
+					boolean a();
+				}
+				class Super{
+					boolean a() -> false;
+				}
+				class Sub extends Super implements IF{}
+				""");
 	}
 }
