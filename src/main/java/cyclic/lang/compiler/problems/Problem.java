@@ -9,13 +9,15 @@ import org.jetbrains.annotations.Nullable;
 
 public sealed interface Problem{
 	
+	String filename(); // or class-name
+	
 	String description();
 	
 	Source from();
 	
-	record Error(String description, Source from) implements Problem{}
+	record Error(String filename, String description, Source from) implements Problem{}
 	
-	record Warning(String description, @Nullable Source from, WarningType type) implements Problem{}
+	record Warning(String filename, String description, @Nullable Source from, WarningType type) implements Problem{}
 	
 	record Source(Position start, @Nullable Position end, @Nullable String snippet, @Nullable MemberReference owner){
 		
