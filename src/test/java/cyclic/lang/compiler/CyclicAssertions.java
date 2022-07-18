@@ -65,32 +65,32 @@ public class CyclicAssertions{
 			// then check the exception type
 		}catch(Throwable t){
 			if(!expected.isInstance(t))
-				throw new RuntimeException("Expected " + expected.getName() + " but got " + t.getClass().getName(), t);
+				throw new AssertionError("Expected " + expected.getName() + " but got " + t.getClass().getName(), t);
 		}
 	}
 	
 	public static void assertEquals(@Nullable Object expected, String sourceToEvaluate){
 		Object actual = evaluate(sourceToEvaluate, null);
 		if(!Objects.equals(expected, actual))
-			throw new RuntimeException("Expected " + expected + " but got " + actual);
+			throw new AssertionError("Expected " + expected + " but got " + actual);
 	}
 	
 	public static void assertInstanceof(Class<?> expected, String sourceToEvaluate){
 		Object actual = evaluate(sourceToEvaluate, null);
 		if(!expected.isInstance(actual))
-			throw new RuntimeException("Expected object of type " + expected + " but got " + actual);
+			throw new AssertionError("Expected object of type " + expected + " but got " + actual);
 	}
 	
 	public static void assertWarns(WarningType warningType, String sourceToEvaluate){
 		compile(sourceToEvaluate);
 		if(!lastSuppressedWarns.contains(warningType))
-			throw new RuntimeException("Expected warning \"" + warningType.ID + "\" to be issued");
+			throw new AssertionError("Expected warning \"" + warningType.ID + "\" to be issued");
 	}
 	
 	public static void assertDoesNotWarn(WarningType warningType, String sourceToEvaluate){
 		compile(sourceToEvaluate);
 		if(lastSuppressedWarns.contains(warningType))
-			throw new RuntimeException("Expected warning \"" + warningType.ID + "\" not to be issued");
+			throw new AssertionError("Expected warning \"" + warningType.ID + "\" not to be issued");
 	}
 	
 	public static void assertDoesntCompile(String sourceToCompile){
