@@ -126,6 +126,13 @@ public class WarningsTests{
 				
 				static List test() -> (List)empty();
 				""");
+		
+		CyclicAssertions.assertWarns(WarningType.IMPOSSIBLE_CAST, """
+				static String test(){
+					Integer i = (Integer)0;
+					return (String)i;
+				}
+				""");
 	}
 	
 	// TODO: test @MustUse
