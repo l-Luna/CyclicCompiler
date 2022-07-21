@@ -55,6 +55,9 @@ public final class Constants{
 	public static final String DEPRECATED = "java.lang.Deprecated";
 	public static final String FUNCTIONAL_INTERFACE = "java.lang.FunctionalInterface";
 	public static final String SAFE_VARARGS = "java.lang.SafeVarargs";
+	
+	public static final String MUST_USE = "cyclic.lang.annotations.MustUse";
+	
 	public static final String SUPPRESS_WARNINGS = "java.lang.SuppressWarnings";
 	
 	public static final String REPEATABLE = "java.lang.annotation.Repeatable";

@@ -1,4 +1,4 @@
-package cyclic.lang.compiler;
+package cyclic.lang.compiler.problems;
 
 import cyclic.lang.compiler.model.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -28,6 +28,10 @@ public class CompileTimeException extends RuntimeException{
 	
 	public static void setFile(String filename){
 		curFile = filename;
+	}
+	
+	public static String getFile(){
+		return curFile;
 	}
 	
 	public static void pushContext(ParserRuleContext context){

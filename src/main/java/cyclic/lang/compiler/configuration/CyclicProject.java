@@ -62,7 +62,7 @@ public class CyclicProject{
 	public void validate(){
 		int curJdk = Runtime.version().feature();
 		if(curJdk != jdk)
-			throw new IllegalStateException("Incorrect compiler JDK " + curJdk + ", project requires " + jdk);
+			throw new ConfigurationException("Incorrect compiler JDK " + curJdk + ", project requires " + jdk);
 	}
 	
 	public Path pathFromRoot(String path){

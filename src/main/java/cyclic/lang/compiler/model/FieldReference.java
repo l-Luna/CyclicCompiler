@@ -1,8 +1,8 @@
 package cyclic.lang.compiler.model;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 

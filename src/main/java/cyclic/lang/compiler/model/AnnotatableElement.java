@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model;
 
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -24,4 +25,15 @@ public interface AnnotatableElement{
 	 * @return The annotatable element type.
 	 */
 	String elementType();
+	
+	/**
+	 * Returns the first annotation tag with a type with the given fully qualified name.
+	 * @param annotationFqName The fully qualified name of the annotation type.
+	 * @return The first annotation tag of that type.
+	 */
+	default Optional<AnnotationTag> getAnnotationByName(String annotationFqName){
+		return annotations().stream()
+				.filter(u -> u.annotationType().fullyQualifiedName().equals(annotationFqName))
+				.findFirst();
+	}
 }

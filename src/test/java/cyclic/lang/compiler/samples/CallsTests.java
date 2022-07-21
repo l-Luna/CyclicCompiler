@@ -1,15 +1,18 @@
 package cyclic.lang.compiler.samples;
 
-import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.List;
 
 import static cyclic.lang.compiler.CompilerLauncher.compileClass;
 import static cyclic.lang.compiler.CompilerLauncher.compileSingleMethod;
+import static cyclic.lang.compiler.CyclicAssertions.assertEquals;
+import static java.lang.invoke.MethodHandles.Lookup;
+import static java.lang.invoke.MethodHandles.lookup;
+import static java.util.Arrays.asList;
+import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -17,7 +20,7 @@ public class CallsTests{
 	
 	@Test
 	void testMethodCalls() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException{
-		MethodHandles.Lookup lookup = MethodHandles.lookup();
+		Lookup lookup = lookup();
 		
 		assertEquals(5, compileSingleMethod("""
 				package cyclic.lang.compiler.samples;
@@ -40,12 +43,9 @@ public class CallsTests{
 				}
 				""", lookup).invoke(null, (Object)null));
 		
-		assertEquals("abcde", compileSingleMethod("""
-				package cyclic.lang.compiler.samples;
-				class Holder{
-					static String test() -> new String("abcde".toCharArray());
-				}
-				""", lookup).invoke(null));
+		assertEquals("abcde", """
+				static String test() -> new String("abcde".toCharArray());
+				""");
 		
 		var conflicted = compileClass("""
 				package cyclic.lang.compiler.samples;
@@ -64,7 +64,7 @@ public class CallsTests{
 				}
 				""", lookup);
 		
-		assertEquals(List.of(-1, 4, 12),
+		assertEquals(of(-1, 4, 12),
 				conflicted.getDeclaredMethod("test").invoke(null));
 		
 		assertEquals(-2,
@@ -99,15 +99,11 @@ public class CallsTests{
 	
 	@Test
 	void testVarargCalls() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException{
-		MethodHandles.Lookup lookup = MethodHandles.lookup();
+		Lookup lookup = lookup();
 		
-		assertEquals(Arrays.asList(0, 1, 2, 3), compileSingleMethod("""
-				package cyclic.lang.compiler.samples;
-				import java.util.*;
-				class Holder{
-					static List test() -> Arrays.asList(0, 1, 2, 3);
-				}
-				""", lookup).invoke(null));
+		assertEquals(asList(0, 1, 2, 3), """
+				static List test() -> Arrays.asList(0, 1, 2, 3);
+				""");
 		
 		var holder = compileClass("""
 				package cyclic.lang.compiler.samples;
@@ -149,7 +145,7 @@ public class CallsTests{
 	
 	@Test
 	void testPassedCalls() throws IllegalAccessException, InvocationTargetException{
-		MethodHandles.Lookup lookup = MethodHandles.lookup();
+		Lookup lookup = lookup();
 		
 		assertEquals(5, compileSingleMethod("""
 				package cyclic.lang.compiler.samples;
@@ -173,13 +169,9 @@ public class CallsTests{
 				}
 				""", lookup).invoke(null, "abcde".toCharArray()));
 		
-		assertEquals(List.of(2, 1, 0), compileSingleMethod("""
-				package cyclic.lang.compiler.samples;
-				import java.util.List;
-				class Holder{
-					static List test() -> 2 |> (1 |> (0 |> List.of()));
-				}
-				""", lookup).invoke(null));
+		assertEquals(of(2, 1, 0), """
+				static List test() -> 2 |> (1 |> (0 |> List.of()));
+				""");
 		
 		assertEquals("abcde", compileSingleMethod("""
 				package cyclic.lang.compiler.samples;

@@ -1,4 +1,4 @@
-package cyclic.lang.compiler;
+package cyclic.lang.compiler.problems;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATNConfigSet;

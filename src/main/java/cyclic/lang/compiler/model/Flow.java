@@ -26,6 +26,7 @@ public final class Flow{
 	 */
 	public static final Object NULL_MARKER = new Object();
 	
+	public static final Predicate<Statement> THROWS = ThrowStatement.class::isInstance;
 	public static final Predicate<Statement> WILL_EXIT = x -> x instanceof ReturnStatement || x instanceof ThrowStatement;
 	
 	/**
@@ -124,8 +125,8 @@ public final class Flow{
 			case IfStatement s -> guaranteedToRun(s.success, condition) && guaranteedToRun(s.fail, condition);
 			// only guaranteed if guaranteed in try block and all catch blocks OR in finally block
 			case TryCatchStatement s -> (guaranteedToRun(s.tryStatement, condition) && s.catchStatements.stream()
-					.allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
-			                            || (s.finallyStatement != null && guaranteedToRun(s.finallyStatement, condition));
+			              .allMatch(k -> guaranteedToRun(k.onCatch(), condition)))
+			                         || (s.finallyStatement != null && guaranteedToRun(s.finallyStatement, condition));
 		};
 	}
 	
@@ -138,11 +139,14 @@ public final class Flow{
 	}
 	
 	public static Predicate<Statement> willAssignToVariable(Variable v){
-		return x -> {
-			return x instanceof VarStatement vs
-					&& vs.value != null
-					&& vs.v.equals(v);
-		};
+		return x -> x instanceof VarStatement vs
+				&& vs.value != null
+				&& vs.v.equals(v);
+	}
+	
+	public static Predicate<Statement> willAssignToField(FieldReference v){
+		return x -> x instanceof AssignFieldStatement afs
+				&& afs.fieldRef.equals(v);
 	}
 	
 	public static int minOccurrencesBefore(Statement body, Statement before, Predicate<Statement> condition, boolean forceEnter){
@@ -208,10 +212,6 @@ public final class Flow{
 				// take all statements until the statement containing the `before` statement
 				// forceEnter for the statement containing the `before` statement to narrow down checking within
 				var cont = new AtomicBoolean(true);
-				for(Statement contain : s.contains){
-					System.out.println(contain + " " + possibleOccurranceBefore(contain, before, condition, forceEnter));
-				}
-				System.out.println();
 				yield s.contains.stream()
 						.takeWhile(x -> cont.get() && (firstMatching(x, y -> y == before).isEmpty() || cont.getAndSet(false)))
 						.map(k -> possibleOccurranceBefore(k, before, condition, !cont.get()))

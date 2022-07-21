@@ -8,14 +8,21 @@ import cyclic.lang.compiler.gen.CyclicClassWriter;
 import cyclic.lang.compiler.gen.asm.AsmCyclicCW;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.ProblemsHolder;
+import cyclic.lang.compiler.problems.SyntaxException;
 import cyclic.lang.compiler.resolve.TypeNotFoundException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassWriter;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.introspector.BeanAccess;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -42,6 +49,9 @@ public final class CompilerLauncher{
 	
 	/** Whether to end the program if a compilation error occurs, rather than throwing an exception. */
 	public static boolean exitOnError = false;
+	
+	/** The path to write diagnostics (errors and warnings) to, in a machine-readable format. */
+	public static String diagnosticsTarget = null;
 	
 	/** The project currently being compiled. */
 	public static CyclicProject project;
@@ -80,9 +90,24 @@ public final class CompilerLauncher{
 			project = new CyclicProject();
 			project.sourcePath = Path.of(args[0]);
 			project.outputPath = Path.of(args[1]);
-			if(args.length >= 3)
-				includeDebugInfo = Boolean.parseBoolean(args[2]);
 			project.includeCyclicLibRefs = false;
+		}
+		
+		if(args.length >= 3){
+			boolean debugSetter = false, diagnosticsSetter = false;
+			for(int i = 2; i < args.length; i++){
+				String arg = args[i];
+				if(arg.equals("--debug"))
+					debugSetter = true;
+				else if(arg.equals("--diagnostics"))
+					diagnosticsSetter = true;
+				else if(arg.equals("--noOutput"))
+					project.noOutput = true;
+				else if(debugSetter)
+					project.includeDebug = Boolean.parseBoolean(arg);
+				else if(diagnosticsSetter)
+					diagnosticsTarget = arg;
+			}
 		}
 		
 		project.validate();
@@ -116,6 +141,24 @@ public final class CompilerLauncher{
 		}
 		
 		checkErrors();
+		
+		if(diagnosticsTarget != null){
+			System.out.println("Outputting diagnostics (\"--diagnostics\" was set) to \"" + diagnosticsTarget + "\"");
+			DumperOptions options = new DumperOptions();
+			options.setWidth(999);
+			options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+			Yaml yaml = new Yaml(options);
+			yaml.setBeanAccess(BeanAccess.FIELD);
+			String yamlOut = yaml.dump(new ArrayList<>(ProblemsHolder.problems));
+			Path path = Path.of(diagnosticsTarget).toAbsolutePath().normalize();
+			try{
+				if(!path.getParent().toFile().exists() && !path.getParent().toFile().mkdirs())
+					throw new IllegalStateException();
+				Files.writeString(path, yamlOut);
+			}catch(IOException e){
+				throw new UncheckedIOException(e);
+			}
+		}
 		
 		if(project.noOutput){
 			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");
@@ -261,7 +304,10 @@ public final class CompilerLauncher{
 			checkErrors();
 		}
 		
-		System.out.println("Compiled " + toCompile.size() + " classes.");
+		if(ProblemsHolder.numWarnings == 0)
+			System.out.println("Compiled " + toCompile.size() + " classes.");
+		else
+			System.out.println("Compiled " + toCompile.size() + " classes, with " + ProblemsHolder.numWarnings + " warnings.");
 		
 		toCompile.clear();
 		return ret;
@@ -333,5 +379,10 @@ public final class CompilerLauncher{
 	public static Method compileSingleMethod(@NotNull String text, @NotNull MethodHandles.Lookup defineWith) throws IllegalAccessException{
 		var holder = compileClass(text, defineWith);
 		return holder.getDeclaredMethods()[0];
+	}
+	
+	public static Method compileSingleMethod(@NotNull String text, @NotNull String methodName, @NotNull MethodHandles.Lookup defineWith) throws IllegalAccessException{
+		var holder = compileClass(text, defineWith);
+		return Arrays.stream(holder.getDeclaredMethods()).filter(u -> u.getName().equals(methodName)).findFirst().orElseThrow();
 	}
 }

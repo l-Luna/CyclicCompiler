@@ -1,6 +1,6 @@
 package cyclic.lang.compiler.model.instructions;
 
-import cyclic.lang.compiler.CompileTimeException;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;

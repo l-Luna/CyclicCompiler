@@ -1,7 +1,7 @@
 package cyclic.lang.compiler.samples;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

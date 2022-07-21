@@ -1,18 +1,16 @@
 package cyclic.lang.compiler.model.cyclic;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Scope;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Variable;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CyclicConstructor implements ConstructorReference, CyclicCallable{
@@ -31,14 +29,18 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	public Statement body = null;
 	public Scope scope = new Scope();
 	
+	private List<CyclicLangParser.AnnotationContext> unresolvedAnnotations;
+	private Set<AnnotationTag> annotations = new HashSet<>();
+	
 	public boolean isGeneratedRecordCtor = false;
 	public boolean isCanonRecordCtor = false;
 	public boolean isInitBlock = false;
 	
 	// for explicit constructors
 	public CyclicConstructor(CyclicLangParser.ConstructorContext ctx, CyclicType in){
-		this.in = in;
 		text = ctx;
+		this.in = in;
+		this.unresolvedAnnotations = ctx.annotation();
 		flags = Utils.fromModifiers(ctx.modifiers());
 		flags = new AccessFlags(flags.visibility(), false, false); // no final or abstract constructors
 		if(!ctx.idPart().getText().equals(in.shortName()))
@@ -104,6 +106,10 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 		
 		if(isVarargs())
 			parameters.set(parameters.size() - 1, new ArrayTypeRef(parameters.get(parameters.size() - 1)));
+		
+		if(unresolvedAnnotations != null)
+			for(CyclicLangParser.AnnotationContext annotation : unresolvedAnnotations)
+				annotations.add(AnnotationTag.fromAst(annotation, this, in));
 	}
 	
 	public TypeReference in(){
@@ -161,18 +167,20 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 			Statement.CtorCallStatement ctorCall = (Statement.CtorCallStatement)cCallOpt.get();
 			// simplify should be idempotent, make sure it's a valid call
 			ctorCall.simplify();
+			boolean isSuperCall = !ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName());
+			
 			if(!(body instanceof Statement.CtorCallStatement))
 				if(!(body instanceof Statement.BlockStatement block && block.contains.get(0) instanceof Statement.CtorCallStatement))
 					throw new CompileTimeException(cCallText, "Must have an explicit constructor call first");
 			if(in.kind() == TypeKind.RECORD){
 				if(isCanonRecordCtor)
 					throw new CompileTimeException(cCallText, "Canonical record constructors must not have an explicit constructor call");
-				else if(!ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName()))
+				else if(isSuperCall)
 					// no super()s in records
 					throw new CompileTimeException(cCallText, "Record constructors cannot call a super-constructor");
 			}
 			if(in.kind() == TypeKind.ENUM){
-				if(!ctorCall.target.in().fullyQualifiedName().equals(in.fullyQualifiedName()))
+				if(isSuperCall)
 					// no super()s in enums
 					throw new CompileTimeException(cCallText, "Enum constructors cannot call a super-constructor");
 			}
@@ -203,7 +211,18 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 		return Flow.firstMatching(body, Statement.CtorCallStatement.class::isInstance);
 	}
 	
+	public Set<AnnotationTag> annotations(){
+		return annotations;
+	}
+	
 	public Statement getBody(){
 		return body;
+	}
+	
+	private Set<String> suppresses = null;
+	public Set<String> suppressedWarnings(){
+		if(suppresses != null)
+			return suppresses;
+		return suppresses = findSuppressedWarnings();
 	}
 }

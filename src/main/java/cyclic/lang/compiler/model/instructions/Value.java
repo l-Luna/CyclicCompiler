@@ -12,6 +12,8 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.ProblemsHolder;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.Contract;
@@ -459,6 +461,10 @@ public abstract class Value{
 				throw new CompileTimeException(text, "Invalid reference; there is no such variable or type \"" + getPartialTypeName() + "\", nor are there any types that correspond to parts of that name");
 			return target;
 		}
+		
+		public void simplify(Statement in){
+			ProblemsHolder.checkReference(target, in, text);
+		}
 	}
 	
 	public static class FieldValue extends Value{
@@ -500,6 +506,7 @@ public abstract class Value{
 		public void simplify(Statement in){
 			if(from != null)
 				from.simplify(in);
+			ProblemsHolder.checkReference(ref, in, text);
 		}
 		
 		public TypeReference type(){
@@ -625,6 +632,7 @@ public abstract class Value{
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
+			ProblemsHolder.checkReference(target, in, text);
 		}
 		
 		public TypeReference type(){
@@ -703,6 +711,7 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			underlying.simplify(in);
+			ProblemsHolder.checkReference(substitute, in, text);
 		}
 		
 		public TypeReference type(){
@@ -758,6 +767,7 @@ public abstract class Value{
 				throw new CompileTimeException(text, "Could not find constructor for type %s given candidates [%s] for args of types [%s]".formatted(of.fullyQualifiedName(), candidates, types));
 			}
 			args.forEach(value -> value.simplify(in));
+			ProblemsHolder.checkReference(ctor, in, text);
 		}
 		
 		public TypeReference type(){
@@ -779,6 +789,10 @@ public abstract class Value{
 		public TypeReference type(){
 			// TODO: generics
 			return TypeResolver.resolveFq(Constants.CLASS);
+		}
+		
+		public void simplify(Statement in){
+			ProblemsHolder.checkReference(of, in, text);
 		}
 	}
 	
@@ -824,6 +838,7 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			checking.simplify(in);
+			ProblemsHolder.checkReference(target, in, text);
 		}
 		
 		public TypeReference type(){
@@ -876,6 +891,8 @@ public abstract class Value{
 		
 		public void simplify(Statement in){
 			casting.simplify(in);
+			ProblemsHolder.checkReference(target, in, text);
+			ProblemsHolder.checkImpossibleCast(casting.type(), target, in, text);
 		}
 		
 		public TypeReference type(){
@@ -1109,6 +1126,20 @@ public abstract class Value{
 		
 		public TypeReference type(){
 			return newValue.type();
+		}
+		
+		public void simplify(Statement in){
+			if(fieldOf != null)
+				fieldOf.simplify(in);
+			if(array != null){
+				array.simplify(in);
+				arrayIndex.simplify(in);
+			}
+			if(target != null)
+				target.simplify(in);
+			
+			if(field != null)
+				ProblemsHolder.checkReference(field, in, text);
 		}
 	}
 }

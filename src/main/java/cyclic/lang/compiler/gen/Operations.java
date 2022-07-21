@@ -1,6 +1,5 @@
 package cyclic.lang.compiler.gen;
 
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.Flow;
 import cyclic.lang.compiler.model.TypeReference;
@@ -8,6 +7,7 @@ import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.Nullable;
