@@ -99,11 +99,11 @@ public interface TypeParameterReference extends TypeReference{
 	
 	/**
 	 * Returns the fully qualified name of this type parameter.
-	 * <p/>For a class type parameter, this is the fully qualified name of the class,
+	 * <p>For a class type parameter, this is the fully qualified name of the class,
 	 * plus <code>/</code>, plus the name of the type parameter.
 	 * <p>Example: <code>org.example.Example/A</code>
 	 *
-	 * <p/>For a method type parameter, this is the fully qualified name of the type
+	 * <p>For a method type parameter, this is the fully qualified name of the type
 	 * that declares the method, plus <code>::</code>, plus the name and descriptor
 	 * of the method, plus <code>/</code>, plus the name of the type parameter.
 	 * <p>Example: <code>org.example.Example::foo(ILjava/lang/String;)V/A</code>
