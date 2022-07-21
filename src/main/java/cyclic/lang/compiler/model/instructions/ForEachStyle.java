@@ -6,6 +6,7 @@ import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.cyclic.CyclicCallable;
+import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
@@ -40,10 +41,15 @@ public interface ForEachStyle{
 			return iteratorType.isAssignableTo(TypeResolver.resolveFq(ITERABLE));
 		}
 		
-		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c, CyclicLangParser.ForeachStatementContext text){
-			// TODO: check T against the iterator's generic type
-			if(varType != null && !varType.fullyQualifiedName().equals(OBJECT))
-				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an iterator for-each loop must be Object or var");
+		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
+			var exactIterable = Utils.asGenericSupertype(iterating.type(), TypeResolver.resolveFq(ITERABLE));
+			TypeReference target = TypeResolver.resolveFq(OBJECT);
+			if(exactIterable instanceof ParameterizedTypeRef ptr)
+				target = ptr.getTypeArguments().values().stream().findAny().get();
+			if(varType != null && !target.isAssignableTo(varType))
+				throw new CompileTimeException("Variable type of an iterator for-each loop must be a subtype of the iterator's type or var - " + target.fullyQualifiedName() + " is not assignable to " + varType.fullyQualifiedName());
+			if(varType == null)
+				varType = target;
 			return forEachStatementWithType(iterating, varName, varType, finalVar, in, body, c);
 		}
 		
