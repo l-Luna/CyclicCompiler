@@ -322,7 +322,7 @@ public interface TypeReference extends AnnotatableElement, GenericElement<TypeRe
 	 * Returns the superclass of this type, with type arguments supplied by this type.
 	 * Returns null if this is <code>java.lang.Object</code> or a primitive type.
 	 * <p>
-	 * <p/> Consider <code>class Sub&lt;T&gt; extends Super&lt;String, T&gt;</code>. Calling
+	 * <p> Consider <code>class Sub&lt;T&gt; extends Super&lt;String, T&gt;</code>. Calling
 	 * {@linkplain TypeReference#superClass()} on Sub will return <code>Super</code>, while calling
 	 * this on Sub will return <code>Super&lt;java.lang.String, Sub/T&gt;</code>.
 	 *

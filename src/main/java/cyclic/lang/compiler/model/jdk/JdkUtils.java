@@ -1,13 +1,12 @@
 package cyclic.lang.compiler.model.jdk;
 
-import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.MemberReference;
 import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
+import cyclic.lang.compiler.model.generic.WildcardTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
-import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.lang.reflect.*;
 import java.util.HashMap;
@@ -31,7 +30,16 @@ public final class JdkUtils{
 			}
 			case GenericArrayType gat -> new ArrayTypeRef(fromReflectType(gat.getGenericComponentType()));
 			case TypeVariable<?> tv -> new JdkTypeParamRef(tv);
-			case WildcardType wildcard -> TypeResolver.resolveFq(Constants.OBJECT); // FIXME: wildcards
+			case WildcardType wildcard -> {
+				// TODO: under what circumstances can something have upper & lower bounds, or multiple lower bounds?
+				// TODO: multiple upper bounds (i.e. T extends A & B)
+				if(wildcard.getUpperBounds().length + wildcard.getLowerBounds().length == 0)
+					yield WildcardTypeRef.wildcard();
+				else if(wildcard.getLowerBounds().length > 0)
+					yield WildcardTypeRef.anySuper(fromReflectType(wildcard.getLowerBounds()[0]));
+				else
+					yield WildcardTypeRef.anyExtends(fromReflectType(wildcard.getUpperBounds()[0]));
+			}
 			default -> throw new IllegalStateException("Cannot convert type: " + type + ", class " + type.getClass());
 		};
 	}
@@ -44,7 +52,7 @@ public final class JdkUtils{
 	public static MemberReference fromReflectMember(Member member){
 		return switch(member){
 			case Method m -> new JdkMethodRef(m);
-			case Constructor c -> new JdkCtorRef(c);
+			case Constructor<?> c -> new JdkCtorRef(c);
 			case Field f -> new JdkFieldRef(f, Utils.forAnyClass(f.getDeclaringClass()));
 			default -> throw new IllegalStateException("Cannot convert member: " + member);
 		};

@@ -40,7 +40,7 @@ public interface Dependency extends Closeable{
 	/**
 	 * Resolves complex references in types within this dependency to other types, which may be in other dependencies,
 	 * such as inherited members.
-	 * <p/>This method must be called after {@link #resolveRefs()} has been called.
+	 * <p>This method must be called after {@link #resolveRefs()} has been called.
 	 */
 	default void resolveInheritance(){}
 }
