@@ -337,7 +337,7 @@ public abstract class Statement{
 			this.returnValue = returnValue;
 			this.toReturn = toReturn;
 			if(returnValue != null && returnValue.fit(toReturn) == null)
-				throw new CompileTimeException("Can't return " + returnValue + " from " + from + "; not assignable to " + toReturn);
+				throw new CompileTimeException("Can't return value of type " + returnValue.typeName() + " from " + from.summary() + "; not assignable to " + toReturn.fullyQualifiedName());
 		}
 		
 		public void write(MethodVisitor mv){

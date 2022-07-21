@@ -247,11 +247,15 @@ public final class Utils{
 		if(typeArgs.isEmpty()){
 			if(base.isConcrete())
 				return base;
-			// TODO: varargs!
-			// make this whole thing less awful please
-			List<Map.Entry<TypeReference, TypeReference>> used = new ArrayList<>(base.parameters().size());
-			for(int i = 0; i < base.parameters().size(); i++)
-				used.add(Map.entry(base.parameters().get(i), args.get(i).type()));
+			List<Map.Entry<TypeReference, TypeReference>> used = new ArrayList<>(args.size());
+			for(int i = 0; i < args.size(); i++){
+				TypeReference param;
+				if(base.isVarargs() && i >= base.parameters().size() - 1 && base.parameters().get(base.parameters().size() - 1) instanceof ArrayTypeRef atr)
+					param = atr.getComponent();
+				else
+					param = base.parameters().get(i);
+				used.add(Map.entry(param, args.get(i).type()));
+			}
 			typeParamMap = TypeInferrer.match(used);
 		}
 		// match typeArgs to the method's type parameters by index
@@ -267,19 +271,19 @@ public final class Utils{
 		// check that its arguments are compatible with the type arguments
 		if(!newTarget.isVarargs() && newTarget.parameters().size() != args.size())
 			return null; // shouldn't happen
-		TypeReference lastNewParam = newTarget.parameters().get(newTarget.parameters().size() - 1);
+		TypeReference lastNewParam = newTarget.parameters().size() > 0 ? newTarget.parameters().get(newTarget.parameters().size() - 1) : null;
 		boolean isExplicitVarargs = newTarget.isVarargs()
 				&& args.get(args.size() - 1).type() instanceof ArrayTypeRef atr
 				&& lastNewParam instanceof ArrayTypeRef lnptr
 				&& atr.getComponent().equals(lnptr.getComponent());
 		for(int i = 0; i < args.size(); i++){
 			var arg = args.get(i);
-			boolean isVarargParam = i >= newTarget.parameters().size();
+			boolean isVarargParam = i >= newTarget.parameters().size() - 1;
 			
 			var param = isVarargParam
 					? lastNewParam
 					: newTarget.parameters().get(i);
-			if(arg.fit(param) == null ||
+			if(arg.fit(param) == null && // TODO: is this correct?
 					(isVarargParam && !isExplicitVarargs && param instanceof ArrayTypeRef atr && arg.fit(atr.getComponent()) == null))
 				return null;
 		}
