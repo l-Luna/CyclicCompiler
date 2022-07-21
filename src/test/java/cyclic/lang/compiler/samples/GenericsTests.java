@@ -76,5 +76,15 @@ public class GenericsTests{
 					return s;
 				}
 				""");
+		
+		assertEquals("aabbcc", """
+				static String test(){
+					List<String> parts = List.of("a", "ab", "bc", "c");
+					String s = "";
+					for(String p : parts)
+						s += p;
+					return s;
+				}
+				""");
 	}
 }

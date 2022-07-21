@@ -11,6 +11,7 @@ import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.MethodResolver;
+import cyclic.lang.compiler.resolve.TypeInferrer;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -242,15 +243,26 @@ public final class Utils{
 		var base = resolveMethod(name, on, args, from, superCall);
 		if(base == null)
 			return null;
-		if(typeArgs.isEmpty())
-			return base.isConcrete() ? base : base.erasure(); // TODO: type inference
+		Map<TypeParameterReference, TypeReference> typeParamMap = null;
+		if(typeArgs.isEmpty()){
+			if(base.isConcrete())
+				return base;
+			// TODO: varargs!
+			// make this whole thing less awful please
+			List<Map.Entry<TypeReference, TypeReference>> used = new ArrayList<>(base.parameters().size());
+			for(int i = 0; i < base.parameters().size(); i++)
+				used.add(Map.entry(base.parameters().get(i), args.get(i).type()));
+			typeParamMap = TypeInferrer.match(used);
+		}
 		// match typeArgs to the method's type parameters by index
-		var typeParams = base.typeParameters();
-		if(typeParams.size() != typeArgs.size())
-			return null; // don't throw yet, a pass expression could later resolve to a different method
-		var typeParamMap = new HashMap<TypeParameterReference, TypeReference>();
-		for(int i = 0; i < typeParams.size(); i++)
-			typeParamMap.put(typeParams.get(i), typeArgs.get(i));
+		if(typeParamMap == null){
+			List<? extends TypeParameterReference> typeParams = base.typeParameters();
+			if(typeParams.size() != typeArgs.size())
+				return null; // don't throw yet, a pass expression could later resolve to a different method
+			typeParamMap = new HashMap<>();
+			for(int i = 0; i < typeParams.size(); i++)
+				typeParamMap.put(typeParams.get(i), typeArgs.get(i));
+		}
 		var newTarget = new ParameterizedMethodRef(base, typeParamMap, null);
 		// check that its arguments are compatible with the type arguments
 		if(!newTarget.isVarargs() && newTarget.parameters().size() != args.size())
