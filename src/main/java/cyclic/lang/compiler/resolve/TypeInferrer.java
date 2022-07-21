@@ -4,6 +4,7 @@ import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
+import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ public class TypeInferrer{
 	// {T -> Double, T -> Long} -> {T -> Number},
 	// {T -> String, T -> Integer} -> {T -> Object},
 	// {List<T> -> ArrayList<Integer>} -> {T -> Integer}
-	public static Map<TypeReference, TypeReference> match(List<Entry<TypeReference, TypeReference>> supplied){
+	public static Map<TypeParameterReference, TypeReference> match(List<Entry<TypeReference, TypeReference>> supplied){
 		// reduce generics: {A<X> -> A<Y>} -> {X -> Y}
 		boolean happened;
 		do{
@@ -34,9 +35,12 @@ public class TypeInferrer{
 				}
 		}while(happened);
 		// reduce lower bounds {T -> Long, T -> Double} -> {T -> Number}
-		Map<TypeReference, List<TypeReference>> bounds = supplied.stream().collect(groupingBy(Entry::getKey, mapping(Entry::getValue, toList())));
+		Map<TypeReference, List<TypeReference>> bounds = supplied.stream()
+				.map(x -> Map.entry(x.getKey(), x.getValue() instanceof PrimitiveTypeRef p ? p.boxedType() : x.getValue()))
+				.collect(groupingBy(Entry::getKey, mapping(Entry::getValue, toList())));
 		return bounds.entrySet().stream()
-				.map(x -> Map.entry(x.getKey(), lowestCommonSupertype(x.getValue())))
+				.filter(x -> x.getKey() instanceof TypeParameterReference)
+				.map(x -> Map.entry((TypeParameterReference)x.getKey(), lowestCommonSupertype(x.getValue())))
 				.collect(toMap(Entry::getKey, Entry::getValue));
 	}
 	
