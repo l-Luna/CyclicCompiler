@@ -1,11 +1,13 @@
 package cyclic.lang.compiler.model.jdk;
 
+import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.MemberReference;
 import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.Utils;
 import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
+import cyclic.lang.compiler.resolve.TypeResolver;
 
 import java.lang.reflect.*;
 import java.util.HashMap;
@@ -29,7 +31,8 @@ public final class JdkUtils{
 			}
 			case GenericArrayType gat -> new ArrayTypeRef(fromReflectType(gat.getGenericComponentType()));
 			case TypeVariable<?> tv -> new JdkTypeParamRef(tv);
-			default -> throw new IllegalStateException("Cannot convert type: " + type);
+			case WildcardType wildcard -> TypeResolver.resolveFq(Constants.OBJECT); // FIXME: wildcards
+			default -> throw new IllegalStateException("Cannot convert type: " + type + ", class " + type.getClass());
 		};
 	}
 	
