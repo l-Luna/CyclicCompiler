@@ -2,7 +2,6 @@ package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.antlr_generated.CyclicLangParser.GenericTypeUsesContext;
-import cyclic.lang.compiler.CompileTimeException;
 import cyclic.lang.compiler.CompilerLauncher;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.gen.Operations;

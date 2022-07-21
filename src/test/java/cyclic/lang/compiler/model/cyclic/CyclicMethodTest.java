@@ -1,11 +1,7 @@
 package cyclic.lang.compiler.model.cyclic;
 
-import cyclic.lang.compiler.CompileTimeException;
-import cyclic.lang.compiler.CompilerLauncher;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static cyclic.lang.compiler.CyclicAssertions.assertDoesntCompile;
 import static cyclic.lang.compiler.CyclicAssertions.compile;
 
