@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static cyclic.lang.compiler.CyclicAssertions.assertEquals;
-import static cyclic.lang.compiler.CyclicAssertions.assertThrows;
+import static cyclic.lang.compiler.CyclicAssertions.*;
 
 public class GenericsTests{
 	
@@ -84,6 +83,12 @@ public class GenericsTests{
 					for(String p : parts)
 						s += p;
 					return s;
+				}
+				""");
+		
+		assertDoesntCompile( """
+				static void test(){
+					List<Integer> is = List.of("a", "b", "c");
 				}
 				""");
 	}
