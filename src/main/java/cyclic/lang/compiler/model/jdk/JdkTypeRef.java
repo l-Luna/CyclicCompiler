@@ -98,6 +98,10 @@ public class JdkTypeRef implements TypeReference{
 		return JdkUtils.fromReflectType(clss);
 	}
 	
+	public List<? extends TypeReference> genericSuperInterfaces(){
+		return Arrays.stream(underlying.getGenericInterfaces()).map(JdkUtils::fromReflectType).toList();
+	}
+	
 	public String toString(){
 		return "JDK:" + fullyQualifiedName();
 	}

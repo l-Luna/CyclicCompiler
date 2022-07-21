@@ -86,7 +86,7 @@ public class ParameterizedTypeRef implements TypeReference{
 	
 	public List<? extends TypeReference> genericSuperInterfaces(){
 		return base.genericSuperInterfaces().stream()
-				.map(x->GenericUtils.substitute(x, getTypeArguments()))
+				.map(x -> GenericUtils.substitute(x, getTypeArguments()))
 				.toList();
 	}
 	

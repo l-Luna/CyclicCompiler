@@ -66,5 +66,15 @@ public class GenericsTests{
 					List<List<String>> list = List.<List<String>>of(List.<String>of("yes"));
 				}
 				""");
+		
+		assertEquals("aabbcc", """
+				static String test(){
+					List<String> parts = List.<String>of("a", "ab", "bc", "c");
+					String s = "";
+					for(String p : parts)
+						s += p;
+					return s;
+				}
+				""");
 	}
 }

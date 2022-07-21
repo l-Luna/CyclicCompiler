@@ -395,4 +395,18 @@ public final class Utils{
 	public static <T, Eq> List<T> distinctListByEq(List<T> in, Function<T, Eq> eq){
 		return distinctStreamByEq(in.stream(), eq).collect(Collectors.toCollection(ArrayList::new));
 	}
+	
+	// e.g. (List<String>, Iterable) -> Iterable<String>
+	@NotNull
+	public static TypeReference asGenericSupertype(TypeReference value, TypeReference supertypeBase){
+		if(value.erasure().equals(supertypeBase))
+			return value;
+		TypeReference superClass = value.genericSuperClass();
+		if(superClass != null && superClass.isAssignableTo(supertypeBase))
+			return asGenericSupertype(superClass, supertypeBase);
+		for(TypeReference iface : value.genericSuperInterfaces())
+			if(iface.isAssignableTo(supertypeBase))
+				return asGenericSupertype(iface, supertypeBase);
+		throw new IllegalArgumentException("Type " + value.fullyQualifiedName() + value.genericSummary() + " is not assignable to " + supertypeBase.fullyQualifiedName() + supertypeBase.genericSummary() + "!");
+	}
 }
