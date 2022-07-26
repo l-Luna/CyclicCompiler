@@ -93,15 +93,17 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "The name of the dependency to look for - currently unused."
+            "description": "The name of the dependency to look for; for a mavenJar, this is groupId:artefactId.",
+            "x-intellij-html-description": "The name of the dependency to look for; for a <code>mavenJar</code>, this is <code>groupId:artefactId</code>."
           },
           "version": {
             "type": "string",
-            "description": "The version of this dependency to look for - currently unused."
+            "description": "The version of this dependency to look for; used by mavenJar dependencies.",
+            "x-intellij-html-description": "The version of this dependency to look for; used by <code>mavenJar</code> dependencies."
           },
           "type": {
             "type": "string",
-            "enum": ["jar", "classFolder", "sourceFolder", "webJar"],
+            "enum": ["jar", "classFolder", "sourceFolder", "webJar", "mavenJar"],
             "description": "The type of dependency."
           },
           "location": {
