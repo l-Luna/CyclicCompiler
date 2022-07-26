@@ -14,6 +14,8 @@ import java.lang.annotation.*;
 
 // The compiler will issue a warning if the value is ignored. If `value` is not empty, it will be included
 // in the warning.
+@Retention(RetentionPolicy.CLASS)
+@Target(new ElementType[]{ ElementType.METHOD })
 public annotation MustUse{
 
 	String value() -> "";
