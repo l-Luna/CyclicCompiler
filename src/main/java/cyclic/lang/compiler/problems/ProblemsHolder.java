@@ -70,7 +70,7 @@ public final class ProblemsHolder{
 	}
 	
 	public static void checkImpossibleCast(TypeReference obj, TypeReference target, @Nullable Statement in, @Nullable ParserRuleContext location){
-		if(!obj.isAssignableTo(target) && !target.isAssignableTo(obj))
+		if(target.kind() != TypeKind.INTERFACE && !obj.isAssignableTo(target) && !target.isAssignableTo(obj))
 			warnFrom(WarningType.IMPOSSIBLE_CAST, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
 	}
 	

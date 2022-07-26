@@ -133,6 +133,13 @@ public class WarningsTests{
 					return (String)i;
 				}
 				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_CAST, """
+				static Comparable test(){
+					Number i = (Integer)1;
+					return (Comparable)i;
+				}
+				""");
 	}
 	
 	// TODO: test @MustUse
