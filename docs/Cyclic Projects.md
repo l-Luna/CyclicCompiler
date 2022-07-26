@@ -38,6 +38,7 @@ For a dependency, the following `type`s are supported:
 - `classFolder`: A folder containing compiled classes.
 - `sourceFolder`: A folder containing source files.
 - `webJar`: A JAR file on the internet; `location` should be a URL.
+- `mavenJar`: A project hosted on a maven repository. `name` should be the project's `groupId:artefactId`, e.g. `org.ow2.asm:asm`; `version` should be it's version according to semver. `location` is optional; if set, it will be used as the maven repo's URL, otherwise the project's maven repos will be used.
 
 For a package, only the `jar` type is supported.
 
@@ -49,6 +50,7 @@ There are a few other attributes that can be specified:
 - `includeDebug`: Whether to include debug symbols (parameter names and line numbers) in compiled code, `true` by default. (Note: This may become a package-specific option in the future.)
 - `cyclicLib`: The version of the Cyclic library to compile against, equal to `jdk` by default. *This currently has no effect*, and you must specify a Cyclic library dependency yourself.
 - `includeCyclicLibRefs`: Whether to include references to the Cyclic library in compiled code, `true` by default. When disabled, Cyclic features that depend on standard library types may not be available.
+- `mavenRepos`: A list of maven repositories to be checked for `mavenJar` dependencies. Maven Central is implicitly added.
 - `defaultImports`: A list of imports to be considered in every file of this project, such as `java.lang.*` or `cyclic.lang.annotations.MustUse`. Empty by default. (Note: `java.lang.*` is always considered a default import regardless of the values of this list.)
 - `noOutput`: Whether to skip writing compiled classes to the output folder and produce no packages, `false` by default.
 - `internal`: Causes the compiler to throw an exception when a compilation error occurs instead of exiting gracefully, for testing purposes. `false` by default.

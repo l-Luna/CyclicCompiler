@@ -48,6 +48,16 @@
       "description": "Whether class files and packages should not be generated for this project."
     },
 
+    "mavenRepos": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "examples": ["https://repo1.maven.org/maven2/"]
+      },
+      "description": "A list of additional maven repository URLs to be checked for mavenJar dependencies.",
+      "x-intellij-html-description": "A list of additional maven repository URLs to be checked for <code>mavenJar</code> dependencies."
+    },
+
     "defaultImports": {
       "type": "array",
       "items": {
