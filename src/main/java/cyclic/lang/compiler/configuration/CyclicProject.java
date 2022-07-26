@@ -40,12 +40,14 @@ public class CyclicProject{
 	public List<CyclicPackage> packages = new ArrayList<>();
 	public List<CyclicPackage> dependencies = new ArrayList<>();
 	
+	public List<String> mavenRepos = new ArrayList<>();
+	
 	@NotNull
 	public static CyclicProject parse(Path projectPath) throws IOException{
 		var yaml = new Yaml();
 		var text = Files.readString(projectPath);
 		var project = yaml.loadAs(text, CyclicProject.class);
-		project.updatePaths(projectPath.getParent());
+		project.postParse(projectPath.getParent());
 		if(project.name == null){
 			var filename = projectPath.getFileName().toString();
 			project.name = filename.substring(0, filename.length() - PROJECT_FILE_EXTENSION.length());
@@ -53,10 +55,13 @@ public class CyclicProject{
 		return project;
 	}
 	
-	/*package-private*/ void updatePaths(Path root){
+	/*package-private*/ void postParse(Path root){
 		this.root = root;
 		sourcePath = root.resolve(source).normalize();
 		outputPath = root.resolve(output).normalize();
+		
+		// Maven central
+		mavenRepos.add("https://repo1.maven.org/maven2/");
 	}
 	
 	public void validate(){
