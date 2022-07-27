@@ -70,8 +70,17 @@ public final class ProblemsHolder{
 	}
 	
 	public static void checkImpossibleCast(TypeReference obj, TypeReference target, @Nullable Statement in, @Nullable ParserRuleContext location){
-		if(target.kind() != TypeKind.INTERFACE && !obj.isAssignableTo(target) && !target.isAssignableTo(obj))
+		// (T)(X)x, where T and X are classes in separate hierarchies
+		if(target.kind() != TypeKind.INTERFACE && obj.kind() != TypeKind.INTERFACE && !obj.isAssignableTo(target) && !target.isAssignableTo(obj))
 			warnFrom(WarningType.IMPOSSIBLE_CAST, "Values of type \"%s\" cannot be cast to \"%s\"".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
+	}
+	
+	public static void checkInstanceof(TypeReference obj, TypeReference target, @Nullable Statement in, @Nullable ParserRuleContext location){
+		// (X)x instanceof T, where T and X are in different hierarchies
+		if(target.kind() != TypeKind.INTERFACE && obj.kind() != TypeKind.INTERFACE && !obj.isAssignableTo(target) && !target.isAssignableTo(obj))
+			warnFrom(WarningType.IMPOSSIBLE_INSTANCEOF, "Values of type \"%s\" cannot be cast to \"%s\", so expression is always false".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
+		if(obj.isAssignableTo(target))
+			warnFrom(WarningType.GUARANTEED_INSTANCEOF, "Values of type \"%s\" are assignable to \"%s\", so expression is always true".formatted(obj.fullyQualifiedName(), target.fullyQualifiedName()), in, location);
 	}
 	
 	private static String nameForWarning(MemberReference ref){

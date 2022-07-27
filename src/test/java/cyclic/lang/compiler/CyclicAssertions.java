@@ -22,6 +22,7 @@ public class CyclicAssertions{
                 """
 				package cyclic.lang.compiler;
 				import java.util.*;
+				import java.util.function.*;
 				class Holder{
 				""" + sourceToEvaluate + "}";
 		try{
@@ -41,6 +42,7 @@ public class CyclicAssertions{
 				"""
 				package cyclic.lang.compiler;
 				import java.util.*;
+				import java.util.function.*;
 				class Holder{
 				""" + sourceToCompile + "}";
 		try{

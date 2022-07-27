@@ -140,6 +140,74 @@ public class WarningsTests{
 					return (Comparable)i;
 				}
 				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_CAST, """
+				static Object test(){
+					Number i = (Integer)1;
+					return (Object)i;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_CAST, """
+				static Object test(){
+					Object o = null;
+					return (Object)o;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_CAST, """
+				static Object test(){
+					Comparable i = "";
+					return (String)i;
+				}
+				""");
+	}
+	
+	@Test
+	void testConstantInstanceof(){
+		CyclicAssertions.assertWarns(WarningType.IMPOSSIBLE_INSTANCEOF, """
+				static Integer zero() -> 0;
+				
+				static boolean test() -> zero() instanceof String;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_INSTANCEOF, """
+				static Integer zero() -> 0;
+				
+				@SuppressWarnings("impossible_instanceof")
+				static boolean test() -> zero() instanceof String;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_CAST, """
+				static Object zero() -> (Integer)0;
+				
+				static boolean test() -> zero() instanceof String;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.IMPOSSIBLE_INSTANCEOF, """
+				static Consumer cs() -> null;
+				
+				static boolean test() -> cs() instanceof Comparable;
+				""");
+		
+		CyclicAssertions.assertWarns(WarningType.GUARANTEED_INSTANCEOF, """
+				static Integer zero() -> 0;
+				
+				static boolean test() -> zero() instanceof Number;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.GUARANTEED_INSTANCEOF, """
+				static Integer zero() -> 0;
+				
+				@SuppressWarnings("guaranteed_instanceof")
+				static boolean test() -> zero() instanceof Number;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.GUARANTEED_INSTANCEOF, """
+				static Object zero() -> (Integer)0;
+				
+				static boolean test() -> zero() instanceof Number;
+				""");
 	}
 	
 	// TODO: test @MustUse

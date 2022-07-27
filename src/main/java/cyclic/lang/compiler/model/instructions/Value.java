@@ -814,6 +814,7 @@ public abstract class Value{
 		public void simplify(Statement in){
 			checking.simplify(in);
 			ProblemsHolder.checkReference(target, in, text);
+			ProblemsHolder.checkInstanceof(checking.type(), target, in, text);
 		}
 		
 		public TypeReference type(){
