@@ -37,8 +37,8 @@ public class CompileTimeException extends RuntimeException{
 	public static void pushContext(ParserRuleContext context){
 		curText.push(context == null ?
 				/* still need to show correct file */
-				new Context("", curFile, -1, -1) :
-				new Context(Utils.format(context), curFile, context.start.getLine(), context.start.getCharPositionInLine()));
+				new Context(null, curFile, -1, -1) :
+				new Context(context, curFile, context.start.getLine(), context.start.getCharPositionInLine()));
 	}
 	
 	public static void popContext(){
@@ -56,10 +56,10 @@ public class CompileTimeException extends RuntimeException{
 		return message;
 	}
 	
-	public record Context(String text, String filename, int line, int start){
+	public record Context(ParserRuleContext text, String filename, int line, int start){
 		
 		public String toString(){
-			return "[%d:%d]\n%s".formatted(line(), start(), text());
+			return "[%d:%d]\n%s".formatted(line(), start(), Utils.format(text()));
 		}
 	}
 }

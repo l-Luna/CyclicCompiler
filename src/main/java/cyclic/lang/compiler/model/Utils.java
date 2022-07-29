@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 
 import java.util.*;
@@ -315,12 +316,12 @@ public final class Utils{
 		return "[%d:%d]".formatted(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine());
 	}
 	
-	public static String format(@NotNull ParserRuleContext ctx){
-		return format(getAllTokens(ctx));
+	public static String format(@Nullable ParserRuleContext ctx){
+		return ctx == null ? "" : format(getAllTokens(ctx));
 	}
 	
 	public static List<TerminalNode> getAllTokens(@NotNull ParserRuleContext ctx){
-		var ret = new ArrayList<TerminalNode>();
+		var ret = new LinkedList<TerminalNode>();
 		if(ctx.children != null)
 			for(var child : ctx.children)
 				if(child instanceof TerminalNode t)
