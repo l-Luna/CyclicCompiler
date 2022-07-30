@@ -33,7 +33,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 	List<List<CyclicLangParser.AnnotationContext>> paramsAnnotationNames = new ArrayList<>();
 	CyclicLangParser.BlockContext blockStatement;
 	CyclicLangParser.ValueContext arrowVal;
-	CyclicLangParser.StatementContext arrowStatement;
+	CyclicLangParser.UnitStatementContext arrowStatement;
 	CyclicLangParser.FunctionContext text;
 	
 	TypeReference returns;
@@ -61,11 +61,11 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 			isSt |= modifier.equals("static");
 		});
 		
-		if(ctx.functionArrow() != null){
-			if(ctx.functionArrow().statement() != null)
-				arrowStatement = ctx.functionArrow().statement();
+		if(ctx.functionArrow() != null && ctx.functionArrow().valueOrStatement() != null){
+			if(ctx.functionArrow().valueOrStatement().unitStatement() != null)
+				arrowStatement = ctx.functionArrow().valueOrStatement().unitStatement();
 			else
-				arrowVal = ctx.functionArrow().value();
+				arrowVal = ctx.functionArrow().valueOrStatement().value();
 		}else
 			blockStatement = ctx.functionBlock().block();
 		
@@ -165,7 +165,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 				body.text = blockStatement;
 			}else{
 				if(arrowStatement != null)
-					body = Statement.fromAst(arrowStatement, methodScope, in, this);
+					body = Statement.fromUnitStatAst(arrowStatement, methodScope, in, this);
 				else{
 					body = new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns, this);
 					body.text = arrowVal;

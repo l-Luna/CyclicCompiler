@@ -317,7 +317,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return isBool ? new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.BOOLEAN) : new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.INT);
+			return isBool ? PlatformDependency.BOOLEAN : PlatformDependency.INT;
 		}
 		
 		public String toString(){

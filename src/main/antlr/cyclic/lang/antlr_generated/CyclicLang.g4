@@ -47,7 +47,7 @@ init: STATIC? block;
 function: annotation* modifiers genericTypeDefs? type idPart LPAREN parameters RPAREN (functionBlock | functionArrow);
 
 functionBlock: (block | SEMICOLON);
-functionArrow: DASHARROW (value SEMICOLON | statement);
+functionArrow: DASHARROW (valueOrStatement);
 
 varDecl: annotation* modifiers typeOrInferred idPart (ASSIGN value | LPAREN arguments RPAREN)?;
 parameter: FINAL? type ELIPSES? idPart (ASSIGN value)?;
@@ -55,15 +55,24 @@ parameters: (parameter (COMMA parameter)*)?;
 
 block: LBRACE statement* RBRACE;
 
+// to avoid ambiguities between "-> statement" and "-> value;", we need to split "value;" statements from everything else
+
 statement
-    : block
+    : unitStatement
+    | valueStatement SEMICOLON
+    ;
+
+valueOrStatement
+	: unitStatement
+	| value SEMICOLON
+	;
+
+unitStatement
+	: block
     | returnStatement SEMICOLON
     | assertStatement SEMICOLON
     | throwStatement SEMICOLON
     | varDecl SEMICOLON
-    | varAssignment SEMICOLON
-    | initialisation SEMICOLON
-    | varIncrement SEMICOLON
     | ifStatement
     | whileStatement
     | forStatement
@@ -72,12 +81,18 @@ statement
     | tryStatement
     | switchStatement
     | yieldStatement
-	| breakStatement
-	| continueStatement
-    | ((value | SUPER) DOT)? call SEMICOLON
+    | breakStatement
+    | continueStatement
     | ctorCall SEMICOLON
     | SEMICOLON
     ;
+
+valueStatement
+	: ((value | SUPER) DOT)? call
+	| initialisation
+	| varAssignment
+	| varIncrement
+	;
 
 annotation: AT id (LPAREN (annotationArg (COMMA annotationArg)* | value)? RPAREN)?;
 annotationArg: idPart ASSIGN value;

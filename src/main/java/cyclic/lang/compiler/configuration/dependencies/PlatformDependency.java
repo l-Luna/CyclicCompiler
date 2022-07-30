@@ -25,6 +25,7 @@ public final class PlatformDependency implements Dependency{
 	public static final TypeReference DOUBLE = new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.DOUBLE);
 	
 	public static final TypeReference VOID = new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.VOID);
+	public static final TypeReference NULL = new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.NULL);
 	
 	public Optional<TypeReference> find(String fqName){
 		if(fqName.endsWith("[]"))
