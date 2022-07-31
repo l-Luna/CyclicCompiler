@@ -149,6 +149,10 @@ public final class Flow{
 				&& afs.fieldRef.equals(v);
 	}
 	
+	public static Predicate<Statement> willAssignOrThrow(FieldReference v){
+		return willAssignToField(v).or(THROWS);
+	}
+	
 	public static int minOccurrencesBefore(Statement body, Statement before, Predicate<Statement> condition, boolean forceEnter){
 		return switch(body){
 			case default -> body != before && condition.test(body) ? 1 : 0;

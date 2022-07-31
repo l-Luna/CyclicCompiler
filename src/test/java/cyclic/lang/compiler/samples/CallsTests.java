@@ -179,7 +179,7 @@ public class CallsTests{
 					static String test(String[] x){
 						var b = new StringBuilder();
 						for(String s : x)
-							b = s |> b.append();
+							b = (s |> b.append());
 						return b.toString();
 					}
 				}
