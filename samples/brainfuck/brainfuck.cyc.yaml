@@ -1,0 +1,6 @@
+source: "cyclic/"
+output: "out/"
+
+jdk: 17
+
+includeDebug: true
