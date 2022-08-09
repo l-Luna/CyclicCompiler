@@ -196,28 +196,7 @@ public class SampleTests{
 			assertEquals("12345", """
 					static String test() -> ("1" + "2") + ("3" + "4" + 5);
 					""");
-			
-			Assertions.assertEquals("k".repeat(14 * 21), CompilerLauncher.compileSingleMethod("""
-					package cyclic.lang.compiler.samples;
-					class Holder{
-						static String repetition(String obj) -> obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
-														+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj;
-					}
-					""", lookup)
-					.invoke(null, "k"));
-			
+
 			Assertions.assertEquals(26f, CompilerLauncher.compileSingleMethod("""
 					package cyclic.lang.compiler.samples;
 					class Holder{
@@ -298,12 +277,46 @@ public class SampleTests{
 						Object test() -> this;
 					}
 					""", lookup);
-			
+
+			assertEquals('*', """
+					static Object test() -> '*';
+					""");
+
+			assertEquals('\'', """
+					static Object test() -> '\\'';
+					""");
+
 		}catch(IllegalAccessException | InvocationTargetException e){
 			throw new AssertionError(e);
 		}
 	}
-	
+
+	@Test
+	void testLongStringConcat() throws IllegalAccessException, InvocationTargetException{
+		Lookup lookup = lookup();
+
+		Assertions.assertEquals("k".repeat(14 * 21), CompilerLauncher.compileSingleMethod("""
+				package cyclic.lang.compiler.samples;
+				class Holder{
+					static String repetition(String obj) -> obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj
+													+ obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj + obj;
+				}
+				""", lookup)
+				.invoke(null, "k"));
+	}
+
 	@Test
 	void testAnnotations(){
 		

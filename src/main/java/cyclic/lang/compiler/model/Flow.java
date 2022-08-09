@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.model;
 
+import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Statement.TryCatchStatement.CatchStatement;
 import cyclic.lang.compiler.model.instructions.Value;
@@ -47,7 +48,10 @@ public final class Flow{
 			case NullLiteralValue ignored -> Optional.of(NULL_MARKER);
 			case FloatLiteralValue f -> Optional.of(f.value);
 			case DoubleLiteralValue d -> Optional.of(d.value);
-			case IntLiteralValue i -> i.isBool ? Optional.of(i.value == 1) : Optional.of(i.value);
+			case IntLiteralValue i ->
+					i.setType == PlatformDependency.BOOLEAN ? Optional.of(i.value == 1) :
+					i.setType == PlatformDependency.CHAR ? Optional.of((char)i.value) :
+						Optional.of(i.value);
 			case LongLiteralValue l -> Optional.of(l.value);
 			case StringLiteralValue str -> Optional.of(str.value);
 			case Value.ClassValue l -> Optional.of(l.of);

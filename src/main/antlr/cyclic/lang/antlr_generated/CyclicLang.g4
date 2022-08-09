@@ -154,6 +154,7 @@ value
     | DECLIT                                    #decLit
     | INTLIT                                    #intLit
     | STRLIT                                    #strLit
+    | CHARLIT                                   #charLit
     | BOOLLIT                                   #boolLit
     | NULL                                      #nullLit
     | idPart                                    #varValue
@@ -321,6 +322,7 @@ YIELD: 'yield';
 DECLIT: MINUS? DIGIT* DOT DIGIT+ ('f' | 'd')?;
 INTLIT: MINUS? DIGIT+ ('f' | 'd' | 'l')?;
 STRLIT: QUOTE (ESCAPE_QUOTE | (~[\r\n"]))*? (QUOTE);
+CHARLIT: APOSTRAPHE (ESCAPE_APOSTRAPHE | ~[\r\n']) APOSTRAPHE;
 BOOLLIT: TRUE | FALSE;
 NULL: 'null';
 
@@ -372,6 +374,8 @@ ELIPSES: '...';
 
 ESCAPE_QUOTE: '\\"';
 QUOTE: '"';
+ESCAPE_APOSTRAPHE: '\\\'';
+APOSTRAPHE: '\'';
 
 DASHARROW: '->';
 EQARROW: '=>'; // Unused

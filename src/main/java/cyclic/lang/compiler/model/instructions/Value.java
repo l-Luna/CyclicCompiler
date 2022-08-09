@@ -32,14 +32,22 @@ public abstract class Value{
 		
 		Value result = switch(ctx){
 			case CyclicLangParser.NullLitContext ignored -> new NullLiteralValue();
-			case CyclicLangParser.BoolLitContext boolLit -> new IntLiteralValue(boolLit.getText().equals("true") ? 1 : 0, true);
+			case CyclicLangParser.BoolLitContext boolLit -> IntLiteralValue.ofBoolean(boolLit.getText().equals("true"));
 			case CyclicLangParser.StrLitContext strLit -> new StringLiteralValue(strLit.getText().substring(1, strLit.getText().length() - 1));
 			case CyclicLangParser.ParenValueContext paren -> fromAst(paren.value(), scope, type, method);
 			case CyclicLangParser.ArrayIndexValueContext ind -> new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
 			case CyclicLangParser.PrimitiveClassValueContext prim -> new PrimitiveClassValue(PrimitiveTypeRef.getPrimitiveDesc(prim.primitiveType().getText()));
 			case CyclicLangParser.PrefixOpValueContext preOp -> Operations.resolvePrefix(preOp.prefixop().getText(), fromAst(preOp.value(), scope, type, method));
 			case CyclicLangParser.PostfixOpValueContext postOp -> Operations.resolvePostfix(postOp.postfixop().getText(), fromAst(postOp.value(), scope, type, method));
-			
+
+			case CyclicLangParser.CharLitContext clc -> {
+				var literal = clc.getText();
+				literal = literal.substring(1, literal.length() - 1);
+				literal = literal.replace("\\'", "'");
+				assert literal.length() == 1;
+				yield IntLiteralValue.ofChar(literal.charAt(0));
+			}
+
 			case CyclicLangParser.InlineAssignValueContext ia -> {
 				Value toAssign = fromAst(ia.left, scope, type, method);
 				Value newValue = fromAst(ia.right, scope, type, method);
@@ -271,15 +279,23 @@ public abstract class Value{
 	// TODO: combine primitive literal values?
 	public static class IntLiteralValue extends Value{
 		public int value;
-		public boolean isBool = false;
+		public TypeReference setType = null;
 		
 		public IntLiteralValue(int value){
 			this.value = value;
 		}
 		
-		public IntLiteralValue(int value, boolean isBool){
+		public IntLiteralValue(int value, TypeReference setType){
 			this.value = value;
-			this.isBool = isBool;
+			this.setType = setType;
+		}
+
+		public static IntLiteralValue ofBoolean(boolean b){
+			return new IntLiteralValue(b ? 1 : 0, PlatformDependency.BOOLEAN);
+		}
+
+		public static IntLiteralValue ofChar(char c){
+			return new IntLiteralValue(c, PlatformDependency.CHAR);
 		}
 		
 		public void write(MethodVisitor mv){
@@ -307,7 +323,7 @@ public abstract class Value{
 			if(s != null)
 				return s;
 			// TODO: error if the value is out of range
-			if(!isBool && target instanceof PrimitiveTypeRef pref){
+			if(setType == null && target instanceof PrimitiveTypeRef pref){
 				if(pref.type == PrimitiveTypeRef.Primitive.SHORT)
 					return new SubstituteTypeValue(PlatformDependency.SHORT, this);
 				if(pref.type == PrimitiveTypeRef.Primitive.BYTE)
@@ -317,11 +333,13 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return isBool ? PlatformDependency.BOOLEAN : PlatformDependency.INT;
+			return setType != null ? setType : PlatformDependency.INT;
 		}
 		
 		public String toString(){
-			return isBool ? (value == 1 ? "true" : "false") : String.valueOf(value);
+			return setType == PlatformDependency.BOOLEAN ? (value == 1 ? "true" : "false") :
+					setType == PlatformDependency.CHAR ? String.valueOf((char)value) :
+					String.valueOf(value);
 		}
 	}
 	

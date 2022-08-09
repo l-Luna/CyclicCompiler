@@ -444,8 +444,8 @@ public final class Operations{
 				case GEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() >= y.doubleValue());
 				case LESSER -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() < y.doubleValue());
 				case LEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() <= y.doubleValue());
-				case EQUALS -> new Value.IntLiteralValue(cl.equals(cr) ? 1 : 0, true);
-				case NOTEQUALS -> new Value.IntLiteralValue(cl.equals(cr) ? 0 : 1, true);
+				case EQUALS -> Value.IntLiteralValue.ofBoolean(cl.equals(cr));
+				case NOTEQUALS -> Value.IntLiteralValue.ofBoolean(!cl.equals(cr));
 				case default -> null;
 			};
 			
@@ -476,13 +476,13 @@ public final class Operations{
 		
 		private Value applyBoolToNumbers(Object left, Object right, BiPredicate<Number, Number> apply){
 			if(left instanceof Integer il && right instanceof Integer ir)
-				return new Value.IntLiteralValue(apply.test(il, ir) ? 1 : 0, true);
+				return Value.IntLiteralValue.ofBoolean(apply.test(il, ir));
 			if(left instanceof Long ll && right instanceof Long lr)
-				return new Value.IntLiteralValue(apply.test(ll, lr) ? 1 : 0, true);
+				return Value.IntLiteralValue.ofBoolean(apply.test(ll, lr));
 			if(left instanceof Float fl && right instanceof Float fr)
-				return new Value.IntLiteralValue(apply.test(fl, fr) ? 1 : 0, true);
+				return Value.IntLiteralValue.ofBoolean(apply.test(fl, fr));
 			if(left instanceof Double dl && right instanceof Double dr)
-				return new Value.IntLiteralValue(apply.test(dl, dr) ? 1 : 0, true);
+				return Value.IntLiteralValue.ofBoolean(apply.test(dl, dr));
 			return null;
 		}
 	}
@@ -573,8 +573,8 @@ public final class Operations{
 	
 	public static class BranchBoolBinaryOpValue extends BinaryOpValue{
 		
-		private Value condTrue = new IntLiteralValue(1, true);
-		private Value condFalse = new IntLiteralValue(0, true);
+		private Value condTrue = IntLiteralValue.ofBoolean(true);
+		private Value condFalse = IntLiteralValue.ofBoolean(false);
 		
 		public BranchBoolBinaryOpValue(int opcode, Value left, Value right){
 			super(BOOLEAN, opcode, left, right);

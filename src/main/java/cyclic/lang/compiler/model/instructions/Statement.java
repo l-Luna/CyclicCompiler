@@ -338,7 +338,7 @@ public abstract class Statement{
 			if(returnValue == null)
 				mv.visitInsn(Opcodes.RETURN);
 			else
-				mv.visitInsn(returnValue.type().returnOpcode());
+				mv.visitInsn(returnValue.fit(toReturn).type().returnOpcode());
 		}
 		
 		public void simplify(){

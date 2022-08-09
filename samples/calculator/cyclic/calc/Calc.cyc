@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Calc{
 
-    private static List symbols = List.of("(", ")", "+", "-", "*", "/", "^", "%");
+    private static List symbols = List.of('(', ')', '+', '-', '*', '/', '^', '%');
 
     public static void main(String[] args){
         var input = args[0];
@@ -13,7 +13,7 @@ public class Calc{
         var curToken = new StringBuilder();
         for(var c : input.toCharArray()){
             var ch = String.valueOf(c);
-            if(symbols.contains(ch) || ch.isBlank()){
+            if(symbols.contains(c) || ch.isBlank()){
                 if(curToken.length() > 0)
                     tokens.add(curToken.toString());
                 if(!ch.isBlank())
