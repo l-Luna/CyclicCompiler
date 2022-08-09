@@ -310,5 +310,12 @@ public class FlowTests{
 					i = 0;
 				}
 				""");
+
+		CyclicAssertions.compile("""
+				static final String s;
+				static{
+					s = "".intern();
+				}
+				""");
 	}
 }
