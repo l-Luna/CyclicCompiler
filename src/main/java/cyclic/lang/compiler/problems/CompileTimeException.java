@@ -23,7 +23,8 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public CompileTimeException(String message){
-		this(null, message);
+		super(message);
+		ctx = curText.peek();
 	}
 	
 	public static void setFile(String filename){
