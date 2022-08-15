@@ -9,6 +9,8 @@ import cyclic.lang.compiler.model.instructions.Variable;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -189,10 +191,10 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 					&& !isStatic()
 					&& in.kind() != TypeKind.ENUM
 					&& in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-				throw new CompileTimeException(null, "Missing explicit constructor call (superclass has no 0-arg constructors)");
+				throw new CompileTimeException(nameToken(), "Missing explicit constructor call (superclass has no 0-arg constructors)");
 			}
 			if(in.kind() == TypeKind.RECORD && !(isGeneratedRecordCtor || isCanonRecordCtor || isInitBlock))
-				throw new CompileTimeException(null, "Non-canonical constructor call must defer to canonical constructor");
+				throw new CompileTimeException(nameToken(), "Non-canonical constructor call must defer to canonical constructor");
 		}
 	}
 	
@@ -217,6 +219,10 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	
 	public Statement getBody(){
 		return body;
+	}
+	
+	public @Nullable ParserRuleContext nameToken(){
+		return text != null ? text.idPart() : null;
 	}
 	
 	private Set<String> suppresses = null;

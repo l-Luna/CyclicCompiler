@@ -261,6 +261,11 @@ public abstract class Value{
 		return type() != null ? type().fullyQualifiedName() : "<unknown>";
 	}
 	
+	public ParserRuleContext getText(){
+		return text;
+	}
+	
+	
 	public static class NullLiteralValue extends Value{
 		
 		public TypeReference type(){

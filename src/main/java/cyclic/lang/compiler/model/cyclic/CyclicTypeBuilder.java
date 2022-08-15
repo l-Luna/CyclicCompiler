@@ -62,7 +62,7 @@ public final class CyclicTypeBuilder{
 				boolean matchesFileName = expected.equals(prototype.fullyQualifiedName());
 				if(!matchesFileName){
 					CompileTimeException.setFile(from.toString());
-					throw new CompileTimeException(null, "Top-level class declares fully-qualified name " + prototype.fullyQualifiedName() + ", but must have name " + expected + " according to file structure");
+					throw new CompileTimeException(prototype.nameToken(), "Top-level class declares fully-qualified name " + prototype.fullyQualifiedName() + ", but must have name " + expected + " according to file structure");
 				}
 			}
 		}

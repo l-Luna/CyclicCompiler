@@ -9,6 +9,8 @@ import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,6 +44,8 @@ public class CyclicType implements TypeReference, CyclicMember{
 	private List<CyclicLangParser.ParameterContext> unresolvedRecordComponents;
 	private List<CyclicRecordComponent> recordComponents = new ArrayList<>();
 	
+	private CyclicLangParser.ClassDeclContext text;
+	
 	public CyclicType outer;
 	public List<CyclicType> inners = new ArrayList<>();
 	public List<String> imports;
@@ -55,6 +59,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		this.imports = imports;
 		this.unresolvedAnnotations = ast.annotation();
 		this.unresolvedRecordComponents = ast.recordComponents() != null ? ast.recordComponents().parameter() : new ArrayList<>();
+		text = ast;
 		
 		String typeText = ast.objectType().getText().toLowerCase(Locale.ROOT).replaceAll(" +", "");
 		kind = switch(typeText){
@@ -73,10 +78,10 @@ public class CyclicType implements TypeReference, CyclicMember{
 			superTypeName = OBJECT;
 			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
 			if(ast.objectImplements() != null && ast.objectImplements().type().size() > 0)
-				throw new CompileTimeException(null, "Interface has " + ast.objectImplements().type().size() + " declared implemented interfaces, but must have 0");
+				throw new CompileTimeException(text.objectImplements(), "Interfaces cannot implement interfaces, but this declares " + ast.objectImplements().type().size() + " super-interface(s)");
 		}else{
 			if(ast.objectExtends() != null && ast.objectExtends().type().size() > 1)
-				throw new CompileTimeException(null, "Non-interface has " + ast.objectExtends().type().size() + " declared supertypes, but can only have 1");
+				throw new CompileTimeException(text.objectExtends(), "Non-interfaces cannot have multiple supertypes, but this declares " + ast.objectExtends().type().size() + " supertypes");
 			superTypeName = ast.objectExtends() != null ? TypeResolver.getBaseName(ast.objectExtends().type(0)) : OBJECT;
 			interfaceNames = ast.objectImplements() != null ? ast.objectImplements().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
 		}
@@ -91,7 +96,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 			flags = new AccessFlags(flags.visibility(), flags.isAbstract(), true);
 		
 		if(flags.isAbstract() && flags.isFinal())
-			throw new CompileTimeException(null, "Type cannot be abstract and final");
+			throw new CompileTimeException(text.modifiers(), "Type cannot be abstract and final");
 		
 		boolean isInterface = kind() == TypeKind.INTERFACE;
 		for(var member : ast.member()){
@@ -192,7 +197,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		interfaces = interfaceNames.stream().map(x -> TypeResolver.resolve(x, imports, packageName())).collect(Collectors.toList());
 		
 		if(!Visibility.visibleFrom(superType, this))
-			throw new CompileTimeException(null, "Type " + superType.fullyQualifiedName() + " is not visible here and cannot be extended");
+			throw new CompileTimeException(text.objectExtends().type().get(0), "Type " + superType.fullyQualifiedName() + " is not visible here and cannot be extended");
 		
 		var inaccessible = interfaces.stream()
 				.filter(x -> !Visibility.visibleFrom(x, this))
@@ -203,28 +208,28 @@ public class CyclicType implements TypeReference, CyclicMember{
 		
 		if(kind == TypeKind.INTERFACE){
 			if(flags.isFinal())
-				throw new CompileTimeException(null, "Interfaces must not be final");
+				throw new CompileTimeException(text.modifiers(), "Interfaces must not be final");
 			flags = new AccessFlags(flags.visibility(), true, false);
 			
 		}else if(kind == TypeKind.ENUM){
 			if(flags.isAbstract())
-				throw new CompileTimeException(null, "Enums must not be abstract");
+				throw new CompileTimeException(text.modifiers(), "Enums must not be abstract");
 			if(!superType.fullyQualifiedName().equals(OBJECT) && !superType.fullyQualifiedName().equals(ENUM))
-				throw new CompileTimeException(null, "Enums can only declare java.lang.Object or java.lang.Enum as super type");
+				throw new CompileTimeException(text.objectExtends(), "Enums can only declare java.lang.Object or java.lang.Enum as super type");
 			flags = new AccessFlags(flags.visibility(), false, true);
 			superType = TypeResolver.resolveFq(ENUM);
 			
 		}else if(kind == TypeKind.RECORD){
 			if(flags.isAbstract())
-				throw new CompileTimeException(null, "Records must not be abstract");
+				throw new CompileTimeException(text.modifiers(), "Records must not be abstract");
 			if(!superType.fullyQualifiedName().equals(OBJECT) && !superType.fullyQualifiedName().equals(RECORD))
-				throw new CompileTimeException(null, "Records can only declare java.lang.Object or java.lang.Record as super type");
+				throw new CompileTimeException(text.objectExtends(), "Records can only declare java.lang.Object or java.lang.Record as super type");
 			flags = new AccessFlags(flags.visibility(), false, true);
 			superType = TypeResolver.resolveFq(RECORD);
 			
 		}else if(kind == TypeKind.SINGLE)
 			if(flags.isAbstract())
-				throw new CompileTimeException(null, "Single types must not be abstract");
+				throw new CompileTimeException(text.modifiers(), "Single types must not be abstract");
 		
 		members.forEach(CyclicMember::resolve);
 		
@@ -299,13 +304,13 @@ public class CyclicType implements TypeReference, CyclicMember{
 	
 	private void validate(){
 		if(superType.kind() == TypeKind.INTERFACE)
-			throw new CompileTimeException(null, "Cannot extend the interface type " + superType.fullyQualifiedName());
+			throw new CompileTimeException(text.objectExtends(), "Cannot extend the interface type " + superType.fullyQualifiedName());
 		if(superType.flags().isFinal())
-			throw new CompileTimeException(null, "Cannot extend the final type " + superType.fullyQualifiedName());
+			throw new CompileTimeException(text.objectExtends(), "Cannot extend the final type " + superType.fullyQualifiedName());
 		
 		for(TypeReference i : superInterfaces())
 			if(i.kind() != TypeKind.INTERFACE)
-				throw new CompileTimeException(null, "Cannot implement non-interface type " + i.fullyQualifiedName());
+				throw new CompileTimeException(text.objectImplements(), "Cannot implement non-interface type " + i.fullyQualifiedName());
 		
 		// don't include generated record ctors, since those are prepended to the explicit method if present
 		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).toList(), "constructor", CallableReference::descriptor, CallableReference::summary);
@@ -319,17 +324,17 @@ public class CyclicType implements TypeReference, CyclicMember{
 		
 		if(kind() == TypeKind.INTERFACE){
 			if(constructors.size() > 0)
-				throw new CompileTimeException(null, "Interfaces should have no constructors, but found " + constructors.size());
+				throw new CompileTimeException(constructors.get(0).nameToken(), "Interfaces should have no constructors, but found " + constructors.size());
 			if(fields.stream().anyMatch(x -> !x.isStatic()))
 				throw new CompileTimeException(null, "Interfaces should have no instance fields, but found " + fields.stream().filter(x -> !x.isStatic()).count());
 		}
 		
 		if(kind() != TypeKind.RECORD && unresolvedRecordComponents.size() > 0)
-			throw new CompileTimeException(null, "Non-records should have no record components");
+			throw new CompileTimeException(text.recordComponents(), "Non-records should have no record components");
 		
 		if(kind() == TypeKind.SINGLE)
 			if(constructors.stream().noneMatch(x -> x.parameters().size() == 0))
-				throw new CompileTimeException(null, "Single-types must have a no-arg constructor");
+				throw new CompileTimeException(nameToken(), "Single-types must have a no-arg constructor");
 	}
 	
 	public void resolveInheritance(){
@@ -501,6 +506,10 @@ public class CyclicType implements TypeReference, CyclicMember{
 				interfaceMethods.add(method);
 			}
 		return interfaceMethods;
+	}
+	
+	public @Nullable ParserRuleContext nameToken(){
+		return text != null ? text.idPart() : null;
 	}
 	
 	private Set<String> suppresses = null;

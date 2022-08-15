@@ -63,13 +63,13 @@ public record AnnotationTag(TypeReference annotationType, Map<String, Annotation
 		if(ctx.value() != null){
 			Value value = Value.fromAst(ctx.value(), new Scope(), type, null);
 			var constant = Flow.constantValue(value);
-			args.put("value", constant.orElseThrow(() -> new CompileTimeException(null, "Annotation value must be a compile-time constant")));
+			args.put("value", constant.orElseThrow(() -> new CompileTimeException(value.getText(), "Annotation value must be a compile-time constant")));
 		}else if(ctx.annotationArg().size() > 0)
 			for(CyclicLangParser.AnnotationArgContext context : ctx.annotationArg()){
 				Value value = Value.fromAst(context.value(), new Scope(), type, null);
 				var constant = Flow.constantValue(value);
 				String argName = context.idPart().getText();
-				args.put(argName, constant.orElseThrow(() -> new CompileTimeException(null, "Annotation value " + argName + " must be a compile-time constant")));
+				args.put(argName, constant.orElseThrow(() -> new CompileTimeException(value.getText(), "Annotation value \"" + argName + "\" must be a compile-time constant")));
 			}
 		return new AnnotationTag(ref, params, args, on);
 	}
