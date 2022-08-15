@@ -31,7 +31,7 @@ public class CompileTimeException extends RuntimeException{
 		curFile = filename;
 	}
 	
-	public static String getFile(){
+	public static String getCurrentFile(){
 		return curFile;
 	}
 	
@@ -55,6 +55,15 @@ public class CompileTimeException extends RuntimeException{
 		if(details != null && !details.isBlank())
 			message += "\n\t" + details;
 		return message;
+	}
+	
+	public String getErrorMessage(){
+		return super.getMessage();
+	}
+	
+	@NotNull
+	public Context getCtx(){
+		return ctx;
 	}
 	
 	public record Context(ParserRuleContext text, String filename, int line, int start){

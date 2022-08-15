@@ -11,6 +11,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.problems.ProblemsHolder;
 import cyclic.lang.compiler.problems.SyntaxException;
+import cyclic.lang.compiler.problems.Warning;
 import cyclic.lang.compiler.resolve.TypeNotFoundException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.jetbrains.annotations.NotNull;
@@ -142,23 +143,8 @@ public final class CompilerLauncher{
 		
 		checkErrors();
 		
-		if(diagnosticsTarget != null){
-			System.out.println("Outputting diagnostics (\"--diagnostics\" was set) to \"" + diagnosticsTarget + "\"");
-			DumperOptions options = new DumperOptions();
-			options.setWidth(999);
-			options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-			Yaml yaml = new Yaml(options);
-			yaml.setBeanAccess(BeanAccess.FIELD);
-			String yamlOut = yaml.dump(new ArrayList<>(ProblemsHolder.problems));
-			Path path = Path.of(diagnosticsTarget).toAbsolutePath().normalize();
-			try{
-				if(!path.getParent().toFile().exists() && !path.getParent().toFile().mkdirs())
-					throw new IllegalStateException();
-				Files.writeString(path, yamlOut);
-			}catch(IOException e){
-				throw new UncheckedIOException(e);
-			}
-		}
+		if(diagnosticsTarget != null)
+			writeDiagnostics();
 		
 		if(project.noOutput){
 			System.out.println("Skipping output and packaging (because the project has \"noOutput\" set to true).");
@@ -227,8 +213,35 @@ public final class CompilerLauncher{
 				System.err.println(e.getMessage());
 				System.err.println();
 			}
+			if(diagnosticsTarget != null)
+				writeErrorDiagnostics();
 			compileErrors.clear();
 			throwOrExit(2);
+		}
+	}
+	
+	private static void writeErrorDiagnostics(){
+		for(Exception error : compileErrors)
+			if(error instanceof CompileTimeException cte)
+				ProblemsHolder.problems.add(Warning.fromError(cte));
+		writeDiagnostics();
+	}
+	
+	private static void writeDiagnostics(){
+		System.out.println("Outputting diagnostics (\"--diagnostics\" was set) to \"" + diagnosticsTarget + "\"");
+		DumperOptions options = new DumperOptions();
+		options.setWidth(999);
+		options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+		Yaml yaml = new Yaml(options);
+		yaml.setBeanAccess(BeanAccess.FIELD);
+		String yamlOut = yaml.dump(new ArrayList<>(ProblemsHolder.problems));
+		Path path = Path.of(diagnosticsTarget).toAbsolutePath().normalize();
+		try{
+			if(!path.getParent().toFile().exists() && !path.getParent().toFile().mkdirs())
+				throw new IllegalStateException();
+			Files.writeString(path, yamlOut);
+		}catch(IOException e){
+			throw new UncheckedIOException(e);
 		}
 	}
 	
@@ -268,7 +281,7 @@ public final class CompilerLauncher{
 	 */
 	public static Map<String, byte[]> compileFileSet(@NotNull Set<File> files, @Nullable Path root){
 		compileErrors = new HashSet<>(files.size());
-		for(File file : files){
+		files.forEach(withErrorChecking(file -> {
 			Path relative = root == null ? null : root.relativize(file.toPath());
 			if(file.getName().endsWith(".cyc")){
 				try{
@@ -284,7 +297,8 @@ public final class CompilerLauncher{
 			}else{
 				System.out.println("File \"" + (relative != null ? relative.toString() : file.getName()) + "\" was asked to be compiled, but does not have \".cyc\" extension and will be ignored.");
 			}
-		} checkErrors();
+		}));
+		checkErrors();
 		
 		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveRefs));          checkErrors();
 		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveInheritance));   checkErrors();

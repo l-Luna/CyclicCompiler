@@ -18,7 +18,7 @@ public final class ProblemsHolder{
 	
 	public static int numWarnings = 0;
 	public static Set<WarningType> warned = new HashSet<>(); // TODO: remove
-	public static Set<Problem> problems = new HashSet<>();
+	public static Set<Warning> problems = new HashSet<>();
 	
 	public static void warnFrom(WarningType type, String warning, @Nullable Object in, @Nullable ParserRuleContext location){
 		if(in instanceof Statement st)
@@ -33,14 +33,14 @@ public final class ProblemsHolder{
 	
 	public static void warn(String warning, @Nullable ParserRuleContext location, WarningType type){
 		String quote = location != null ? Utils.format(location) : null;
-		var message = "Warning in class \"" + CompileTimeException.getFile() + "\"";
+		var message = "Warning in class \"" + CompileTimeException.getCurrentFile() + "\"";
 		if(location != null)
 			message += ", at [%d:%d]\n%s".formatted(location.start.getLine(), location.start.getCharPositionInLine(), quote);
 		if(warning != null && !warning.isBlank())
 			message += "\n\t" + warning;
 		
 		System.err.println(message);
-		problems.add(new Problem.Warning(CompileTimeException.getFile(), warning, Problem.Source.fromCtxNullable(location), type));
+		problems.add(new Warning(CompileTimeException.getCurrentFile(), warning, Warning.Source.fromCtxNullable(location), type));
 		numWarnings++;
 	}
 	

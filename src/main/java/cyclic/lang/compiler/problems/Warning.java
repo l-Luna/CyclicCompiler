@@ -7,19 +7,9 @@ import org.antlr.v4.runtime.Token;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public sealed interface Problem{
+public record Warning(String filename, String description, @Nullable Source from, WarningType type){
 	
-	String filename(); // or class-name
-	
-	String description();
-	
-	Source from();
-	
-	record Error(String filename, String description, Source from) implements Problem{}
-	
-	record Warning(String filename, String description, @Nullable Source from, WarningType type) implements Problem{}
-	
-	record Source(Position start, @Nullable Position end, @Nullable String snippet, @Nullable MemberReference owner){
+	public record Source(Position start, @Nullable Position end, @Nullable String snippet, @Nullable MemberReference owner){
 		
 		public static Source fromCtx(@NotNull ParserRuleContext ctx){
 			return new Source(
@@ -39,7 +29,7 @@ public sealed interface Problem{
 		}
 	}
 	
-	record Position(int line, int column){
+	public record Position(int line, int column){
 		
 		public static Position fromToken(Token token){
 			return new Position(token.getLine(), token.getCharPositionInLine());
@@ -48,5 +38,9 @@ public sealed interface Problem{
 		public static Position fromTokenEnd(Token token){
 			return new Position(token.getLine(), token.getCharPositionInLine() + (token.getStopIndex() - token.getStartIndex()));
 		}
+	}
+	
+	public static Warning fromError(CompileTimeException cte){
+		return new Warning(cte.getCtx().filename(), cte.getErrorMessage(), Source.fromCtxNullable(cte.getCtx().text()), WarningType.ERROR);
 	}
 }

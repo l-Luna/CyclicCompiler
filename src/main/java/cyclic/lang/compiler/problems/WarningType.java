@@ -1,6 +1,8 @@
 package cyclic.lang.compiler.problems;
 
 public enum WarningType{
+	ERROR(null), // can't be suppressed, TODO: should we assign errors IDs for error messages?
+	
 	DEPRECATION("deprecation"),
 	
 	MUST_USE("must_use"),
