@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.spi.ToolProvider;
@@ -43,7 +44,7 @@ import java.util.spi.ToolProvider;
 public final class CompilerLauncher{
 	
 	/** The set of types that are currently being compiled, indexed by their fully qualified names. */
-	public static final Map<String, CyclicType> toCompile = new HashMap<>();
+	public static final Map<String, CyclicType> toCompile = new ConcurrentHashMap<>();
 	
 	/** Whether line mappings and parameter names will be emitted in output class files in the next run. */
 	public static boolean includeDebugInfo = true;
@@ -281,7 +282,7 @@ public final class CompilerLauncher{
 	 */
 	public static Map<String, byte[]> compileFileSet(@NotNull Set<File> files, @Nullable Path root){
 		compileErrors = new HashSet<>(files.size());
-		files.forEach(withErrorChecking(file -> {
+		files.parallelStream().forEach(withErrorChecking(file -> {
 			Path relative = root == null ? null : root.relativize(file.toPath());
 			if(file.getName().endsWith(".cyc")){
 				try{
@@ -292,7 +293,9 @@ public final class CompilerLauncher{
 				}catch(IOException e){
 					e.printStackTrace();
 				}catch(SyntaxException se){
-					compileErrors.add(se);
+					synchronized(compileErrors){
+						compileErrors.add(se);
+					}
 				}
 			}else{
 				System.out.println("File \"" + (relative != null ? relative.toString() : file.getName()) + "\" was asked to be compiled, but does not have \".cyc\" extension and will be ignored.");
