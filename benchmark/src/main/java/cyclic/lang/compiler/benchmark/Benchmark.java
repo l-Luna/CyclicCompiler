@@ -20,6 +20,7 @@ public class Benchmark{
 						static int i = 3 + 3;
 						static String u = "3" + "3";
 						int o = 4;
+						
 						public static void main(String... args){
 							for(String o : args)
 								System.out.println(o);
@@ -30,9 +31,30 @@ public class Benchmark{
 							i--;
 							System.out.println(test(test((long)i)));
 						}
+						
 						{ o = 3; }
 						public static String test(int i) -> i + u;
 						public static int test(long l) -> (int)l;
+						public double compute(int i, long l, float f, Object obj, String s, double d, byte b){
+							double d2;
+							if(d < 0)
+								throw new IllegalArgumentException("d > 0");
+							else
+								{ d2 = d; }
+							do{
+								d2 += f;
+								d2 += i;
+								d -= 0.1;
+								if(b < 30)
+									continue;
+								if(d < Math.sqrt(Math.PI * d))
+									break;
+							}while(d > 0);
+							if(s == obj)
+								return d2;
+							else
+								return d2 - s.length();
+						}
 					}
 					""".formatted(i));
 		
