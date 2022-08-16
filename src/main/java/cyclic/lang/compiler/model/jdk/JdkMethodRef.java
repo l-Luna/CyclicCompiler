@@ -4,14 +4,13 @@ import cyclic.lang.compiler.model.*;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JdkMethodRef implements MethodReference{
-	Method underlying;
+	
+	private final Method underlying;
+	private List<TypeReference> parameters = null;
 	
 	public JdkMethodRef(Method underlying){
 		this.underlying = underlying;
@@ -30,7 +29,13 @@ public class JdkMethodRef implements MethodReference{
 	}
 	
 	public List<TypeReference> parameters(){
-		return Arrays.stream(underlying.getParameterTypes()).map(Utils::forAnyClass).collect(Collectors.toList());
+		if(parameters == null){
+			Class<?>[] types = underlying.getParameterTypes();
+			parameters = new ArrayList<>(types.length);
+			for(Class<?> c : types)
+				parameters.add(Utils.forAnyClass(c));
+		}
+		return parameters;
 	}
 	
 	public List<String> parameterNames(){

@@ -4,6 +4,7 @@ import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 
@@ -67,6 +68,7 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 * @return A reference to this type's super class.
 	 */
 	@Nullable
+	@Contract(pure = true)
 	TypeReference superClass();
 	
 	/**
@@ -249,7 +251,11 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 		if(superClass() != null && superClass().isAssignableTo(target))
 			return true;
 		
-		return superInterfaces().stream().anyMatch(x -> x.isAssignableTo(target));
+		for(TypeReference x : superInterfaces())
+			if(x.isAssignableTo(target))
+				return true;
+		
+		return false;
 	}
 	
 	default String elementType(){

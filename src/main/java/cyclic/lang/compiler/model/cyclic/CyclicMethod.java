@@ -161,7 +161,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		
 		if(body == null){
 			if(blockStatement != null){
-				body = new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).collect(Collectors.toList()), methodScope, this);
+				body = new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, methodScope, in, this)).toList(), methodScope, this);
 				body.text = blockStatement;
 			}else{
 				if(arrowStatement != null)
