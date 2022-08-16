@@ -220,10 +220,11 @@ public final class Utils{
 						: type.methods());
 		}
 		
-		candidates = candidates.stream()
-				.filter(x -> Visibility.visibleFrom(x, from))
-				.filter(x -> x.name().equals(name))
-				.toList();
+		List<MethodReference> filtered = new ArrayList<>(candidates.size());
+		for(MethodReference x : candidates)
+			if(x.name().equals(name) && Visibility.visibleFrom(x, from))
+				filtered.add(x);
+		candidates = filtered;
 		
 		return MethodResolver.best(candidates, args);
 	}
