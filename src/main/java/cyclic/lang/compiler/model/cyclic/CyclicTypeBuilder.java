@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public final class CyclicTypeBuilder{
 	
 	public static List<CyclicType> fromFile(@NotNull String file, @Nullable Path from){
-		SyntaxException.curFile = from != null ? from.toString() : "<unnamed file>";
+		SyntaxException.curFile.set(from != null ? from.toString() : "<unnamed file>");
 		return fromParsedFile(parser(file).file(), from);
 	}
 	
