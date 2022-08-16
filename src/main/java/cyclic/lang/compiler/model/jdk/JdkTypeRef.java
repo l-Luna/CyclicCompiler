@@ -16,6 +16,9 @@ public class JdkTypeRef implements TypeReference{
 	List<JdkCtorRef> ctors;
 	List<JdkRecordComponentRef> components;
 	
+	TypeReference superclass = null;
+	List<TypeReference> interfaces = null;
+	
 	public JdkTypeRef(Class<?> underlying){
 		this.underlying = underlying;
 		fields = Arrays.stream(underlying.getDeclaredFields()).map(k -> new JdkFieldRef(k, this)).collect(Collectors.toList());
@@ -52,11 +55,11 @@ public class JdkTypeRef implements TypeReference{
 	}
 	
 	public TypeReference superClass(){
-		return underlying.getSuperclass() != null ? Utils.forAnyClass(underlying.getSuperclass()) : null;
+		return superclass != null ? superclass : (superclass = (underlying.getSuperclass() != null ? Utils.forAnyClass(underlying.getSuperclass()) : null));
 	}
 	
 	public List<? extends TypeReference> superInterfaces(){
-		return Arrays.stream(underlying.getInterfaces()).map(Utils::forAnyClass).collect(Collectors.toList());
+		return interfaces != null ? interfaces : (interfaces = Arrays.stream(underlying.getInterfaces()).map(Utils::forAnyClass).collect(Collectors.toList()));
 	}
 	
 	public List<? extends TypeReference> innerClasses(){

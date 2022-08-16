@@ -237,6 +237,9 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 * @return Whether an instance of this type is assignable to the target type.
 	 */
 	default boolean isAssignableTo(@Nullable TypeReference target){
+		if(this == target)
+			return true;
+		
 		if(target == null)
 			return false;
 		
@@ -251,9 +254,10 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 		if(superClass() != null && superClass().isAssignableTo(target))
 			return true;
 		
-		for(TypeReference x : superInterfaces())
-			if(x.isAssignableTo(target))
-				return true;
+		if(target.kind() == TypeKind.INTERFACE)
+			for(TypeReference x : superInterfaces())
+				if(x.isAssignableTo(target))
+					return true;
 		
 		return false;
 	}
