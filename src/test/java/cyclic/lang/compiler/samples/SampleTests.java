@@ -416,6 +416,14 @@ public class SampleTests{
 				}
 				""");
 		
+		compile("""
+				static void test(){
+					try{
+						return;
+					}catch(Throwable t){}
+				}
+				""");
+		
 		CyclicAssertions.assertThrows(IllegalStateException.class, """
 				static int test(){
 					try{
@@ -626,6 +634,24 @@ public class SampleTests{
 					}finally{
 						return 3;
 					}
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static int test(){
+					try{
+						return 1;
+					}catch(Object t){}
+					return 2;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static int test(){
+					try{
+						return 1;
+					}catch(Cloneable t){}
+					return 2;
 				}
 				""");
 	}

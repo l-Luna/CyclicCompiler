@@ -199,7 +199,7 @@ public abstract class Statement{
 				Statement catchBody = fromBlockAst(aCatch.block(), catchScope, type, callable);
 				catchVar.owner = catchBody;
 				catchVar.fakeAssigned = true;
-				return new TryCatchStatement.CatchStatement(catchType, varName, catchBody, catchScope, catchVar);
+				return new TryCatchStatement.CatchStatement(catchType, varName, catchBody, catchScope, catchVar, aCatch);
 			}).toList();
 			
 			Statement finallyBlock;
@@ -767,7 +767,7 @@ public abstract class Statement{
 	}
 	
 	public static class TryCatchStatement extends Statement{
-		public record CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope, Variable catchVariable){}
+		public record CatchStatement(TypeReference type, String name, Statement onCatch, Scope ownScope, Variable catchVariable, CyclicLangParser.CatchBlockContext text){}
 		
 		public Statement tryStatement;
 		public List<CatchStatement> catchStatements;
@@ -837,6 +837,13 @@ public abstract class Statement{
 		}
 		
 		public void simplify(){
+			for(CatchStatement c : catchStatements){
+				if(c.type.kind() == TypeKind.INTERFACE)
+					throw new CompileTimeException(c.text.type(), "Catch block types must be classes inheriting from java.lang.Throwable, but " + c.type.fullyQualifiedName() + " is an interface");
+				if(!c.type.isAssignableTo(TypeResolver.resolveFq(THROWABLE)))
+					throw new CompileTimeException(c.text.type(), "Catch block types must inherit from java.lang.Throwable, but " + c.type.fullyQualifiedName() + " does not");
+			}
+			
 			tryStatement.simplify();
 			for(var c : catchStatements)
 				c.onCatch().simplify();
