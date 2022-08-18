@@ -11,7 +11,9 @@ import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.MethodResolver;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -289,49 +291,33 @@ public final class Utils{
 		return adjustVarIndex(v.in(), v.getVarIndex());
 	}
 	
-	public static String format(List<TerminalNode> tokens){
-		var current = new StringBuilder();
-		TerminalNode last = null;
-		int curLine = tokens.size() > 0 ? tokens.get(0).getSymbol().getLine() : 0;
-		// TODO: "\t".repeat(...) assumes that preceding whitespace is tabs
-		// check hidden channel tokens to actually find the correct indentation
-		for(TerminalNode token : tokens){
-			if(last != null){
-				if(token.getSymbol().getLine() > curLine){
-					current.append("\n");
-					current.append("\t".repeat(token.getSymbol().getCharPositionInLine()));
-				}else{
-					int space = token.getSymbol().getCharPositionInLine() - last.getSymbol().getCharPositionInLine() - last.getText().length();
-					if(space > 0)
-						current.append(" ".repeat(space));
-				}
-			}else{
-				current.append("\t".repeat(token.getSymbol().getCharPositionInLine()));
-			}
-			current.append(token);
-			last = token;
-			curLine = last.getSymbol().getLine();
+	public static String format(@Nullable ParserRuleContext ctx){
+		if(ctx == null)
+			return "";
+		CharStream stream = ctx.start.getInputStream();
+		return stream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
+	}
+	
+	public static String renderHighlight(@NotNull ParserRuleContext ctx){
+		// assuming the highlight is one line...
+		CharStream stream = ctx.start.getInputStream();
+		int startIdx = ctx.start.getStartIndex(), endIdx = ctx.stop.getStopIndex();
+		int sdiff = 0;
+		
+		while(startIdx > 0 && !stream.getText(new Interval(startIdx, startIdx)).equals("\n")){
+			startIdx--;
+			sdiff++;
 		}
-		return current.toString().replace("\t", "    ").stripIndent().indent(4).stripTrailing();
+		while(endIdx < (stream.size() - 1) && !stream.getText(new Interval(endIdx, endIdx)).equals("\n"))
+			endIdx++;
+		
+		String line = stream.getText(new Interval(startIdx + 1, endIdx - 1)).replace("\t", " ");
+		String highlight = " ".repeat(sdiff - 1) + "^".repeat(ctx.stop.getStopIndex() - ctx.start.getStartIndex() + 1);
+		return (line + "\n" + highlight).stripIndent().indent(4).stripTrailing();
 	}
 	
 	public static String position(ParserRuleContext ctx){
 		return "[%d:%d]".formatted(ctx.getStart().getLine(), ctx.getStart().getCharPositionInLine());
-	}
-	
-	public static String format(@Nullable ParserRuleContext ctx){
-		return ctx == null ? "" : format(getAllTokens(ctx));
-	}
-	
-	public static List<TerminalNode> getAllTokens(@NotNull ParserRuleContext ctx){
-		var ret = new LinkedList<TerminalNode>();
-		if(ctx.children != null)
-			for(var child : ctx.children)
-				if(child instanceof TerminalNode t)
-					ret.add(t);
-				else if(child instanceof ParserRuleContext r)
-					ret.addAll(getAllTokens(r));
-		return ret;
 	}
 	
 	public static int maxMethodParameterLocalIndex(CallableReference method){

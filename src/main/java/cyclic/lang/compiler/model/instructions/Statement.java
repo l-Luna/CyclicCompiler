@@ -159,7 +159,7 @@ public abstract class Statement{
 			boolean isFinal = varTypeName.equals("val") || fe.FINAL() != null;
 			for(ForEachStyle style : ForEachStyle.STYLES)
 				if(style.appliesTo(iterating)){
-					result = style.forEachStatement(iterating, varName, varType, isFinal, in, scope -> Statement.fromAst(fe.statement(), scope, type, callable), callable);
+					result = style.forEachStatement(iterating, varName, varType, isFinal, in, scope -> Statement.fromAst(fe.statement(), scope, type, callable), callable, fe);
 					break;
 				}
 			if(result == null)
@@ -841,7 +841,7 @@ public abstract class Statement{
 				if(c.type.kind() == TypeKind.INTERFACE)
 					throw new CompileTimeException(c.text.type(), "Catch block types must be classes inheriting from java.lang.Throwable, but " + c.type.fullyQualifiedName() + " is an interface");
 				if(!c.type.isAssignableTo(TypeResolver.resolveFq(THROWABLE)))
-					throw new CompileTimeException(c.text.type(), "Catch block types must inherit from java.lang.Throwable, but " + c.type.fullyQualifiedName() + " does not");
+					throw new CompileTimeException(c.text.type(), "Catch block types must inherit from java.lang.Throwable, but " + c.type.fullyQualifiedName() + " doesn't");
 			}
 			
 			tryStatement.simplify();

@@ -33,14 +33,14 @@ public final class ProblemsHolder{
 	}
 	
 	public static void warn(String warning, @Nullable ParserRuleContext location, WarningType type){
-		String quote = location != null ? Utils.format(location) : null;
+		String quote = location != null ? Utils.renderHighlight(location) : null;
 		var message = "Warning in class \"" + CompileTimeException.getCurrentFile() + "\"";
 		if(location != null)
 			message += ", at [%d:%d]\n%s".formatted(location.start.getLine(), location.start.getCharPositionInLine(), quote);
 		if(warning != null && !warning.isBlank())
-			message += "\n\t" + warning;
+			message += "\n    " + warning;
 		
-		System.err.println(message);
+		System.err.println(message + "\n");
 		problems.add(new Warning(CompileTimeException.getCurrentFile(), warning, Warning.Source.fromCtxNullable(location), type));
 		numWarnings++;
 	}

@@ -69,7 +69,7 @@ public class CompileTimeException extends RuntimeException{
 	public record Context(ParserRuleContext text, String filename, int line, int start){
 		
 		public String toString(){
-			return "[%d:%d]\n%s".formatted(line(), start(), Utils.format(text()));
+			return "[%d:%d]\n%s".formatted(line(), start(), Utils.renderHighlight(text()));
 		}
 	}
 }

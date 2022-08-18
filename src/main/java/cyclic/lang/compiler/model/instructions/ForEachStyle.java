@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.model.instructions;
 
+import cyclic.lang.antlr_generated.CyclicLangParser;
 import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.TypeKind;
 import cyclic.lang.compiler.model.TypeReference;
@@ -31,7 +32,7 @@ public interface ForEachStyle{
 	boolean appliesTo(TypeReference iteratorType);
 	
 	// null varType = var/val
-	Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable from);
+	Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable from, CyclicLangParser.ForeachStatementContext text);
 	
 	class IteratorForEach implements ForEachStyle{
 		
@@ -39,10 +40,10 @@ public interface ForEachStyle{
 			return iteratorType.isAssignableTo(TypeResolver.resolveFq(ITERABLE));
 		}
 		
-		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
+		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c, CyclicLangParser.ForeachStatementContext text){
 			// TODO: check T against the iterator's generic type
 			if(varType != null && !varType.fullyQualifiedName().equals(OBJECT))
-				throw new CompileTimeException("Variable type of an iterator for-each loop must be Object or var");
+				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an iterator for-each loop must be Object or var");
 			return forEachStatementWithType(iterating, varName, varType, finalVar, in, body, c);
 		}
 		
@@ -82,12 +83,12 @@ public interface ForEachStyle{
 			return iteratorType instanceof ArrayTypeRef;
 		}
 		
-		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
-			return forEachStatementInner(iterating, varName, varType, finalVar, in, body, c);
+		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c, CyclicLangParser.ForeachStatementContext text){
+			return forEachStatementInner(iterating, varName, varType, finalVar, in, body, c, text);
 		}
 		
 		@NotNull
-		protected static Statement forEachStatementInner(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
+		protected static Statement forEachStatementInner(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c, CyclicLangParser.ForeachStatementContext text){
 			/*    for(T t : x)
 			 *         act;
 			 *  becomes
@@ -97,7 +98,7 @@ public interface ForEachStyle{
 			 */
 			var component = ((ArrayTypeRef)iterating.type()).getComponent();
 			if(varType != null && !component.isAssignableTo(varType))
-				throw new CompileTimeException("Variable type of an array for-each loop must be a subtype of the array type");
+				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an array for-each loop must be a subtype of the array component type");
 			BlockStatement container = new BlockStatement(in, c);
 			Variable array = new Variable("~array", iterating.type(), container.blockScope, null);
 			Variable index = new Variable("~idx", PlatformDependency.INT, container.blockScope, null);
@@ -127,7 +128,7 @@ public interface ForEachStyle{
 			return ForEachStyle.super.appliesTo(value) && value instanceof TypeValue t && t.target.kind() == TypeKind.ENUM;
 		}
 		
-		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable from){
+		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable from, CyclicLangParser.ForeachStatementContext text){
 			/*
 			*     for(T t : T)
 			*         act;
@@ -139,7 +140,7 @@ public interface ForEachStyle{
 			*/
 			TypeReference type = iterating.type();
 			if(varType != null && !type.isAssignableTo(varType))
-				throw new CompileTimeException("Variable type of an enum for-each loop must be the enum type");
+				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an enum for-each loop must be the enum type");
 			var entries = Utils.resolveSingleOptionalMethod(type, "entries", true);
 			if(entries.isPresent()){
 				var entriesExpr = new CallValue(null, List.of(), entries.get());
@@ -147,7 +148,7 @@ public interface ForEachStyle{
 			}else{
 				var values = Utils.resolveSingleMethod(type, "values", true);
 				var valuesExpr = new CallValue(null, List.of(), values);
-				return ArrayForEach.forEachStatementInner(valuesExpr, varName, varType, finalVar, in, body, from);
+				return ArrayForEach.forEachStatementInner(valuesExpr, varName, varType, finalVar, in, body, from, text);
 			}
 		}
 	}

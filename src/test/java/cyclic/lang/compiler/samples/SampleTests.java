@@ -385,25 +385,23 @@ public class SampleTests{
 		Method iterTestMethod = holderEnum.getDeclaredMethod("all");
 		Assertions.assertEquals(iterTestMethod.invoke(null), "ABC012");
 		
-		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileSingleClass("""
-				package cyclic.lang.compiler.samples;
+		assertDoesntCompile("""
 				enum EnumHolder1{
 					static void all(){
 						for(String e : EnumHolder1)
 							;
 					}
 				}
-				"""));
+				""");
 		
-		Assertions.assertDoesNotThrow(() -> CompilerLauncher.compileSingleClass("""
-				package cyclic.lang.compiler.samples;
+		compile("""
 				enum EnumHolder1{
 					static void all(){
 						for(Object e : EnumHolder1)
 							;
 					}
 				}
-				"""));
+				""");
 	}
 	
 	@Test
