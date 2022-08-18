@@ -30,10 +30,13 @@ public class JdkMethodRef implements MethodReference{
 	
 	public List<TypeReference> parameters(){
 		if(parameters == null){
-			Class<?>[] types = underlying.getParameterTypes();
-			parameters = new ArrayList<>(types.length);
-			for(Class<?> c : types)
-				parameters.add(Utils.forAnyClass(c));
+			synchronized(this){
+				Class<?>[] types = underlying.getParameterTypes();
+				var temp = new ArrayList<TypeReference>(types.length);
+				for(Class<?> c : types)
+					temp.add(Utils.forAnyClass(c));
+				parameters = temp;
+			}
 		}
 		return parameters;
 	}

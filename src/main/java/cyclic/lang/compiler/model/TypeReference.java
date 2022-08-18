@@ -86,6 +86,8 @@ public interface TypeReference extends AnnotatableElement, MemberReference{
 	 */
 	List<? extends TypeReference> innerClasses();
 	
+	List<? extends MethodReference> declaredMethods();
+	
 	/**
 	 * Returns a list of references to the methods of this type, including inherited methods.
 	 * Non-public methods may not be included for externally defined types.

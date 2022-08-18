@@ -11,39 +11,39 @@ import java.util.Stack;
  */
 public class CompileTimeException extends RuntimeException{
 	
-	private static String curFile;
-	private static Stack<@NotNull Context> curText = new Stack<>();
+	private static final ThreadLocal<String> curFile = new ThreadLocal<>();
+	private static final ThreadLocal<Stack<@NotNull Context>> curText = ThreadLocal.withInitial(Stack::new);
 	private @NotNull Context ctx;
 	
 	public CompileTimeException(ParserRuleContext context, String message){
 		super(message);
 		pushContext(context);
-		ctx = curText.peek();
+		ctx = curText.get().peek();
 		popContext();
 	}
 	
 	public CompileTimeException(String message){
 		super(message);
-		ctx = curText.peek();
+		ctx = curText.get().peek();
 	}
 	
 	public static void setFile(String filename){
-		curFile = filename;
+		curFile.set(filename);
 	}
 	
 	public static String getCurrentFile(){
-		return curFile;
+		return curFile.get();
 	}
 	
 	public static void pushContext(ParserRuleContext context){
-		curText.push(context == null ?
+		curText.get().push(context == null ?
 				/* still need to show correct file */
-				new Context(null, curFile, -1, -1) :
-				new Context(context, curFile, context.start.getLine(), context.start.getCharPositionInLine()));
+				new Context(null, getCurrentFile(), -1, -1) :
+				new Context(context, getCurrentFile(), context.start.getLine(), context.start.getCharPositionInLine()));
 	}
 	
 	public static void popContext(){
-		curText.pop();
+		curText.get().pop();
 	}
 	
 	public String getMessage(){

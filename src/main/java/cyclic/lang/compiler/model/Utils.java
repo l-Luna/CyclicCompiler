@@ -248,7 +248,7 @@ public final class Utils{
 	
 	public static Optional<MethodReference> resolveSingleOptionalMethod(TypeReference from, String name, boolean isStatic, TypeReference... args){
 		candidates:
-		for(var c : from.methods()){
+		for(var c : from.declaredMethods()){
 			if((c.isStatic() == isStatic) && c.name().equals(name) && c.parameters().size() == args.length){
 				for(int i = 0; i < c.parameters().size(); i++){
 					TypeReference p = c.parameters().get(i);
@@ -277,10 +277,12 @@ public final class Utils{
 	
 	// add 1 for every long or double var before it
 	public static int adjustVarIndex(Scope in, int localVar){
-		return (int)(localVar + in.getIndexList().stream()
-				.filter(x -> x.type() instanceof PrimitiveTypeRef p && (p.type == PrimitiveTypeRef.Primitive.DOUBLE || p.type == PrimitiveTypeRef.Primitive.LONG))
-				.filter(x -> x.getVarIndex() < localVar)
-				.count());
+		int count = 0;
+		for(Variable x : in.getIndexList())
+			if(x.getVarIndex() < localVar)
+				if(x.type() instanceof PrimitiveTypeRef p && (p.type == PrimitiveTypeRef.Primitive.DOUBLE || p.type == PrimitiveTypeRef.Primitive.LONG))
+					count++;
+		return localVar + count;
 	}
 	
 	public static int adjustedIndex(Variable v){

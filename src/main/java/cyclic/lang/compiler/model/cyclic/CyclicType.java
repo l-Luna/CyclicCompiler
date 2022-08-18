@@ -7,6 +7,7 @@ import cyclic.lang.compiler.gen.SingleMembers;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
+import cyclic.lang.compiler.model.jdk.JdkTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -186,6 +187,10 @@ public class CyclicType implements TypeReference, CyclicMember{
 		return inners;
 	}
 	
+	public List<? extends MethodReference> declaredMethods(){
+		return methods;
+	}
+	
 	public Set<AnnotationTag> annotations(){
 		return annotations;
 	}
@@ -361,7 +366,8 @@ public class CyclicType implements TypeReference, CyclicMember{
 		}
 		
 		// inherit methods that aren't hidden
-		for(MethodReference method : inheritedMethods())
+		// FIXME: CAN'T DO THIS, inheritedMethods() -> methods() -> methodsAndInherited -> inheritedMethods() ...
+		for(MethodReference method : inheritedMethodsOf(this, false))
 			if(method.flags().visibility() != Visibility.PRIVATE){
 				CyclicMethod overrides = null;
 				for(CyclicMethod x : methods)
@@ -478,7 +484,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		// check @Override annotations
 		for(CyclicMethod method : methods)
 			if(method.annotations().stream().anyMatch(k -> k.annotationType().fullyQualifiedName().equals(OVERRIDE)))
-				if(inheritedMethods().stream().noneMatch(method::overrides))
+				if(inheritedMethodsOf(this, false).stream().noneMatch(method::overrides))
 					throw new CompileTimeException(null, "Method \"" + method.summary() + "\" has @Override annotation but does not override any members");
 	}
 	
@@ -494,14 +500,24 @@ public class CyclicType implements TypeReference, CyclicMember{
 		return fullyQualifiedName().hashCode();
 	}
 	
-	private List<? extends MethodReference> inheritedMethods(){
-		List<MethodReference> interfaceMethods = interfaces.stream()
-				.flatMap(x -> x.methods().stream())
+	private static List<? extends MethodReference> inheritedMethodsOf(TypeReference tr, boolean includeDeclared){
+		if(tr instanceof JdkTypeRef)
+			return tr.methods(); // already resolved
+		
+		List<MethodReference> interfaceMethods = tr.superInterfaces().stream()
+				.flatMap(x -> inheritedMethodsOf(x, true).stream())
 				.filter(k -> k.flags().visibility() != Visibility.PRIVATE)
 				.collect(Collectors.toCollection(ArrayList::new));
 		// superclass methods "override" interface methods
-		if(superType != null)
-			for(MethodReference method : superType.methods()){
+		if(tr.superClass() != null)
+			for(MethodReference method : inheritedMethodsOf(tr.superClass(), true)){
+				interfaceMethods.removeIf(method::overrides);
+				interfaceMethods.add(method);
+			}
+		// declared methods override all others
+		if(includeDeclared)
+			for(MethodReference method : tr.declaredMethods()){
+				// invalid CyclicType overrides get picked up when validating that class
 				interfaceMethods.removeIf(method::overrides);
 				interfaceMethods.add(method);
 			}

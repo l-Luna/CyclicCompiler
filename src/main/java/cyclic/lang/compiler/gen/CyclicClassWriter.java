@@ -14,8 +14,8 @@ import java.lang.annotation.RetentionPolicy;
 
 public final class CyclicClassWriter{
 	
-	public static int outputClassfileVersion = Opcodes.V17;
-	public static CallableReference currentMethod = null;
+	public static final int outputClassfileVersion = Opcodes.V17;
+	public static ThreadLocal<CallableReference> currentMethod = new ThreadLocal<>();
 	
 	public static void writeClass(ClassWriter writer, CyclicType type){
 		CompileTimeException.setFile(type.fullyQualifiedName());
@@ -28,7 +28,7 @@ public final class CyclicClassWriter{
 			MethodVisitor smv = writer.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
 			for(var init : type.initBlocks)
 				if(init.isStatic()){
-					currentMethod = init;
+					currentMethod.set(init);
 					CyclicMethodWriter.writeCtor(smv, init);
 				}
 			smv.visitInsn(Opcodes.RETURN);
@@ -50,7 +50,7 @@ public final class CyclicClassWriter{
 			if(cyc.isCanonRecordCtor && !cyc.isGeneratedRecordCtor)
 				continue; // generate with generated one, which is always present
 			
-			currentMethod = ctor;
+			currentMethod.set(ctor);
 			MethodVisitor mv = writer.visitMethod(getAccessFlags(ctor.flags()), "<init>", ctor.descriptor(), null, null);
 			
 			// implicit "super();" if not present in text
@@ -89,7 +89,7 @@ public final class CyclicClassWriter{
 		for(var method : type.methods()){
 			if(method instanceof CyclicMethod cyc
 					&& cyc.in().fullyQualifiedName().equals(type.fullyQualifiedName())){
-				currentMethod = cyc;
+				currentMethod.set(cyc);
 				MethodVisitor mv = writer.visitMethod(getMethodAccessFlags(method), method.name(), method.descriptor(), null, null);
 				CyclicMethodWriter.writeMethod(mv, cyc);
 				mv.visitMaxs(0, 0);
@@ -97,7 +97,7 @@ public final class CyclicClassWriter{
 			}
 		}
 		
-		currentMethod = null;
+		currentMethod.set(null);
 		
 		for(AnnotationTag annotation : type.annotations()){
 			var retention = annotation.retention();

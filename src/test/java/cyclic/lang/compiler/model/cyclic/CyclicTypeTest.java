@@ -39,6 +39,8 @@ class CyclicTypeTest{
 				() -> assertDoesntCompile("record T(Object component) { Object field; }"),
 				() -> compile("record T(Object component) { static Object template; Object component() -> component; }"),
 				
+				() -> compile("class T{ final void v(); }"),
+				
 				() -> assertDoesntCompile("class E{ val A; val B; val C; }"),
 				() -> assertDoesntCompile("class E{ int A(3); }"),
 				() -> compile("enum E{ val A; val B; val C; }"),
@@ -210,6 +212,22 @@ class CyclicTypeTest{
 					boolean a() -> false;
 				}
 				class Sub extends Super implements IF{}
+				""");
+	}
+	
+	@Test
+	void testInheritance(){
+		compile("""
+				class A extends B{
+					
+					void test() -> v();
+					
+					class B extends C;
+					class C extends D;
+					class D{
+						void v();
+					}
+				}
 				""");
 	}
 }

@@ -29,10 +29,15 @@ public class Benchmark{
 								System.out.println(o);
 							i++;
 							i--;
+							//lol("%s");
+							//String s = (String)(Integer)%s;
 							System.out.println(test(test((long)i)));
 						}
 						
 						{ o = 3; }
+						
+						private Bench%s(){ super(); var u = 0; u /= 1; }
+						
 						public static String test(int i) -> i + u;
 						public static int test(long l) -> (int)l;
 						public double compute(int i, long l, float f, Object obj, String s, double d, byte b){
@@ -56,7 +61,7 @@ public class Benchmark{
 								return d2 - s.length();
 						}
 					}
-					""".formatted(i));
+					""".formatted(i, i, i, i));
 		
 		var projectPath = addFile("project.cyc.yaml", """
 				source: "cyclic/"

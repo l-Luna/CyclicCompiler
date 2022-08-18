@@ -164,11 +164,17 @@ public final class Flow{
 			case BlockStatement s -> {
 				// take all statements until the statement containing the `before` statement
 				// forceEnter for the statement containing the `before` statement to narrow down checking within
-				var cont = new AtomicBoolean(true);
-				yield s.contains.stream()
-						.takeWhile(x -> cont.get() && (firstMatching(x, y -> y == before).isEmpty() || cont.getAndSet(false)))
-						.mapToInt(k -> minOccurrencesBefore(k, before, condition, !cont.get()))
-						.sum();
+				var cont = true;
+				int sum = 0;
+				for(Statement x : s.contains){
+					if(!cont)
+						break;
+					else if(firstMatching(x, y -> y == before).isPresent())
+						cont = false;
+					int i = minOccurrencesBefore(x, before, condition, !cont);
+					sum += i;
+				}
+				yield sum;
 			}
 			case WhileStatement s -> forceEnter ? minOccurrencesBefore(s.success, before, condition, false) : 0;
 			case ForStatement s -> minOccurrencesBefore(s.start, before, condition, false)

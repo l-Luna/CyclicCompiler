@@ -141,7 +141,7 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 	public void resolveBody(){
 		if(body == null){
 			addParamVars();
-			body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, scope, in, this)).collect(Collectors.toList()), scope, this) :
+			body = (blockStatement != null) ? new Statement.BlockStatement(blockStatement.statement().stream().map(ctx -> Statement.fromAst(ctx, scope, in, this)).toList(), scope, this) :
 				   (arrowStatement != null) ? Statement.fromAst(arrowStatement, scope, in, this) :
 				    null; // a semicolon just returns - no implicit return in case of init blocks
 			

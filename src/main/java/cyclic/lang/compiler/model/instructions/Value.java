@@ -629,8 +629,9 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
-			if(target == null)
-				throw new CompileTimeException(text, "Could not find method " + name + " for args of types " + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "[", "]")));
+			if(target == null){
+				throw new CompileTimeException(text, "Could not find method " + name + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "(", ")")));
+			}
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));

@@ -13,6 +13,7 @@ public class JdkTypeRef implements TypeReference{
 	Class<?> underlying;
 	List<JdkFieldRef> fields;
 	List<JdkMethodRef> methods;
+	List<JdkMethodRef> declaredMethods;
 	List<JdkCtorRef> ctors;
 	List<JdkRecordComponentRef> components;
 	
@@ -21,11 +22,12 @@ public class JdkTypeRef implements TypeReference{
 	
 	public JdkTypeRef(Class<?> underlying){
 		this.underlying = underlying;
-		fields = Arrays.stream(underlying.getDeclaredFields()).map(k -> new JdkFieldRef(k, this)).collect(Collectors.toList());
-		methods = Arrays.stream(underlying.getDeclaredMethods()).map(JdkMethodRef::new).collect(Collectors.toList());
-		ctors = Arrays.stream(underlying.getDeclaredConstructors()).map(JdkCtorRef::new).collect(Collectors.toList());
+		fields = Arrays.stream(underlying.getDeclaredFields()).map(k -> new JdkFieldRef(k, this)).toList();
+		declaredMethods = Arrays.stream(underlying.getDeclaredMethods()).map(JdkMethodRef::new).toList();
+		methods = Arrays.stream(underlying.getMethods()).map(JdkMethodRef::new).toList();
+		ctors = Arrays.stream(underlying.getDeclaredConstructors()).map(JdkCtorRef::new).toList();
 		if(underlying.isRecord())
-			components = Arrays.stream(underlying.getRecordComponents()).map(JdkRecordComponentRef::new).collect(Collectors.toList());
+			components = Arrays.stream(underlying.getRecordComponents()).map(JdkRecordComponentRef::new).toList();
 		else components = List.of();
 	}
 	
@@ -59,11 +61,15 @@ public class JdkTypeRef implements TypeReference{
 	}
 	
 	public List<? extends TypeReference> superInterfaces(){
-		return interfaces != null ? interfaces : (interfaces = Arrays.stream(underlying.getInterfaces()).map(Utils::forAnyClass).collect(Collectors.toList()));
+		return interfaces != null ? interfaces : (interfaces = Arrays.stream(underlying.getInterfaces()).map(Utils::forAnyClass).toList());
 	}
 	
 	public List<? extends TypeReference> innerClasses(){
 		return Collections.emptyList();
+	}
+	
+	public List<? extends MethodReference> declaredMethods(){
+		return declaredMethods;
 	}
 	
 	public List<? extends MethodReference> methods(){

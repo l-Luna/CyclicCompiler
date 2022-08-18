@@ -53,8 +53,12 @@ public class ArrayTypeRef implements TypeReference{
 		return Collections.emptyList();
 	}
 	
-	public List<? extends MethodReference> methods(){
+	public List<? extends MethodReference> declaredMethods(){
 		return Collections.emptyList();
+	}
+	
+	public List<? extends MethodReference> methods(){
+		return declaredMethods();
 	}
 	
 	public List<? extends FieldReference> fields(){

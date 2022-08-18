@@ -69,6 +69,11 @@ public class ClassfileTypeRef implements TypeReference{
 		return List.of();
 	}
 	
+	public List<? extends MethodReference> declaredMethods(){
+		return methods;
+	}
+	
+	// TODO
 	public List<? extends MethodReference> methods(){
 		return methods;
 	}

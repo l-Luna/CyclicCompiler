@@ -90,7 +90,7 @@ public interface FieldReference extends AnnotatableElement, MemberReference{
 			// assignment to a final field is allowed if the assignment is in a constructor and
 			// - the field and constructor are non-static and the constructor is in a type assignable to the declaring type
 			// - the field and constructor are static (i.e. init block or default value) and in the same type
-			if(CyclicClassWriter.currentMethod instanceof CyclicConstructor c){
+			if(CyclicClassWriter.currentMethod.get() instanceof CyclicConstructor c){
 				boolean isSuitableStatic = isStatic() && c.isStatic() && in().fullyQualifiedName().equals(c.in().fullyQualifiedName());
 				boolean isSuitableInst = !isStatic() && !c.isStatic() && c.in().isAssignableTo(in());
 				if(!isSuitableStatic && !isSuitableInst)

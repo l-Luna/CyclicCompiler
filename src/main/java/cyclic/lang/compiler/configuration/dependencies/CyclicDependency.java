@@ -18,10 +18,10 @@ public final class CyclicDependency implements Dependency{
 	}
 	
 	public void resolveRefs(){
-		toCompile.values().forEach(CyclicType::resolveRefs);
+		toCompile.values().parallelStream().forEach(CyclicType::resolveRefs);
 	}
 	
 	public void resolveInheritance(){
-		toCompile.values().forEach(CyclicType::resolveInheritance);
+		toCompile.values().parallelStream().forEach(CyclicType::resolveInheritance);
 	}
 }

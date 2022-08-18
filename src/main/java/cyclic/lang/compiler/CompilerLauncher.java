@@ -281,7 +281,7 @@ public final class CompilerLauncher{
 	 * @return A map containing the byte contents of compiled classes indexed by fully-qualified names.
 	 */
 	public static Map<String, byte[]> compileFileSet(@NotNull Set<File> files, @Nullable Path root){
-		compileErrors = new HashSet<>(files.size());
+		compileErrors = ConcurrentHashMap.newKeySet();
 		files.parallelStream().forEach(withErrorChecking(file -> {
 			Path relative = root == null ? null : root.relativize(file.toPath());
 			if(file.getName().endsWith(".cyc")){
@@ -307,9 +307,9 @@ public final class CompilerLauncher{
 		TypeResolver.dependencies.forEach(withErrorChecking(Dependency::resolveInheritance));   checkErrors();
 		toCompile.values().forEach(withErrorChecking(CyclicType::resolveBodies));               checkErrors();
 		
-		Map<String, byte[]> ret = new HashMap<>(toCompile.size());
+		Map<String, byte[]> ret = new ConcurrentHashMap<>(toCompile.size());
 		
-		for(var type : toCompile.values()){
+		toCompile.values().parallelStream().forEach(type -> {
 			CompileTimeException.setFile(type.fullyQualifiedName());
 			ClassWriter writer = new AsmCyclicCW(ClassWriter.COMPUTE_FRAMES);
 			try{
@@ -318,8 +318,8 @@ public final class CompilerLauncher{
 				compileErrors.add(e);
 			}
 			ret.put(type.fullyQualifiedName(), writer.toByteArray());
-			checkErrors();
-		}
+		});
+		checkErrors();
 		
 		if(ProblemsHolder.numWarnings == 0)
 			System.out.println("Compiled " + toCompile.size() + " classes.");

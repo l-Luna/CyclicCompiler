@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles non-fatal issues.
@@ -17,8 +18,8 @@ import java.util.Set;
 public final class ProblemsHolder{
 	
 	public static int numWarnings = 0;
-	public static Set<WarningType> warned = new HashSet<>(); // TODO: remove
-	public static Set<Warning> problems = new HashSet<>();
+	public static Set<WarningType> warned = ConcurrentHashMap.newKeySet(); // TODO: remove
+	public static Set<Warning> problems = ConcurrentHashMap.newKeySet();
 	
 	public static void warnFrom(WarningType type, String warning, @Nullable Object in, @Nullable ParserRuleContext location){
 		if(in instanceof Statement st)
