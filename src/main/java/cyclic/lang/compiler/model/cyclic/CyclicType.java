@@ -79,7 +79,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 			superTypeName = OBJECT;
 			interfaceNames = ast.objectExtends() != null ? ast.objectExtends().type().stream().map(TypeResolver::getBaseName).collect(Collectors.toList()) : Collections.emptyList();
 			if(ast.objectImplements() != null && ast.objectImplements().type().size() > 0)
-				throw new CompileTimeException(text.objectImplements(), "Interfaces cannot implement interfaces, but this declares " + ast.objectImplements().type().size() + " super-interface(s)");
+				throw new CompileTimeException(text.objectImplements(), "Interfaces cannot implement interfaces, but this declares " + ast.objectImplements().type().size() + " super-interface(s)", "Help: Use extends instead");
 		}else{
 			if(ast.objectExtends() != null && ast.objectExtends().type().size() > 1)
 				throw new CompileTimeException(text.objectExtends(), "Non-interfaces cannot have multiple supertypes, but this declares " + ast.objectExtends().type().size() + " supertypes");
@@ -134,7 +134,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		if(kind() == TypeKind.ENUM)
 			for(var constructor : constructors){
 				if(constructor.flags.visibility() == Visibility.PUBLIC || constructor.flags.visibility() == Visibility.PROTECTED)
-					throw new CompileTimeException(constructor.text, "Enum constructors must declared as private or package-private");
+					throw new CompileTimeException(constructor.text, "Enum constructors must be declared private or package-private");
 				constructor.flags = new AccessFlags(Visibility.PRIVATE, false, false);
 			}
 	}
@@ -248,8 +248,9 @@ public class CyclicType implements TypeReference, CyclicMember{
 	
 	private void generateMembersForKind(){
 		if(kind() == TypeKind.RECORD){
-			if(fields.stream().anyMatch(x -> !x.isStatic()))
-				throw new CompileTimeException(null, "Record types may not have non-static members");
+			Optional<CyclicField> first = fields.stream().filter(x -> !x.isStatic()).findFirst();
+			if(first.isPresent())
+				throw new CompileTimeException(first.get().text.idPart(), "Record types may not have non-static members");
 			
 			for(CyclicLangParser.ParameterContext component : unresolvedRecordComponents){
 				TypeReference type = TypeResolver.resolve(component.type(), imports, packageName());
@@ -309,19 +310,22 @@ public class CyclicType implements TypeReference, CyclicMember{
 	
 	private void validate(){
 		if(superType.kind() == TypeKind.INTERFACE)
-			throw new CompileTimeException(text.objectExtends(), "Cannot extend the interface type " + superType.fullyQualifiedName());
+			throw new CompileTimeException(text.objectExtends(), "Classes cannot extend the interface type " + superType.fullyQualifiedName(), "Help: Use implements instead");
 		if(superType.flags().isFinal())
 			throw new CompileTimeException(text.objectExtends(), "Cannot extend the final type " + superType.fullyQualifiedName());
 		
 		for(TypeReference i : superInterfaces())
 			if(i.kind() != TypeKind.INTERFACE)
-				throw new CompileTimeException(text.objectImplements(), "Cannot implement non-interface type " + i.fullyQualifiedName());
+				if(kind() == TypeKind.INTERFACE)
+					throw new CompileTimeException(text.objectExtends(), "Interfaces cannot extend non-interface type " + i.fullyQualifiedName());
+				else
+					throw new CompileTimeException(text.objectImplements(), "Cannot implement non-interface type " + i.fullyQualifiedName(), "Help: Use extends instead");
 		
 		// don't include generated record ctors, since those are prepended to the explicit method if present
-		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).toList(), "constructor", CallableReference::descriptor, CallableReference::summary);
-		Utils.checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface");
-		Utils.checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name");
-		Utils.checkDuplicates(methods, "method", MethodReference::nameAndDescriptor, MethodReference::summary);
+		Utils.checkDuplicates(constructors.stream().filter(x -> !x.isGeneratedRecordCtor).toList(), "constructor", CallableReference::descriptor, CallableReference::summary, nameToken());
+		Utils.checkDuplicates(interfaces.stream().map(TypeReference::internalName).toList(), "implemented interface", nameToken());
+		Utils.checkDuplicates(fields.stream().map(CyclicField::name).toList(), "field name", nameToken());
+		Utils.checkDuplicates(methods, "method", MethodReference::nameAndDescriptor, MethodReference::summary, nameToken());
 		
 		for(CyclicMethod method : methods)
 			if(method.flags().isAbstract() && !flags().isAbstract())
@@ -375,16 +379,19 @@ public class CyclicType implements TypeReference, CyclicMember{
 						overrides = x;
 						break;
 					}else if(x.name().equals(method.name()) && x.parameters().equals(method.parameters()))
-						throw new CompileTimeException(null, "Method " + x.summary() + " cannot have its return type changed.");
+						throw new CompileTimeException(x.text.type(),
+								"Method \"" + x.summary() + "\" clashes with inherited method \"" + method.summary() + "\"",
+								"Note: Methods clash because they are override-compatible except for return type",
+								"Help: Change return type to match if an override was intended, or change the method's name or parameters");
 				if(overrides == null){
 					if(method.flags().isAbstract() && !flags.isAbstract())
-						throw new CompileTimeException(null, "Abstract supertype method " + method.summary() + " must be overridden in concrete subclass");
+						throw new CompileTimeException(nameToken(), "Abstract supertype method " + method.summary() + " must be overridden in concrete subclass");
 					methodsAndInherited.add(method);
 				}else{
 					if(method.flags().isFinal())
-						throw new CompileTimeException(null, "Method " + method.summary() + " cannot be overridden");
+						throw new CompileTimeException(overrides.nameToken(), "Method " + method.summary() + " cannot be overridden");
 					if(overrides.flags().visibility().ordinal() < method.flags().visibility().ordinal())
-						throw new CompileTimeException(null, "Method " + method.summary() + " cannot have its visibility narrowed");
+						throw new CompileTimeException(overrides.nameToken(), "Method " + method.summary() + " cannot have its visibility narrowed");
 				}
 			}
 		
@@ -392,7 +399,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		methodsAndInherited = Utils.distinctListByEq(methodsAndInherited, x -> x.nameAndDescriptor() + x.in().fullyQualifiedName());
 		
 		// if we didn't error earlier, its due to inheritance
-		Utils.checkDuplicates(methodsAndInherited, "inherited method", method -> method.name() + method.parameterDescriptor(), MethodReference::summary);
+		Utils.checkDuplicates(methodsAndInherited, "inherited method", method -> method.name() + method.parameterDescriptor(), MethodReference::summary, nameToken());
 		
 		for(FieldReference field : superType.fields())
 			if(field.flags().visibility() != Visibility.PRIVATE){

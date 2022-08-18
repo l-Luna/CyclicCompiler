@@ -46,16 +46,16 @@ public final class Utils{
 		}
 	}
 	
-	public static <T> void checkDuplicates(List<T> in, String label){
-		checkDuplicates(in, label, Object::toString, Object::toString);
+	public static <T> void checkDuplicates(List<T> in, String label, ParserRuleContext errorAt){
+		checkDuplicates(in, label, Object::toString, Object::toString, errorAt);
 	}
 	
-	public static <T> void checkDuplicates(List<T> in, String label, Function<T, String> namer, Function<T, String> prettier){
+	public static <T> void checkDuplicates(List<T> in, String label, Function<T, String> namer, Function<T, String> prettier, ParserRuleContext errorAt){
 		Set<String> checked = new HashSet<>(in.size());
 		for(T t : in){
 			var name = namer.apply(t);
 			if(checked.contains(name))
-				throw new CompileTimeException(null, "Duplicate " + label + " \"" + prettier.apply(t) + "\"");
+				throw new CompileTimeException(errorAt, "Duplicate " + label + " \"" + prettier.apply(t) + "\"");
 			checked.add(name);
 		}
 	}

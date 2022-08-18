@@ -77,11 +77,11 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		
 		boolean isA = isN || flags.isAbstract();
 		if(isA && flags.isFinal())
-			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be final and abstract or native");
+			throw new CompileTimeException(ctx.modifiers(), "Method \"" + name + "\" cannot be final and abstract or native");
 		if(isA && isStatic())
-			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be static and abstract or native");
+			throw new CompileTimeException(ctx.modifiers(), "Method \"" + name + "\" cannot be static and abstract or native");
 		if(isNative() && flags.isAbstract())
-			throw new CompileTimeException(ctx, "Method \"" + name + "\" cannot be native and abstract");
+			throw new CompileTimeException(ctx.modifiers(), "Method \"" + name + "\" cannot be native and abstract");
 		
 		retType = ctx.type();
 		for(var p : ctx.parameters().parameter()){
@@ -94,7 +94,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 				throw new CompileTimeException(p, "Parameter types may not be inferred");
 		}
 		
-		Utils.checkDuplicates(parameterNames(), "parameter name in method " + name);
+		Utils.checkDuplicates(parameterNames(), "parameter name in method " + name, nameToken());
 		
 		for(int i = 0; i < ctx.parameters().parameter().size() - 1; i++){
 			var param = ctx.parameters().parameter(i);
@@ -103,7 +103,7 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 		}
 		
 		if(isA && (arrowStatement != null || arrowVal != null || blockStatement != null))
-			throw new CompileTimeException(ctx, "Abstract or native method \"" + name + "\" cannot have a body");
+			throw new CompileTimeException(ctx.modifiers(), "Abstract or native method \"" + name + "\" cannot have a body");
 		
 		var typeName = TypeResolver.getBaseName(ctx.type());
 		if(typeName.equals("var") || typeName.equals("val"))

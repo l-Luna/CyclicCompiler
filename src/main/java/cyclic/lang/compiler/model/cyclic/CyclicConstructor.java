@@ -46,7 +46,7 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 		flags = Utils.fromModifiers(ctx.modifiers());
 		flags = new AccessFlags(flags.visibility(), false, false); // no final or abstract constructors
 		if(!ctx.idPart().getText().equals(in.shortName()))
-			throw new CompileTimeException(ctx.idPart(), "Return type required for method");
+			throw new CompileTimeException(ctx.idPart(), "Return type required for method", "Help: To make a constructor, use the name of the containing class, \"" + in.shortName() + "\"");
 		
 		for(var p : ctx.parameters().parameter()){
 			paramTypeNames.add(p.type());
@@ -54,7 +54,7 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 			isVargs = p.ELIPSES() != null; // only the last assignment stays
 		}
 		
-		Utils.checkDuplicates(parameterNames(), "parameter name in constructor");
+		Utils.checkDuplicates(parameterNames(), "parameter name in constructor", nameToken());
 		
 		for(int i = 0; i < ctx.parameters().parameter().size() - 1; i++){
 			var param = ctx.parameters().parameter(i);
@@ -191,7 +191,7 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 					&& !isStatic()
 					&& in.kind() != TypeKind.ENUM
 					&& in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-				throw new CompileTimeException(nameToken(), "Missing explicit constructor call (superclass has no 0-arg constructors)");
+				throw new CompileTimeException(nameToken(), "Missing explicit constructor call; superclass has no default (0-arg) constructors");
 			}
 			if(in.kind() == TypeKind.RECORD && !(isGeneratedRecordCtor || isCanonRecordCtor || isInitBlock))
 				throw new CompileTimeException(nameToken(), "Non-canonical constructor call must defer to canonical constructor");

@@ -46,6 +46,7 @@ class CyclicTypeTest{
 				() -> compile("enum E{ val A; val B; val C; }"),
 				() -> compile("enum E{ val A(); }"),
 				() -> assertDoesntCompile("enum E{ val A; static E X = new E(); }"),
+				() -> assertDoesntCompile("enum E{ val A; static E X = new E(\"\", 0); }"),
 				() -> compile("enum E{ val A(3); E(int i){  } }"),
 				
 				() -> assertDoesntCompile("class T{ U(); }"),
@@ -128,10 +129,10 @@ class CyclicTypeTest{
 					int a();
 				}
 				interface IB extends IA{
-					int a() -> 0;
+					public int a() -> 0;
 				}
 				interface IC extends IB{
-					String a() -> "";
+					public String a() -> "";
 				}
 				""");
 		
