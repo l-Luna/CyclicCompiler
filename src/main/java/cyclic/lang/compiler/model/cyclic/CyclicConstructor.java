@@ -191,7 +191,11 @@ public class CyclicConstructor implements ConstructorReference, CyclicCallable{
 					&& !isStatic()
 					&& in.kind() != TypeKind.ENUM
 					&& in.superClass().constructors().stream().noneMatch(x -> x.parameters().size() == 0)){
-				throw new CompileTimeException(nameToken(), "Missing explicit constructor call; superclass has no default (0-arg) constructors");
+				ParserRuleContext source = nameToken();
+				if(source != null)
+					throw new CompileTimeException(source, "Missing explicit constructor call; superclass has no default (0-arg) constructors");
+				else
+					throw new CompileTimeException(in.nameToken(), "Missing explicit constructor; superclass has no default (0-arg) constructors so a explicit super-constructor call is required");
 			}
 			if(in.kind() == TypeKind.RECORD && !(isGeneratedRecordCtor || isCanonRecordCtor || isInitBlock))
 				throw new CompileTimeException(nameToken(), "Non-canonical constructor call must defer to canonical constructor");
