@@ -8,7 +8,6 @@ import cyclic.lang.compiler.model.instructions.Statement;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,14 +32,14 @@ public final class ProblemsHolder{
 	}
 	
 	public static void warn(String warning, @Nullable ParserRuleContext location, WarningType type){
-		String quote = location != null ? Utils.renderHighlight(location) : null;
-		var message = "Warning in class \"" + CompileTimeException.getCurrentFile() + "\"";
+		String quote = location != null ? Formatter.renderHighlight(location) : null;
+		var message = Formatter.COLOR_ORANGE + "Warning in class \"" + CompileTimeException.getCurrentFile() + "\"";
 		if(location != null)
 			message += ", at [%d:%d]\n%s".formatted(location.start.getLine(), location.start.getCharPositionInLine(), quote);
 		if(warning != null && !warning.isBlank())
-			message += "\n    " + warning;
+			message += "\n     " + Formatter.COLOR_YELLOW + warning;
 		
-		System.err.println(message + "\n");
+		System.out.println(message + "\n");
 		problems.add(new Warning(CompileTimeException.getCurrentFile(), warning, Warning.Source.fromCtxNullable(location), type));
 		numWarnings++;
 	}

@@ -14,7 +14,6 @@ import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -296,24 +295,6 @@ public final class Utils{
 			return "";
 		CharStream stream = ctx.start.getInputStream();
 		return stream.getText(new Interval(ctx.start.getStartIndex(), ctx.stop.getStopIndex()));
-	}
-	
-	public static String renderHighlight(@NotNull ParserRuleContext ctx){
-		// assuming the highlight is one line...
-		CharStream stream = ctx.start.getInputStream();
-		int startIdx = ctx.start.getStartIndex(), endIdx = ctx.stop.getStopIndex();
-		int sdiff = 0;
-		
-		while(startIdx > 0 && !stream.getText(new Interval(startIdx, startIdx)).equals("\n")){
-			startIdx--;
-			sdiff++;
-		}
-		while(endIdx < (stream.size() - 1) && !stream.getText(new Interval(endIdx, endIdx)).equals("\n"))
-			endIdx++;
-		
-		String line = stream.getText(new Interval(startIdx + 1, endIdx - 1)).replace("\t", " ");
-		String highlight = " ".repeat(sdiff - 1) + "^".repeat(ctx.stop.getStopIndex() - ctx.start.getStartIndex() + 1);
-		return (line + "\n" + highlight).stripIndent().indent(4).stripTrailing();
 	}
 	
 	public static String position(ParserRuleContext ctx){

@@ -10,6 +10,7 @@ import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.Formatter;
 import cyclic.lang.compiler.problems.ProblemsHolder;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -428,7 +429,7 @@ public abstract class Statement{
 					if(targetText == null)
 						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + occurrence.get());
 					else
-						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + Utils.position(targetText) + "\n\t\t" + occurrence.get());
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at\n" + Formatter.renderHighlight(targetText));
 				}
 			}
 			if(value != null)

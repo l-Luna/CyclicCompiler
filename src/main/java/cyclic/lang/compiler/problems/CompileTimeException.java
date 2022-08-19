@@ -1,6 +1,5 @@
 package cyclic.lang.compiler.problems;
 
-import cyclic.lang.compiler.model.Utils;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,11 +56,11 @@ public class CompileTimeException extends RuntimeException{
 			message += ", at " + c;
 		String details = super.getMessage();
 		if(details != null && !details.isBlank())
-			message += "\n    " + details;
+			message += "\n     " + Formatter.COLOR_YELLOW + details;
 		if(notes != null)
 			for(String note : notes)
-				message += "\n    " + note;
-		return message;
+				message += "\n     " + Formatter.COLOR_YELLOW + note;
+		return message + Formatter.COLOR_RESET;
 	}
 	
 	public String getErrorMessage(){
@@ -76,7 +75,7 @@ public class CompileTimeException extends RuntimeException{
 	public record Context(ParserRuleContext text, String filename, int line, int start){
 		
 		public String toString(){
-			return "[%d:%d]\n%s".formatted(line(), start(), Utils.renderHighlight(text()));
+			return "[%d:%d]\n%s".formatted(line(), start(), Formatter.renderHighlight(text()));
 		}
 	}
 }
