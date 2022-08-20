@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.model.instructions;
 
 import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.Formatter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Label;
@@ -60,8 +61,12 @@ public class Scope{
 	}
 	
 	public int addVariable(Variable v){
-		if(get(v.name) != null)
-			throw new CompileTimeException("Trying to create a local variable \"" + v.name + "\" when one already exists in scope!");
+		Variable existing = get(v.name);
+		if(existing != null)
+			if(existing.owner != null && existing.owner.text != null)
+				throw new CompileTimeException("Trying to create a local variable \"" + v.name + "\" when one already exists in scope", List.of("Already defined at \n" + Formatter.renderHighlight(existing.owner.text)));
+			else
+				throw new CompileTimeException("Trying to create a local variable \"" + v.name + "\" when one already exists in scope");
 		List<Variable> list = getIndexList();
 		list.add(v);
 		variables.add(v);

@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -25,9 +26,14 @@ public class CompileTimeException extends RuntimeException{
 	}
 	
 	public CompileTimeException(String message){
+		this(message, null);
+	}
+	
+	/*can't use varargs because the overloads become ambiguous with null*/
+	public CompileTimeException(String message, List<String> notes){
 		super(message);
 		ctx = curText.get().peek();
-		notes = null;
+		this.notes = notes == null ? null : notes.toArray(String[]::new);
 	}
 	
 	public static void setFile(String filename){

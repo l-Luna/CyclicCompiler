@@ -427,9 +427,9 @@ public abstract class Statement{
 				if(occurrence.isPresent()){
 					ParserRuleContext targetText = occurrence.get().text;
 					if(targetText == null)
-						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at " + occurrence.get());
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable", "First assigned at " + occurrence.get());
 					else
-						throw new CompileTimeException(text, "Can't reassign the value of a final local variable - first assigned at\n" + Formatter.renderHighlight(targetText));
+						throw new CompileTimeException(text, "Can't reassign the value of a final local variable", "First assigned at\n" + Formatter.renderHighlight(targetText));
 				}
 			}
 			if(value != null)
