@@ -105,6 +105,8 @@ public final class CompilerLauncher{
 					diagnosticsSetter = true;
 				else if(arg.equals("--noOutput"))
 					project.noOutput = true;
+				else if(arg.equals("--throwOnError"))
+					exitOnError = false;
 				else if(debugSetter)
 					project.includeDebug = Boolean.parseBoolean(arg);
 				else if(diagnosticsSetter)
@@ -114,7 +116,6 @@ public final class CompilerLauncher{
 		
 		project.validate();
 		includeDebugInfo = project.includeDebug;
-		exitOnError = !project.internal;
 		
 		// load any dependencies
 		for(CyclicPackage dependency : project.dependencies)

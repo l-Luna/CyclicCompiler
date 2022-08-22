@@ -13,8 +13,6 @@ public class MultiFileProjectTest extends ProjectTestCase{
 				output: "out/"
 				
 				jdk: 17
-				
-				internal: true
 				""");
 		
 		addCyclicFile("cyclic/SimpleFile1", """

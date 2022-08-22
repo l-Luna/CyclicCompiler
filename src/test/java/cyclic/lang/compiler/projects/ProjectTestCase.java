@@ -46,6 +46,6 @@ public class ProjectTestCase{
 	
 	public void compileProject(String projectName){
 		Path projectFile = projectFiles.get(projectName);
-		CompilerLauncher.main("-p", projectFile.toString());
+		CompilerLauncher.main("-p", projectFile.toString(), "--throwOnError");
 	}
 }

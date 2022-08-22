@@ -14,8 +14,6 @@ public class ProjectWithSourceDepsTest extends ProjectTestCase{
 				
 				jdk: 17
 				
-				internal: true
-				
 				dependencies:
 				- location: "dependency"
 				  type: "sourceFolder"

@@ -15,8 +15,6 @@ public class BrokenProjectTest extends ProjectTestCase{
 				output: "out/"
 				
 				jdk: 1
-				
-				internal: true
 				""");
 		
 		Assertions.assertThrows(ConfigurationException.class,
@@ -30,8 +28,6 @@ public class BrokenProjectTest extends ProjectTestCase{
 				output: "out/"
 				
 				jdk: 17
-				
-				internal: true
 				
 				dependencies:
 				- type: "what"
@@ -48,8 +44,6 @@ public class BrokenProjectTest extends ProjectTestCase{
 				output: "out/"
 				
 				jdk: 17
-				
-				internal: true
 				
 				dependencies:
 				- type: "jar"
@@ -68,8 +62,6 @@ public class BrokenProjectTest extends ProjectTestCase{
 				
 				jdk: 17
 				
-				internal: true
-				
 				dependencies:
 				- type: "sourceFolder"
 				  location: "noFolder"
@@ -86,8 +78,6 @@ public class BrokenProjectTest extends ProjectTestCase{
 				output: "out/"
 				
 				jdk: 17
-				
-				internal: true
 				
 				dependencies:
 				- type: "sourceFolder"

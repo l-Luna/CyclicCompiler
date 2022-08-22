@@ -53,4 +53,3 @@ There are a few other attributes that can be specified:
 - `mavenRepos`: A list of maven repositories to be checked for `mavenJar` dependencies. Maven Central is implicitly added.
 - `defaultImports`: A list of imports to be considered in every file of this project, such as `java.lang.*` or `cyclic.lang.annotations.MustUse`. Empty by default. (Note: `java.lang.*` is always considered a default import regardless of the values of this list.)
 - `noOutput`: Whether to skip writing compiled classes to the output folder and produce no packages, `false` by default.
-- `internal`: Causes the compiler to throw an exception when a compilation error occurs instead of exiting gracefully, for testing purposes. `false` by default.
