@@ -55,6 +55,9 @@ public final class CompilerLauncher{
 	/** The path to write diagnostics (errors and warnings) to, in a machine-readable format. */
 	public static String diagnosticsTarget = null;
 	
+	/** Whether to use ANSI colour codes in messages. */
+	public static boolean colouredOutput = true;
+	
 	/** The project currently being compiled. */
 	public static CyclicProject project;
 	
@@ -107,6 +110,8 @@ public final class CompilerLauncher{
 					project.noOutput = true;
 				else if(arg.equals("--throwOnError"))
 					exitOnError = false;
+				else if(arg.equals("--noColour"))
+					colouredOutput = false;
 				else if(debugSetter)
 					project.includeDebug = Boolean.parseBoolean(arg);
 				else if(diagnosticsSetter)

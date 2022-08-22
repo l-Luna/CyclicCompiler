@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.problems;
 
+import cyclic.lang.compiler.CompilerLauncher;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -7,11 +8,11 @@ import org.jetbrains.annotations.NotNull;
 
 public final class Formatter{
 	
-	public static final String COLOR_RESET = "\u001B[0m";
-	public static final String COLOR_ORANGE = "\u001B[38:5:208m";
-	public static final String COLOR_YELLOW = "\u001B[33m";
-	public static final String COLOR_CYAN = "\u001B[36m";
-	public static final String COLOR_WHITE = "\u001B[0;97m";
+	public static final String COLOR_RESET = ifEnabled("\u001B[0m");
+	public static final String COLOR_ORANGE = ifEnabled("\u001B[38:5:208m");
+	public static final String COLOR_YELLOW = ifEnabled("\u001B[33m");
+	public static final String COLOR_CYAN = ifEnabled("\u001B[36m");
+	public static final String COLOR_WHITE = ifEnabled("\u001B[0;97m");
 	
 	public static String renderHighlight(@NotNull ParserRuleContext ctx){
 		// assuming the highlight is one line...
@@ -34,5 +35,9 @@ public final class Formatter{
 	private static String pad(int n){
 		var s = String.valueOf(n);
 		return s + " ".repeat(3 - s.length());
+	}
+	
+	private static String ifEnabled(String code){
+		return CompilerLauncher.colouredOutput ? code : "";
 	}
 }
