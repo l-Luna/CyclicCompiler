@@ -830,4 +830,79 @@ public class SampleTests{
 		Method staticTest = holderStaticSingle.getDeclaredMethod("test");
 		Assertions.assertEquals(staticTest.invoke(null), 4);
 	}
+	
+	@Test
+	void testIntConstants(){
+		CyclicAssertions.compile("""
+				void test(){
+					int x = 2147483647;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					int x = 2147483648;
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				void test(){
+					byte x = 127;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					byte x = 128;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					byte x = 1000000;
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				void test(){
+					byte x = -128;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					byte x = -129;
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				void test(){
+					short x = 32767;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					short x = 32768;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					short x = 1000000;
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				void test(){
+					short x = -32768;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					short x = -32769;
+				}
+				""");
+	}
 }

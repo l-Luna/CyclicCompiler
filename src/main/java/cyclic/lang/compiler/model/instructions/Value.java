@@ -61,8 +61,11 @@ public abstract class Value{
 					yield new FloatLiteralValue(Float.parseFloat(text));
 				else if(text.endsWith("d"))
 					yield new DoubleLiteralValue(Double.parseDouble(text));
-				else
+				else try{
 					yield new IntLiteralValue(Integer.parseInt(text));
+				}catch(NumberFormatException nfe){
+					throw new CompileTimeException("Int value out of range");
+				}
 			}
 			case CyclicLangParser.DecLitContext decLit -> {
 				String text = decLit.DECLIT().getText();
@@ -315,9 +318,9 @@ public abstract class Value{
 					case 5 -> Opcodes.ICONST_5;
 					default -> throw new IllegalStateException("Unexpected value: " + value);
 				});
-			else if(value >= Byte.MIN_VALUE && value <= Byte.MAX_VALUE)
+			else if(isByte())
 				mv.visitIntInsn(Opcodes.BIPUSH, value);
-			else if(value >= Short.MIN_VALUE && value <= Short.MAX_VALUE)
+			else if(isShort())
 				mv.visitIntInsn(Opcodes.SIPUSH, value);
 			else
 				mv.visitLdcInsn(value);
@@ -329,12 +332,20 @@ public abstract class Value{
 				return s;
 			// TODO: error if the value is out of range
 			if(setType == null && target instanceof PrimitiveTypeRef pref){
-				if(pref.type == PrimitiveTypeRef.Primitive.SHORT)
+				if(pref.type == PrimitiveTypeRef.Primitive.SHORT && isShort())
 					return new SubstituteTypeValue(PlatformDependency.SHORT, this);
-				if(pref.type == PrimitiveTypeRef.Primitive.BYTE)
+				if(pref.type == PrimitiveTypeRef.Primitive.BYTE && isByte())
 					return new SubstituteTypeValue(PlatformDependency.BYTE, this);
 			}
 			return null;
+		}
+		
+		private boolean isByte(){
+			return value >= Byte.MIN_VALUE && value <= Byte.MAX_VALUE;
+		}
+		
+		private boolean isShort(){
+			return value >= Short.MIN_VALUE && value <= Short.MAX_VALUE;
 		}
 		
 		public TypeReference type(){
@@ -343,7 +354,7 @@ public abstract class Value{
 		
 		public String toString(){
 			return setType == PlatformDependency.BOOLEAN ? (value == 1 ? "true" : "false") :
-					setType == PlatformDependency.CHAR ? String.valueOf((char)value) :
+					setType == PlatformDependency.CHAR ? "'" + String.valueOf((char)value) + "'" :
 					String.valueOf(value);
 		}
 	}
