@@ -321,4 +321,15 @@ public final class Utils{
 	public static <T, Eq> List<T> distinctListByEq(List<T> in, Function<T, Eq> eq){
 		return distinctStreamByEq(in.stream(), eq).collect(Collectors.toCollection(ArrayList::new));
 	}
+	
+	public static boolean isBoxType(TypeReference type){
+		return Arrays.stream(PrimitiveTypeRef.Primitive.values()).anyMatch(x -> PrimitiveTypeRef.boxedTypeName(x).equals(type.fullyQualifiedName()));
+	}
+	
+	public static PrimitiveTypeRef.Primitive unbox(TypeReference type){
+		return Arrays.stream(PrimitiveTypeRef.Primitive.values())
+				.filter(x -> PrimitiveTypeRef.boxedTypeName(x).equals(type.fullyQualifiedName()))
+				.findFirst()
+				.orElse(null);
+	}
 }

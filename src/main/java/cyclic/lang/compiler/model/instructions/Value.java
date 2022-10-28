@@ -10,6 +10,7 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.problems.ProblemsHolder;
 import cyclic.lang.compiler.resolve.TypeResolver;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -157,7 +159,7 @@ public abstract class Value{
 				if(fit != null){
 					yield new SubstituteTypeValue(target, fit);
 				}else if(target instanceof PrimitiveTypeRef p){
-					if(p.type == PrimitiveTypeRef.Primitive.NULL)
+					if(p.type == Primitive.NULL)
 						yield casting;
 					else if(casting.type() instanceof PrimitiveTypeRef c){
 						if(c.narrowingOpcodes(p.type) == null)
@@ -222,21 +224,31 @@ public abstract class Value{
 		
 		Value ret = null;
 		// unboxing conversion
-		if(target instanceof PrimitiveTypeRef prim)
-			if(myType.fullyQualifiedName().equals(prim.boxedTypeName()))
-				ret = new UnboxValue(this, prim.type);
+		if(target instanceof PrimitiveTypeRef){
+			var ub = Utils.unbox(myType);
+			if(ub != null && ub != Primitive.VOID && ub != Primitive.NULL)
+				ret = new UnboxValue(this, ub);
+		}
 		
 		if(myType instanceof PrimitiveTypeRef p){
 			// boxing conversion
-			if(p.boxedType().isAssignableTo(target) && p.type != PrimitiveTypeRef.Primitive.NULL && p.type != PrimitiveTypeRef.Primitive.VOID)
+			if(p.boxedType().isAssignableTo(target) && p.type != Primitive.NULL && p.type != Primitive.VOID)
 				ret = new BoxValue(this, p.boxedType());
 			// widening conversion
-			if(target instanceof PrimitiveTypeRef to && to.type != p.type){
-				int op = p.wideningOpcode(to.type);
+			Primitive to = null;
+			if(target instanceof PrimitiveTypeRef ptr)
+				to = ptr.type;
+			else{
+				var unboxTarget = Utils.unbox(target);
+				if(unboxTarget != null)
+					to = unboxTarget;
+			}
+			if(to != null && to != p.type && to != Primitive.VOID && to != Primitive.NULL){
+				int op = p.wideningOpcode(to);
 				if(op == 0)
 					ret = new SubstituteTypeValue(target, this);
 				else if(op != -1)
-					ret = new Operations.UnaryOpValue(to, this, op);
+					ret = new Operations.UnaryOpValue(new PrimitiveTypeRef(to), this, op);
 			}
 		}
 		
@@ -272,7 +284,7 @@ public abstract class Value{
 	public static class NullLiteralValue extends Value{
 		
 		public TypeReference type(){
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.NULL);
+			return new PrimitiveTypeRef(Primitive.NULL);
 		}
 		
 		public void write(MethodVisitor mv){
@@ -330,12 +342,18 @@ public abstract class Value{
 			var s = super.fit(target);
 			if(s != null)
 				return s;
-			// TODO: error if the value is out of range
-			if(setType == null && target instanceof PrimitiveTypeRef pref){
-				if(pref.type == PrimitiveTypeRef.Primitive.SHORT && isShort())
-					return new SubstituteTypeValue(PlatformDependency.SHORT, this);
-				if(pref.type == PrimitiveTypeRef.Primitive.BYTE && isByte())
-					return new SubstituteTypeValue(PlatformDependency.BYTE, this);
+			if(setType == null){
+				// allow further fitting e.g. to Byte, Short
+				if(isShort()){
+					var asShort = new SubstituteTypeValue(PlatformDependency.SHORT, this).fit(target);
+					if(asShort != null)
+						return asShort;
+				}
+				if(isByte()){
+					var asByte = new SubstituteTypeValue(PlatformDependency.BYTE, this).fit(target);
+					if(asByte != null)
+						return asByte;
+				}
 			}
 			return null;
 		}
@@ -379,7 +397,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.FLOAT);
+			return new PrimitiveTypeRef(Primitive.FLOAT);
 		}
 	}
 	
@@ -401,7 +419,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.DOUBLE);
+			return new PrimitiveTypeRef(Primitive.DOUBLE);
 		}
 	}
 	
@@ -423,7 +441,7 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			return new PrimitiveTypeRef(PrimitiveTypeRef.Primitive.LONG);
+			return new PrimitiveTypeRef(Primitive.LONG);
 		}
 	}
 	
@@ -662,9 +680,9 @@ public abstract class Value{
 	// could just use call values
 	public static class UnboxValue extends Value{
 		Value underlying;
-		PrimitiveTypeRef.Primitive type;
+		Primitive type;
 		
-		public UnboxValue(Value underlying, PrimitiveTypeRef.Primitive type){
+		public UnboxValue(Value underlying, Primitive type){
 			this.underlying = underlying;
 			this.type = type;
 		}
@@ -859,9 +877,9 @@ public abstract class Value{
 	
 	public static class PrimitiveCastValue extends Value{
 		Value casting;
-		PrimitiveTypeRef.Primitive to;
+		Primitive to;
 		
-		public PrimitiveCastValue(Value casting, PrimitiveTypeRef.Primitive to){
+		public PrimitiveCastValue(Value casting, Primitive to){
 			this.casting = casting;
 			this.to = to;
 		}

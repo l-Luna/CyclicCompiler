@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public static single Interpreter{
 
     public void main(String[] args){
-        val program = "++++++.";//args[0];
+        val program = "++++++++++++++++++++++++++++.";//args[0];
 
         int ptr = 0;
         List cells = new ArrayList();
@@ -21,11 +21,11 @@ public static single Interpreter{
             else if("<".equals(instr))
                 ptr--;
             else if("+".equals(instr))
-                cells.set(ptr, (Byte)(((Byte)cells.get(ptr)) + 1));
+                cells.set(ptr, (byte)(((Byte)cells.get(ptr)) + 1));
             else if("-".equals(instr))
-                cells.set(ptr, (Byte)(((Byte)cells.get(ptr)) - 1));
+                cells.set(ptr, (byte)(((Byte)cells.get(ptr)) - 1));
             else if(".".equals(instr))
-                System.out.println((char)cells.get(ptr));
+                System.out.println((char)(Byte)cells.get(ptr));
         }
     }
 }

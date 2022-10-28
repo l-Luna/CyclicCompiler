@@ -50,7 +50,7 @@ public final class CompilerLauncher{
 	public static boolean includeDebugInfo = true;
 	
 	/** Whether to end the program if a compilation error occurs, rather than throwing an exception. */
-	public static boolean exitOnError = false;
+	public static boolean exitOnError = true;
 	
 	/** The path to write diagnostics (errors and warnings) to, in a machine-readable format. */
 	public static String diagnosticsTarget = null;

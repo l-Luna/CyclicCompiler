@@ -276,7 +276,7 @@ public final class Operations{
 						v.operation = op;
 					return ret;
 				}
-		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.typeName() + " and " + right.typeName() + "!");
+		throw new CompileTimeException(expr, "Found no handlers for operation " + symbol + " that can handle values of types " + left.typeName() + " and " + right.typeName());
 	}
 	
 	public static Value resolvePrefix(String symbol, Value value){

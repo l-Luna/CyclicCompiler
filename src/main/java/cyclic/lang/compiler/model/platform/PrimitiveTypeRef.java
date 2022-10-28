@@ -199,7 +199,7 @@ public class PrimitiveTypeRef implements TypeReference{
 	public int wideningOpcode(Primitive target){
 		return switch(type){
 			case BYTE -> {
-				if(target == SHORT || target == INT)
+				if(target == SHORT || target == CHAR || target == INT)
 					yield 0;
 				else if(target == LONG)
 					yield Opcodes.I2L;
