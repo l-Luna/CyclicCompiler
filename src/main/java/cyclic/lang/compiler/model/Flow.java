@@ -176,21 +176,21 @@ public final class Flow{
 				}
 				yield sum;
 			}
-			case WhileStatement s -> forceEnter ? minOccurrencesBefore(s.success, before, condition, false) : 0;
-			case ForStatement s -> minOccurrencesBefore(s.start, before, condition, false)
-					+ (forceEnter ? minOccurrencesBefore(s.success, before, condition, false) + minOccurrencesBefore(s.increment, before, condition, false) : 0);
-			case DoWhileStatement s -> minOccurrencesBefore(s.success, before, condition, false); // guaranteed to run at least once
+			case WhileStatement s -> forceEnter ? minOccurrencesBefore(s.success, before, condition) : 0;
+			case ForStatement s -> minOccurrencesBefore(s.start, before, condition)
+					+ (forceEnter ? minOccurrencesBefore(s.success, before, condition) + minOccurrencesBefore(s.increment, before, condition) : 0);
+			case DoWhileStatement s -> minOccurrencesBefore(s.success, before, condition); // guaranteed to run at least once
 			case IfStatement s -> {
 				if(forceEnter){
 					if(s.fail == null)
-						yield minOccurrencesBefore(s.success, before, condition, false);
+						yield minOccurrencesBefore(s.success, before, condition);
 					// could be entering either branch
 					if(firstMatching(s.success, y -> y == before).isPresent())
-						yield minOccurrencesBefore(s.success, before, condition, false);
+						yield minOccurrencesBefore(s.success, before, condition);
 					else
-						yield minOccurrencesBefore(s.fail, before, condition, false);
+						yield minOccurrencesBefore(s.fail, before, condition);
 				}
-				yield Math.min(minOccurrencesBefore(s.success, before, condition, false), minOccurrencesBefore(s.fail, before, condition, false));
+				yield Math.min(minOccurrencesBefore(s.success, before, condition), minOccurrencesBefore(s.fail, before, condition));
 			}
 			case TryCatchStatement s -> {
 				// forceEnter is meaningless here since there can be many catch blocks
@@ -203,19 +203,23 @@ public final class Flow{
 				if(forceEnter){
 					for(Statement branch : branches)
 						if(firstMatching(branch, y -> y == before).isPresent())
-							yield minOccurrencesBefore(branch, before, condition, false);
+							yield minOccurrencesBefore(branch, before, condition);
 					if(s.finallyStatement != null && firstMatching(s.finallyStatement, y -> y == before).isPresent())
-						yield minOccurrencesBefore(s.finallyStatement, before, condition, false);
+						yield minOccurrencesBefore(s.finallyStatement, before, condition);
 					throw new IllegalStateException("Tried to force enter a try/catch statement with no matching branches");
 				}else{
-					int fromFinally = s.finallyStatement != null ? minOccurrencesBefore(s.finallyStatement, before, condition, false) : 0;
+					int fromFinally = s.finallyStatement != null ? minOccurrencesBefore(s.finallyStatement, before, condition) : 0;
 					yield branches.stream()
-							.mapToInt(k -> minOccurrencesBefore(k, before, condition, false))
+							.mapToInt(k -> minOccurrencesBefore(k, before, condition))
 							.min()
 							.orElse(0) + fromFinally;
 				}
 			}
 		};
+	}
+	
+	private static int minOccurrencesBefore(Statement body, Statement before, Predicate<Statement> condition){
+		return minOccurrencesBefore(body, before, condition, firstMatching(body, y -> y == before).isPresent());
 	}
 	
 	public static Optional<Statement> possibleOccurranceBefore(Statement body, Statement before, Predicate<Statement> condition, boolean forceEnter){

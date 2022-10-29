@@ -173,6 +173,37 @@ public class FlowTests{
 					}
 				}
 				"""));
+		
+		CyclicAssertions.compile("""
+				void test(boolean a, boolean b, int i){
+					if(a)
+						if(b){
+							int cc = i;
+							cc = cc + 1;
+						}
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				void test(boolean a, boolean b, int i){
+				    if(a){
+				    
+					}else if(b){
+						int cc = i;
+						cc = cc + 1;
+					}
+				}
+				""");
+		
+		CyclicAssertions.compile("""
+				void test(boolean a, boolean b, int i){
+					while(a)
+						if(b){
+							int cc = i;
+							cc = cc + 1;
+						}
+				}
+				""");
 	}
 	
 	@Test
