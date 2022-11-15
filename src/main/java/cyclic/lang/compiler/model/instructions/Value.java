@@ -63,8 +63,13 @@ public abstract class Value{
 					yield new FloatLiteralValue(Float.parseFloat(text));
 				else if(text.endsWith("d"))
 					yield new DoubleLiteralValue(Double.parseDouble(text));
-				else try{
-					yield new IntLiteralValue(Integer.parseInt(text));
+				else if(text.endsWith("l")) try{
+						yield new LongLiteralValue(Long.parseLong(text.substring(0, text.length() - 1)));
+					}catch(NumberFormatException nfe){
+						throw new CompileTimeException("Long value out of range");
+				}else
+					try{
+						yield new IntLiteralValue(Integer.parseInt(text));
 				}catch(NumberFormatException nfe){
 					throw new CompileTimeException("Int value out of range");
 				}

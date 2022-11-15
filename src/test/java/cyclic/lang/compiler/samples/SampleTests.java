@@ -904,5 +904,28 @@ public class SampleTests{
 					short x = -32769;
 				}
 				""");
+		
+		CyclicAssertions.compile("""
+				void test(){
+					long l = 9223372036854775807l;
+					l = -9223372036854775808l;
+				}
+				""");
+		
+		CyclicAssertions.assertDoesntCompile("""
+				void test(){
+					long l = 9223372036854775808l;
+					l = -9223372036854775809l;
+				}
+				""");
+	}
+	
+	@Test
+	void testConstantOps(){
+		// fails; TODO: update Operations::applyToNumbers to handle longs/integrals separate to floating point
+		String source = "static long test() -> %sl + %sl;";
+		
+		for(var l : List.of(Long.MAX_VALUE / 2 - 1, Long.MIN_VALUE / 2 + 1))
+			CyclicAssertions.assertEquals(l + l, source.replace("%s", l.toString()));
 	}
 }
