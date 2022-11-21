@@ -24,9 +24,6 @@ public record Warning(String filename, String description, @Nullable Source from
 			return ctx != null ? fromCtx(ctx) : null;
 		}
 		
-		public Source withOwner(@Nullable MemberReference newOwner){
-			return new Source(start(), end(), snippet(), newOwner);
-		}
 	}
 	
 	public record Position(int line, int column){

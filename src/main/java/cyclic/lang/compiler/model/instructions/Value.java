@@ -295,11 +295,6 @@ public abstract class Value{
 		return type() != null ? type().fullyQualifiedName() : "<unknown>";
 	}
 	
-	// null-safe type().isAssignableTo()
-	public boolean typeAssignableTo(TypeReference target){
-		return type() != null && type().isAssignableTo(target);
-	}
-	
 	public ParserRuleContext getText(){
 		return text;
 	}
@@ -372,11 +367,8 @@ public abstract class Value{
 					if(asShort != null)
 						return asShort;
 				}
-				if(isByte()){
-					var asByte = new SubstituteTypeValue(PlatformDependency.BYTE, this).fit(target);
-					if(asByte != null)
-						return asByte;
-				}
+				if(isByte()) // implicit `else return null`
+					return new SubstituteTypeValue(PlatformDependency.BYTE, this).fit(target);
 			}
 			return null;
 		}
@@ -395,7 +387,7 @@ public abstract class Value{
 		
 		public String toString(){
 			return setType == PlatformDependency.BOOLEAN ? (value == 1 ? "true" : "false") :
-					setType == PlatformDependency.CHAR ? "'" + String.valueOf((char)value) + "'" :
+					setType == PlatformDependency.CHAR ? "'" + (char)value + "'" :
 					String.valueOf(value);
 		}
 	}
@@ -527,13 +519,11 @@ public abstract class Value{
 	}
 	
 	public static class FieldValue extends Value{
-		String fieldName;
 		Value from;
 		
 		public FieldReference ref;
 		
 		public FieldValue(String fieldName, Value from, @Nullable CallableReference method, @NotNull TypeReference mIn){
-			this.fieldName = fieldName;
 			this.from = from;
 			assert from.type() != null;
 			ref = from.type().fields().stream()

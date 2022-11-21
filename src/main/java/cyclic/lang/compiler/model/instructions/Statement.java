@@ -888,8 +888,6 @@ public abstract class Statement{
 			
 			mv.visitJumpInsn(Opcodes.GOTO, attr.targetLabel());
 		}
-		
-		public void simplify(){}
 	}
 	
 	public static class ContinueStatement extends Statement{
@@ -909,7 +907,5 @@ public abstract class Statement{
 			
 			mv.visitJumpInsn(Opcodes.GOTO, attr.targetLabel());
 		}
-		
-		public void simplify(){}
 	}
 }

@@ -149,6 +149,7 @@ public interface TypeReference extends AnnotatableElement, GenericElement<TypeRe
 	 *
 	 * @return The type parameters of this generic type.
 	 */
+	@SuppressWarnings("EmptyMethod") // docs
 	default List<? extends TypeParameterReference> typeParameters(){
 		return GenericElement.super.typeParameters();
 	}
