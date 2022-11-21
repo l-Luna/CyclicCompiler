@@ -922,7 +922,6 @@ public class SampleTests{
 	
 	@Test
 	void testConstantOps(){
-		// fails; TODO: update Operations::applyToNumbers to handle longs/integrals separate to floating point
 		String source = "static long test() -> %sl + %sl;";
 		
 		for(var l : List.of(Long.MAX_VALUE / 2 - 1, Long.MIN_VALUE / 2 + 1))

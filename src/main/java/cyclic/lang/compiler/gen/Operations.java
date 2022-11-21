@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
+import java.util.function.DoubleBinaryOperator;
+import java.util.function.LongBinaryOperator;
 
 import static cyclic.lang.compiler.configuration.dependencies.PlatformDependency.*;
 
@@ -435,15 +437,15 @@ public final class Operations{
 			Value value = switch(op){
 				case PLUS ->
 						cl instanceof String sl && cr instanceof String sr ? new Value.StringLiteralValue(sl + sr) :
-						applyToNumbers(cl, cr, (x, y) -> x.doubleValue() + y.doubleValue());
-				case MINUS -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() - y.doubleValue());
-				case DIVIDE -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() / y.doubleValue());
-				case MULTIPLY -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() * y.doubleValue());
-				case MOD -> applyToNumbers(cl, cr, (x, y) -> x.doubleValue() % y.doubleValue());
-				case GREATER -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() > y.doubleValue());
-				case GEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() >= y.doubleValue());
-				case LESSER -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() < y.doubleValue());
-				case LEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x.doubleValue() <= y.doubleValue());
+						applyToNumbers(cl, cr, Long::sum, Double::sum);
+				case MINUS -> applyToNumbers(cl, cr, (x, y) -> x - y, (x, y) -> x - y);
+				case DIVIDE -> applyToNumbers(cl, cr, (x, y) -> x / y, (x, y) -> x / y);
+				case MULTIPLY -> applyToNumbers(cl, cr, (x, y) -> x * y, (x, y) -> x / y);
+				case MOD -> applyToNumbers(cl, cr, (x, y) -> x % y, (x, y) -> x % y);
+				case GREATER -> applyBoolToNumbers(cl, cr, (x, y) -> x > y, (x, y) -> x > y);
+				case GEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x >= y, (x, y) -> x >= y);
+				case LESSER -> applyBoolToNumbers(cl, cr, (x, y) -> x < y, (x, y) -> x < y);
+				case LEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x >= y, (x, y) -> x >= y);
 				case EQUALS -> Value.IntLiteralValue.ofBoolean(cl.equals(cr));
 				case NOTEQUALS -> Value.IntLiteralValue.ofBoolean(!cl.equals(cr));
 				case default -> null;
@@ -462,27 +464,27 @@ public final class Operations{
 			return value;
 		}
 		
-		private Value applyToNumbers(Object left, Object right, BinaryOperator<Number> apply){
+		private Value applyToNumbers(Object left, Object right, LongBinaryOperator applyIntegral, DoubleBinaryOperator applyFloating){
 			if(left instanceof Integer il && right instanceof Integer ir)
-				return new Value.IntLiteralValue(apply.apply(il, ir).intValue());
+				return new Value.IntLiteralValue((int)applyIntegral.applyAsLong(il, ir));
 			if(left instanceof Long ll && right instanceof Long lr)
-				return new Value.LongLiteralValue(apply.apply(ll, lr).longValue());
+				return new Value.LongLiteralValue(applyIntegral.applyAsLong(ll, lr));
 			if(left instanceof Float fl && right instanceof Float fr)
-				return new Value.FloatLiteralValue(apply.apply(fl, fr).floatValue());
+				return new Value.FloatLiteralValue((float)applyFloating.applyAsDouble(fl, fr));
 			if(left instanceof Double dl && right instanceof Double dr)
-				return new Value.DoubleLiteralValue(apply.apply(dl, dr).doubleValue());
+				return new Value.DoubleLiteralValue(applyFloating.applyAsDouble(dl, dr));
 			return null;
 		}
 		
-		private Value applyBoolToNumbers(Object left, Object right, BiPredicate<Number, Number> apply){
+		private Value applyBoolToNumbers(Object left, Object right, BiPredicate<Long, Long> applyIntegral, BiPredicate<Double, Double> applyFloating){
 			if(left instanceof Integer il && right instanceof Integer ir)
-				return Value.IntLiteralValue.ofBoolean(apply.test(il, ir));
+				return Value.IntLiteralValue.ofBoolean(applyIntegral.test((long)il, (long)ir));
 			if(left instanceof Long ll && right instanceof Long lr)
-				return Value.IntLiteralValue.ofBoolean(apply.test(ll, lr));
+				return Value.IntLiteralValue.ofBoolean(applyIntegral.test(ll, lr));
 			if(left instanceof Float fl && right instanceof Float fr)
-				return Value.IntLiteralValue.ofBoolean(apply.test(fl, fr));
+				return Value.IntLiteralValue.ofBoolean(applyFloating.test((double)fl, (double)fr));
 			if(left instanceof Double dl && right instanceof Double dr)
-				return Value.IntLiteralValue.ofBoolean(apply.test(dl, dr));
+				return Value.IntLiteralValue.ofBoolean(applyFloating.test(dl, dr));
 			return null;
 		}
 	}
