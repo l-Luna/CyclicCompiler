@@ -11,15 +11,15 @@ repositories{
 }
 
 dependencies{
-    implementation("org.antlr:antlr4-runtime:4.9.3")
-    implementation("org.ow2.asm:asm:9.3")
-    implementation("org.jetbrains:annotations:23.0.0")
-    implementation("org.yaml:snakeyaml:1.30")
-    
-    antlr("org.antlr:antlr4:4.9.3")
-    
-	testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+	implementation("org.antlr:antlr4-runtime:4.11.1")
+	implementation("org.ow2.asm:asm:9.4")
+	implementation("org.jetbrains:annotations:23.0.0")
+	implementation("org.yaml:snakeyaml:1.33")
+	
+	antlr("org.antlr:antlr4:4.11.1")
+	
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.0")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
 tasks.getByName<Test>("test"){
