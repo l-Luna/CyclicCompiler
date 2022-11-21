@@ -68,6 +68,10 @@ public class WildcardTypeRef implements TypeReference{
 		return upper != null ? upper.methods() : List.of();
 	}
 	
+	public List<? extends MethodReference> declaredMethods(){
+		return upper != null ? upper.declaredMethods() : List.of();
+	}
+	
 	public List<? extends FieldReference> fields(){
 		return upper != null ? upper.fields() : List.of();
 	}

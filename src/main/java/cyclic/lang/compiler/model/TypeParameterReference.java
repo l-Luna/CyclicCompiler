@@ -76,6 +76,10 @@ public interface TypeParameterReference extends TypeReference{
 		return erasure().methods();
 	}
 	
+	default List<? extends MethodReference> declaredMethods(){
+		return erasure().declaredMethods();
+	}
+	
 	default List<? extends FieldReference> fields(){
 		return erasure().fields();
 	}

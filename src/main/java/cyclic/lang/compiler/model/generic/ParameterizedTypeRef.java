@@ -65,6 +65,12 @@ public class ParameterizedTypeRef implements TypeReference{
 				.toList();
 	}
 	
+	public List<? extends MethodReference> declaredMethods(){
+		return base.declaredMethods().stream()
+				.map(x -> new ParameterizedMethodRef(x, typeArguments, this))
+				.toList();
+	}
+	
 	public List<? extends FieldReference> fields(){
 		return base.fields();
 	}

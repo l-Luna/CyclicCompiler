@@ -41,13 +41,13 @@ public interface ForEachStyle{
 			return iteratorType.isAssignableTo(TypeResolver.resolveFq(ITERABLE));
 		}
 		
-		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c){
+		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c, CyclicLangParser.ForeachStatementContext text){
 			var exactIterable = Utils.asGenericSupertype(iterating.type(), TypeResolver.resolveFq(ITERABLE));
 			TypeReference target = TypeResolver.resolveFq(OBJECT);
 			if(exactIterable instanceof ParameterizedTypeRef ptr)
 				target = ptr.getTypeArguments().values().stream().findAny().get();
 			if(varType != null && !target.isAssignableTo(varType))
-				throw new CompileTimeException("Variable type of an iterator for-each loop must be a subtype of the iterator's type or var - " + target.fullyQualifiedName() + " is not assignable to " + varType.fullyQualifiedName());
+				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an iterator for-each loop must be a subtype of the iterator's type or var - " + target.fullyQualifiedName() + " is not assignable to " + varType.fullyQualifiedName());
 			if(varType == null)
 				varType = target;
 			return forEachStatementWithType(iterating, varName, varType, finalVar, in, body, c);

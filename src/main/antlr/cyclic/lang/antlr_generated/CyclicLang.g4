@@ -58,8 +58,8 @@ block: LBRACE statement* RBRACE;
 // to avoid ambiguities between "-> statement" and "-> value;", we need to split "value;" statements from everything else
 
 statement
-    : valueStatement SEMICOLON
-    | unitStatement
+    : unitStatement
+    | valueStatement SEMICOLON
     ;
 
 valueOrStatement
