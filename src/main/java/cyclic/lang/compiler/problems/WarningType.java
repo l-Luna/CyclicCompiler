@@ -10,7 +10,9 @@ public enum WarningType{
 	
 	IMPOSSIBLE_CAST("impossible_cast"),
 	IMPOSSIBLE_INSTANCEOF("impossible_instanceof"),
-	GUARANTEED_INSTANCEOF("guaranteed_instanceof");
+	GUARANTEED_INSTANCEOF("guaranteed_instanceof"),
+	
+	INAPPLICABLE_ANNOTATION("inapplicable_annotation");
 	
 	public final String ID;
 	
