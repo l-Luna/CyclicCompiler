@@ -4,13 +4,18 @@ import cyclic.lang.compiler.lib.CyclicModifiersAttribute;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
+import cyclic.lang.compiler.model.cyclic.CyclicField;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
 import cyclic.lang.compiler.problems.CompileTimeException;
+import cyclic.lang.compiler.problems.ProblemsHolder;
+import cyclic.lang.compiler.problems.WarningType;
 import org.objectweb.asm.*;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
+import java.util.HashSet;
+import java.util.Set;
 
 public final class CyclicClassWriter{
 	
@@ -42,6 +47,22 @@ public final class CyclicClassWriter{
 		for(var field : type.fields()){
 			// default values are always handled through implicit init blocks
 			FieldVisitor fv = writer.visitField(getFieldAccessFlags(field), field.name(), field.type().descriptor(), null, null);
+			
+			// TODO: type annotations
+			for(AnnotationTag annotation : field.annotations()){
+				var retention = annotation.retention();
+				boolean methodApplicable = annotation.isApplicable(field);
+				boolean typeApplicable = annotation.isApplicable(ElementType.TYPE_USE.name());
+				if(retention != RetentionPolicy.SOURCE){
+					if(methodApplicable)
+						writeAnnotation(fv.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME), annotation);
+					if(typeApplicable)
+						writeAnnotation(fv.visitTypeAnnotation(org.objectweb.asm.TypeReference.newTypeReference(org.objectweb.asm.TypeReference.METHOD_RETURN).getValue(), null, annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME), annotation);
+				}
+				if(!methodApplicable && !typeApplicable)
+					ProblemsHolder.warnFrom(WarningType.INAPPLICABLE_ANNOTATION, "Annotation \"" + annotation.annotationType().fullyQualifiedName() + "\" is not applicable to this field or its return type, and will be ignored", field, ((CyclicField)field).nameToken());
+			}
+			
 			fv.visitEnd();
 		}
 		
@@ -105,8 +126,8 @@ public final class CyclicClassWriter{
 				if(annotation.isApplicable(type) || (type.kind() == TypeKind.ANNOTATION && annotation.isApplicable(ElementType.ANNOTATION_TYPE.name()))){
 					var av = writer.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
 					writeAnnotation(av, annotation);
-				}else
-					System.err.println("Annotation " + annotation.annotationType().fullyQualifiedName() + " on " + type.fullyQualifiedName() + " is not applicable to types and will be ignored.");
+				}else // TODO: use annotation usage instead of type name
+					ProblemsHolder.warnFrom(WarningType.INAPPLICABLE_ANNOTATION, "Annotation \"" + annotation.annotationType().fullyQualifiedName() + "\" is not applicable to types, and will be ignored", type, type.nameToken());
 			}
 		}
 		

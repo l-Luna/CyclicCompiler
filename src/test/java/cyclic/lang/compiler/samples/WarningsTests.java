@@ -210,6 +210,36 @@ public class WarningsTests{
 				""");
 	}
 	
+	@Test
+	void testInapplicableAnnotations(){
+		CyclicAssertions.assertWarns(WarningType.INAPPLICABLE_ANNOTATION, """
+				@java.lang.annotation.Native
+				static String test() -> "";
+				""");
+		
+		CyclicAssertions.assertWarns(WarningType.INAPPLICABLE_ANNOTATION, """
+				@Override
+				static String test;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.INAPPLICABLE_ANNOTATION, """
+				@SuppressWarnings("inapplicable_annotation")
+				@java.lang.annotation.Native
+				static String test() -> "";
+				""");
+		
+		CyclicAssertions.assertWarns(WarningType.INAPPLICABLE_ANNOTATION, """
+				@SuppressWarnings("inapplicable_annotation")
+				@Override
+				static String test;
+				""");
+		
+		CyclicAssertions.assertDoesNotWarn(WarningType.INAPPLICABLE_ANNOTATION, """
+				@java.lang.annotation.Native
+				static String test;
+				""");
+	}
+	
 	// TODO: test @MustUse
 	//  - requires adding stdlib to tests
 	//  - could use stubs as necessary, would be better to make stdlib fully available for other tests though

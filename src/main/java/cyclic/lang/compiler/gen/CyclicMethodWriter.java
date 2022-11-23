@@ -5,6 +5,8 @@ import cyclic.lang.compiler.model.AnnotationTag;
 import cyclic.lang.compiler.model.cyclic.CyclicConstructor;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.instructions.Variable;
+import cyclic.lang.compiler.problems.ProblemsHolder;
+import cyclic.lang.compiler.problems.WarningType;
 import org.objectweb.asm.*;
 
 import java.lang.annotation.ElementType;
@@ -57,9 +59,9 @@ public final class CyclicMethodWriter{
 		annotations.addAll(method.returnTypeAnnotations());
 		for(AnnotationTag annotation : annotations){
 			var retention = annotation.retention();
+			boolean methodApplicable = annotation.isApplicable(method);
+			boolean typeApplicable = annotation.isApplicable(ElementType.TYPE_USE.name());
 			if(retention != RetentionPolicy.SOURCE){
-				boolean methodApplicable = annotation.isApplicable(method);
-				boolean typeApplicable = annotation.isApplicable(ElementType.TYPE_USE.name());
 				if(methodApplicable){
 					var av = mv.visitAnnotation(annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
 					writeAnnotation(av, annotation);
@@ -68,11 +70,9 @@ public final class CyclicMethodWriter{
 					var av = mv.visitTypeAnnotation(TypeReference.newTypeReference(TypeReference.METHOD_RETURN).getValue(), null, annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME);
 					writeAnnotation(av, annotation);
 				}
-				if(!methodApplicable && !typeApplicable){
-					System.err.printf("Annotation %s on method %s in type %s is not applicable to it or its return type, and will be ignored.%n",
-							annotation.annotationType().fullyQualifiedName(), method.nameAndDescriptor(), method.in().fullyQualifiedName());
-				}
 			}
+			if(!methodApplicable && !typeApplicable)
+				ProblemsHolder.warnFrom(WarningType.INAPPLICABLE_ANNOTATION, "Annotation \"" + annotation.annotationType().fullyQualifiedName() + "\" is not applicable to this method or its return type, and will be ignored", method, method.nameToken());
 		}
 	}
 	

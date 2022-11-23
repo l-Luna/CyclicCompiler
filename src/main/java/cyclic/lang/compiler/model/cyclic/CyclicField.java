@@ -6,6 +6,8 @@ import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -160,5 +162,9 @@ public class CyclicField implements FieldReference, CyclicMember{
 	
 	public Set<AnnotationTag> annotations(){
 		return annotations;
+	}
+	
+	public @Nullable ParserRuleContext nameToken(){
+		return text != null ? text.idPart() : null;
 	}
 }
