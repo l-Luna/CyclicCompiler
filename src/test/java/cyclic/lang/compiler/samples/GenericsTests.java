@@ -91,5 +91,12 @@ public class GenericsTests{
 					List<Integer> is = List.of("a", "b", "c");
 				}
 				""");
+		
+		// TODO: warning
+		compile("""
+				static void test(){
+					List<Integer> is = (List<Integer>)(List)List.of("a", "b", "c");
+				}
+				""");
 	}
 }
