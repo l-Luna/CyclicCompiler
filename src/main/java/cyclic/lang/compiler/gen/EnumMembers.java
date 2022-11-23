@@ -63,8 +63,7 @@ public final class EnumMembers{
 				List.of(string));
 		method.parameterNames().set(0, "name");
 		method.isSt = true;
-		MethodReference valOf = Utils.
-				resolveSingleMethod("java.lang.Enum", "valueOf", true, "java.lang.Class", "java.lang.String");
+		MethodReference valOf = Utils.resolveSingleMethod("java.lang.Enum", "valueOf", true, "java.lang.Class", "java.lang.String");
 		// Enum.<T>valueOf(Class<T>, String)
 		valOf = new ParameterizedMethodRef(valOf, Map.of(valOf.typeParameters().get(0), of), null);
 		var expr = new ClassCastValue(
