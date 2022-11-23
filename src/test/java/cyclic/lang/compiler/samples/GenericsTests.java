@@ -99,4 +99,30 @@ public class GenericsTests{
 				}
 				""");
 	}
+	
+	@Test
+	void testClassLiteralGenerics(){
+		compile("""
+				static void test(){
+					Class<Integer> clazz = Integer.class;
+					Class<String> c2 = String.class;
+					Class c3 = Class.class;
+					Class<Integer> c4 = int.class;
+					Class<Void> c5 = (Class<Void>)(Class)System.class;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Class<String> clazz = Integer.class;
+					Class<Integer> c2 = String.class;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Class<int> clazz = int.class;
+				}
+				""");
+	}
 }

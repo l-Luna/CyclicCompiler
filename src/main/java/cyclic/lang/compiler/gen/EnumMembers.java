@@ -4,11 +4,13 @@ import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicField;
 import cyclic.lang.compiler.model.cyclic.CyclicMethod;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
+import cyclic.lang.compiler.model.generic.ParameterizedMethodRef;
 import cyclic.lang.compiler.model.instructions.Statement;
 import cyclic.lang.compiler.model.instructions.Value;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 
 import java.util.List;
+import java.util.Map;
 
 import static cyclic.lang.compiler.model.instructions.Value.*;
 
@@ -63,6 +65,8 @@ public final class EnumMembers{
 		method.isSt = true;
 		MethodReference valOf = Utils.
 				resolveSingleMethod("java.lang.Enum", "valueOf", true, "java.lang.Class", "java.lang.String");
+		// Enum.<T>valueOf(Class<T>, String)
+		valOf = new ParameterizedMethodRef(valOf, Map.of(valOf.typeParameters().get(0), of), null);
 		var expr = new ClassCastValue(
 				new CallValue(null, List.of(
 						new Value.ClassValue(of), new LocalVarValue(string, 0)),

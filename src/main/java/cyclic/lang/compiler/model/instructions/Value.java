@@ -9,6 +9,7 @@ import cyclic.lang.compiler.gen.Operations;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.model.cyclic.CyclicType;
+import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
 import cyclic.lang.compiler.model.platform.ArrayTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef.Primitive;
@@ -24,6 +25,7 @@ import org.objectweb.asm.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class Value{
@@ -39,7 +41,7 @@ public abstract class Value{
 			case CyclicLangParser.StrLitContext strLit -> new StringLiteralValue(strLit.getText().substring(1, strLit.getText().length() - 1));
 			case CyclicLangParser.ParenValueContext paren -> fromAst(paren.value(), scope, type, method);
 			case CyclicLangParser.ArrayIndexValueContext ind -> new ArrayIndexValue(fromAst(ind.array, scope, type, method), fromAst(ind.index, scope, type, method));
-			case CyclicLangParser.PrimitiveClassValueContext prim -> new PrimitiveClassValue(PrimitiveTypeRef.getPrimitiveDesc(prim.primitiveType().getText()));
+			case CyclicLangParser.PrimitiveClassValueContext prim -> new PrimitiveClassValue(TypeResolver.resolveFq(prim.primitiveType().getText()));
 			case CyclicLangParser.PrefixOpValueContext preOp -> Operations.resolvePrefix(preOp.prefixop().getText(), fromAst(preOp.value(), scope, type, method));
 			case CyclicLangParser.PostfixOpValueContext postOp -> Operations.resolvePostfix(postOp.postfixop().getText(), fromAst(postOp.value(), scope, type, method));
 
@@ -837,8 +839,8 @@ public abstract class Value{
 		}
 		
 		public TypeReference type(){
-			// TODO: generics
-			return TypeResolver.resolveFq(Constants.CLASS);
+			var jlClass = TypeResolver.resolveFq(Constants.CLASS);
+			return new ParameterizedTypeRef(jlClass, Map.of(jlClass.typeParameters().get(0), of));
 		}
 		
 		public void simplify(Statement in){
@@ -856,19 +858,19 @@ public abstract class Value{
 						false
 				);
 		
-		public String descriptor;
+		private PrimitiveTypeRef type;
 		
-		public PrimitiveClassValue(String descriptor){
-			this.descriptor = descriptor;
+		public PrimitiveClassValue(TypeReference type){
+			this.type = (PrimitiveTypeRef)type;
 		}
 		
 		public void write(MethodVisitor mv){
-			mv.visitLdcInsn(new ConstantDynamic(descriptor, "Ljava/lang/Class;", PRIMITIVE_CLASS_HANDLE));
+			mv.visitLdcInsn(new ConstantDynamic(type.descriptor(), "Ljava/lang/Class;", PRIMITIVE_CLASS_HANDLE));
 		}
 		
 		public TypeReference type(){
-			// TODO: generics; consider that int.class is Class<Integer>
-			return TypeResolver.resolveFq(Constants.CLASS);
+			var jlClass = TypeResolver.resolveFq(Constants.CLASS);
+			return new ParameterizedTypeRef(jlClass, Map.of(jlClass.typeParameters().get(0), type.boxedType()));
 		}
 	}
 	
