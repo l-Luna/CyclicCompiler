@@ -103,7 +103,7 @@ public class ParameterizedTypeRef implements TypeReference{
 	public String toString(){
 		return fullyQualifiedName() +
 				"<" + typeArguments.values().stream()
-					.map(TypeReference::toString)
+					.map(TypeReference::fullyQualifiedName)
 					.collect(Collectors.joining(", ")) +
 				">";
 	}

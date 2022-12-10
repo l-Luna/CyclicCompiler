@@ -9,6 +9,8 @@ import cyclic.lang.compiler.configuration.dependencies.PlatformDependency;
 import cyclic.lang.compiler.model.TypeParameterReference;
 import cyclic.lang.compiler.model.TypeReference;
 import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
+import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
+import cyclic.lang.compiler.problems.CompileTimeException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -179,9 +181,27 @@ public final class TypeResolver{
 		if(args == null)
 			return base;
 		
+		var numParams = base.typeParameters().size();
+		var numArgs = args.genericTypeUse().size();
+		if(numParams != numArgs){
+			String msg = "Wrong number of generic type arguments; " + base.fullyQualifiedName();
+			msg += switch(numParams){
+				case 0 -> " is not a generic type";
+				case 1 -> " has 1 type parameter";
+				default -> " has " + numParams + " type parameters";
+			};
+			msg += ", but " + (numArgs == 1 ? "one type argument was" : numArgs + " type arguments were") + " provided";
+			throw new CompileTimeException(args, msg);
+		}
+		
 		Map<TypeParameterReference, TypeReference> arguments = new HashMap<>();
-		for(int i = 0; i < args.genericTypeUse().size(); i++)
-			arguments.put(base.typeParameters().get(i), resolve(args.genericTypeUse().get(i).type(), imports, currentPackage));
+		for(int i = 0; i < numArgs; i++){
+			var place = args.genericTypeUse().get(i).type();
+			TypeReference arg = resolve(place, imports, currentPackage);
+			if(arg instanceof PrimitiveTypeRef p)
+				throw new CompileTimeException(place, "Cannot use a primitive type as a type argument", "Help: Use the boxed version, " + p.boxedType().shortName());
+			arguments.put(base.typeParameters().get(i), arg);
+		}
 		
 		if(!arguments.isEmpty())
 			return new ParameterizedTypeRef(base, arguments);

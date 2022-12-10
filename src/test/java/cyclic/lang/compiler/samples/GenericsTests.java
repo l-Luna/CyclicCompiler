@@ -125,4 +125,56 @@ public class GenericsTests{
 				}
 				""");
 	}
+	
+	@Test
+	void testWrongParameterization(){
+		assertDoesntCompile("""
+				static void test(){
+					String<Integer> s;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Class<String, String> clazz;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Map<String, String, String> map;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Map<String> map;
+				}
+				""");
+		
+		// TODO: improve error messages
+		assertDoesntCompile("""
+				static void test(){
+					List<String> strs = List.<String, String>of("a", "b");
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Map<String, String> strs = Map.<String>of("a", "b");
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Class<int> clazz;
+				}
+				""");
+		
+		assertDoesntCompile("""
+				static void test(){
+					Class<void> clazz;
+				}
+				""");
+	}
 }

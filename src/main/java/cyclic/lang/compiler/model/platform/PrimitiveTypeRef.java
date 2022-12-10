@@ -179,7 +179,8 @@ public class PrimitiveTypeRef implements TypeReference{
 	
 	public static String boxedTypeName(Primitive type){
 		return switch(type){
-			case NULL, VOID -> "java.lang.Object";
+			case NULL -> "java.lang.Object";
+			case VOID -> "java.lang.Void";
 			case BOOLEAN -> "java.lang.Boolean";
 			case CHAR -> "java.lang.Character";
 			case SHORT -> "java.lang.Short";
