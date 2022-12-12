@@ -109,6 +109,7 @@ public class GenericsTests{
 					Class c3 = Class.class;
 					Class<Integer> c4 = int.class;
 					Class<Void> c5 = (Class<Void>)(Class)System.class;
+					Class<Void> c6 = void.class;
 				}
 				""");
 		
@@ -140,6 +141,12 @@ public class GenericsTests{
 				}
 				""");
 		
+		compile("""
+				static void test(){
+					Class<String> clazz;
+				}
+				""");
+		
 		assertDoesntCompile("""
 				static void test(){
 					Map<String, String, String> map;
@@ -152,6 +159,12 @@ public class GenericsTests{
 				}
 				""");
 		
+		compile("""
+				static void test(){
+					Map<String, String> clazz;
+				}
+				""");
+		
 		// TODO: improve error messages
 		assertDoesntCompile("""
 				static void test(){
@@ -159,9 +172,21 @@ public class GenericsTests{
 				}
 				""");
 		
+		compile("""
+				static void test(){
+					List<String> strs = List.<String>of("a", "b");
+				}
+				""");
+		
 		assertDoesntCompile("""
 				static void test(){
 					Map<String, String> strs = Map.<String>of("a", "b");
+				}
+				""");
+		
+		compile("""
+				static void test(){
+					Map<String, String> strs = Map.<String, String>of("a", "b");
 				}
 				""");
 		
