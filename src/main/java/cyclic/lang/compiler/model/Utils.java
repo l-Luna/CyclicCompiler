@@ -211,9 +211,12 @@ public final class Utils{
 		if(superCall && from.isStatic())
 			throw new IllegalArgumentException("Can't resolve a super method in a static context");
 		
-		if(on != null)
-			candidates.addAll(on.type().methods());
-		else{
+		if(on != null){
+			var onType = on.type();
+			if(onType == null)
+				return null;
+			candidates.addAll(onType.methods());
+		}else{
 			var type = from.in();
 			if(superCall)
 				type = type.superClass();

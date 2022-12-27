@@ -14,8 +14,6 @@ import org.objectweb.asm.*;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
-import java.util.HashSet;
-import java.util.Set;
 
 public final class CyclicClassWriter{
 	

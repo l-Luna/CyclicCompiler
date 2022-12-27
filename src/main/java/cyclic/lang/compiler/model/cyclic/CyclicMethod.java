@@ -167,8 +167,10 @@ public class CyclicMethod implements MethodReference, CyclicCallable{
 				if(arrowStatement != null)
 					body = Statement.fromUnitStatAst(arrowStatement, methodScope, in, this);
 				else{
+					CompileTimeException.pushContext(arrowVal);
 					body = new Statement.ReturnStatement(Value.fromAst(arrowVal, methodScope, in, this), methodScope, returns, this);
 					body.text = arrowVal;
+					CompileTimeException.popContext();
 				}
 			}
 		}

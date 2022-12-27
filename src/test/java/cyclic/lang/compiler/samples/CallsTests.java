@@ -1,5 +1,6 @@
 package cyclic.lang.compiler.samples;
 
+import cyclic.lang.compiler.CyclicAssertions;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +70,12 @@ public class CallsTests{
 		
 		assertEquals(-2,
 				conflicted.getDeclaredMethod("test2").invoke(null));
+		
+		CyclicAssertions.assertDoesntCompile("""
+				static void test(){
+					(new Object()).abcd().efgh();
+				}
+				""");
 	}
 	
 	@Test

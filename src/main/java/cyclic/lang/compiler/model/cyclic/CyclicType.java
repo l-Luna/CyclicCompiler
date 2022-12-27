@@ -11,6 +11,7 @@ import cyclic.lang.compiler.model.jdk.JdkTypeRef;
 import cyclic.lang.compiler.problems.CompileTimeException;
 import cyclic.lang.compiler.resolve.TypeResolver;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -175,6 +176,7 @@ public class CyclicType implements TypeReference, CyclicMember{
 		return outer;
 	}
 	
+	@NotNull("Source classes always have superclasses")
 	public TypeReference superClass(){
 		return superType;
 	}
