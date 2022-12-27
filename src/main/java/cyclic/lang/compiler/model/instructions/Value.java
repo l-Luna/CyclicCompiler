@@ -692,7 +692,7 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
-			fail();
+			typeNN();
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
