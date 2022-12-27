@@ -60,7 +60,7 @@ public final class CyclicClassWriter{
 						writeAnnotation(fv.visitTypeAnnotation(org.objectweb.asm.TypeReference.newTypeReference(org.objectweb.asm.TypeReference.METHOD_RETURN).getValue(), null, annotation.annotationType().descriptor(), retention == RetentionPolicy.RUNTIME), annotation);
 				}
 				if(!methodApplicable && !typeApplicable)
-					ProblemsHolder.warnFrom(WarningType.INAPPLICABLE_ANNOTATION, "Annotation \"" + annotation.annotationType().fullyQualifiedName() + "\" is not applicable to this field or its return type, and will be ignored", field, ((CyclicField)field).nameToken());
+					ProblemsHolder.warnFrom(WarningType.INAPPLICABLE_ANNOTATION, "Annotation \"" + annotation.annotationType().fullyQualifiedName() + "\" is not applicable to this field or its type, and will be ignored", field, ((CyclicField)field).nameToken());
 			}
 			
 			fv.visitEnd();
