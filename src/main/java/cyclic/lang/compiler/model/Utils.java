@@ -257,7 +257,7 @@ public final class Utils{
 					param = atr.getComponent();
 				else
 					param = base.parameters().get(i);
-				used.add(Map.entry(param, args.get(i).type()));
+				used.add(Map.entry(param, args.get(i).typeNN()));
 			}
 			typeParamMap = TypeInferrer.match(used);
 		}

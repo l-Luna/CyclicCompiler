@@ -30,7 +30,7 @@ public interface Dependency extends Closeable{
 	 * Closes this dependency and releases any resources associated with it.
 	 * Most dependencies will not need to implement this method.
 	 */
-	default void close() throws IOException{}
+	default void close(){}
 	
 	/**
 	 * Resolves initial references in types within this dependency to other types, which may be in other dependencies.

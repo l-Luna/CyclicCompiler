@@ -445,7 +445,7 @@ public final class Operations{
 				case GREATER -> applyBoolToNumbers(cl, cr, (x, y) -> x > y, (x, y) -> x > y);
 				case GEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x >= y, (x, y) -> x >= y);
 				case LESSER -> applyBoolToNumbers(cl, cr, (x, y) -> x < y, (x, y) -> x < y);
-				case LEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x >= y, (x, y) -> x >= y);
+				case LEQ -> applyBoolToNumbers(cl, cr, (x, y) -> x >= y, (x, y) -> x <= y);
 				case EQUALS -> Value.IntLiteralValue.ofBoolean(cl.equals(cr));
 				case NOTEQUALS -> Value.IntLiteralValue.ofBoolean(!cl.equals(cr));
 				case default -> null;

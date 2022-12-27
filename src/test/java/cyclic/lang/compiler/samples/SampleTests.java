@@ -286,6 +286,14 @@ public class SampleTests{
 					static Object test() -> '\\'';
 					""");
 
+			assertDoesntCompile("""
+					static void test(){
+						for(Object o : (new Object()).abcd()){
+							System.out.println(o);
+						}
+					}
+					""");
+
 		}catch(IllegalAccessException | InvocationTargetException e){
 			throw new AssertionError(e);
 		}

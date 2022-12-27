@@ -176,11 +176,7 @@ public final class CompilerLauncher{
 		System.out.println("Written " + output + " class files.");
 		
 		for(Dependency dependency : TypeResolver.dependencies)
-			try{
-				dependency.close();
-			}catch(IOException e){
-				e.printStackTrace();
-			}
+			dependency.close();
 		// reset dependency list for next run
 		TypeResolver.dependencies = new ArrayList<>(TypeResolver.INITIAL_DEPENDENCIES);
 		

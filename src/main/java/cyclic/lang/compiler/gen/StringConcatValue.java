@@ -58,7 +58,7 @@ public final class StringConcatValue extends Value{
 				component.write(mv);
 		
 		// TODO: actually do non-string constants
-		String args = components.stream().filter(isConstString.negate()).map(Value::type).map(TypeReference::descriptor).collect(Collectors.joining("", "(", ")"));
+		String args = components.stream().filter(isConstString.negate()).map(Value::typeNN).map(TypeReference::descriptor).collect(Collectors.joining("", "(", ")"));
 		String recipe = components.stream().map(x ->
 				x instanceof StringLiteralValue slv ? slv.value :
 				TAG_ARG)

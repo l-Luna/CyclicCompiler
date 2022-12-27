@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -299,6 +298,21 @@ public abstract class Value{
 	
 	public ParserRuleContext getText(){
 		return text;
+	}
+	
+	/**
+	 * Ensures this value's type is non-null, throwing an appropriate exception if unresolved.
+	 */
+	@NotNull
+	public TypeReference typeNN(){
+		if(type() == null)
+			fail();
+		return type();
+	}
+	
+	@Contract("-> fail")
+	protected void fail(){
+		throw new CompileTimeException(getText(), "Unresolved value");
 	}
 	
 	public static class NullLiteralValue extends Value{
@@ -678,13 +692,16 @@ public abstract class Value{
 		}
 		
 		public void simplify(Statement in){
-			if(target == null){
-				throw new CompileTimeException(text, "Could not find method " + name + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "(", ")")));
-			}
+			fail();
 			if(on != null)
 				on.simplify(in);
 			args.forEach(value -> value.simplify(in));
 			ProblemsHolder.checkReference(target, in, text);
+		}
+		
+		protected void fail(){
+			if(target == null)
+				throw new CompileTimeException(text, "Could not find method " + name + args.stream().map(Value::typeName).collect(Collectors.joining(", ", "(", ")")));
 		}
 		
 		public TypeReference type(){

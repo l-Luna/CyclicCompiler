@@ -38,11 +38,11 @@ public interface ForEachStyle{
 	class IteratorForEach implements ForEachStyle{
 		
 		public boolean appliesTo(TypeReference iteratorType){
-			return iteratorType.isAssignableTo(TypeResolver.resolveFq(ITERABLE));
+			return iteratorType != null && iteratorType.isAssignableTo(TypeResolver.resolveFq(ITERABLE));
 		}
 		
 		public Statement forEachStatement(Value iterating, String varName, TypeReference varType, boolean finalVar, Scope in, Function<Scope, Statement> body, CyclicCallable c, CyclicLangParser.ForeachStatementContext text){
-			var exactIterable = Utils.asGenericSupertype(iterating.type(), TypeResolver.resolveFq(ITERABLE));
+			var exactIterable = Utils.asGenericSupertype(iterating.typeNN(), TypeResolver.resolveFq(ITERABLE));
 			TypeReference target = TypeResolver.resolveFq(OBJECT);
 			if(exactIterable instanceof ParameterizedTypeRef ptr)
 				target = ptr.getTypeArguments().values().stream().findAny().get();
@@ -102,11 +102,12 @@ public interface ForEachStyle{
 			 *         T t = x[i];
 			 *         act;
 			 */
-			var component = ((ArrayTypeRef)iterating.type()).getComponent();
+			var iterType = iterating.typeNN();
+			var component = ((ArrayTypeRef)iterType).getComponent();
 			if(varType != null && !component.isAssignableTo(varType))
 				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an array for-each loop must be a subtype of the array component type");
 			BlockStatement container = new BlockStatement(in, c);
-			Variable array = new Variable("~array", iterating.type(), container.blockScope, null);
+			Variable array = new Variable("~array", iterType, container.blockScope, null);
 			Variable index = new Variable("~idx", PlatformDependency.INT, container.blockScope, null);
 			Variable iterationVar = new Variable(varName, varType != null ? varType : component, container.blockScope, container);
 			iterationVar.isFinal = finalVar;
@@ -117,7 +118,7 @@ public interface ForEachStyle{
 							new BlockStatement(scope -> List.of(new VarStatement(scope, iterationVar, true, new ArrayIndexValue(new LocalVarValue(array), new LocalVarValue(index)), c), action), container.blockScope, c),
 							new VarStatement(container.blockScope, index, new IntLiteralValue(0), c),
 							new VarStatement(container.blockScope, index, new BinaryOpValue(PlatformDependency.INT, Opcodes.IADD, new LocalVarValue(index), new IntLiteralValue(1)), c),
-							new BranchBoolBinaryOpValue(Opcodes.IF_ICMPLT, new LocalVarValue(index), new FieldValue(Utils.getField(iterating.type(), "length"), new LocalVarValue(array))),
+							new BranchBoolBinaryOpValue(Opcodes.IF_ICMPLT, new LocalVarValue(index), new FieldValue(Utils.getField(iterType, "length"), new LocalVarValue(array))),
 							c, false)
 			);
 			return container;
@@ -127,7 +128,7 @@ public interface ForEachStyle{
 	class EnumForEach implements ForEachStyle{
 		
 		public boolean appliesTo(TypeReference iteratorType){
-			return iteratorType.isAssignableTo(Utils.forAnyClass(Enum.class));
+			return iteratorType != null && iteratorType.isAssignableTo(Utils.forAnyClass(Enum.class));
 		}
 		
 		public boolean appliesTo(Value value){
@@ -144,7 +145,7 @@ public interface ForEachStyle{
 			*  where T extends Enum and entries() exists
 			*  otherwise fall back to T.values()
 			*/
-			TypeReference type = iterating.type();
+			TypeReference type = iterating.typeNN();
 			if(varType != null && !type.isAssignableTo(varType))
 				throw new CompileTimeException(text.typeOrInferred(), "Variable type of an enum for-each loop must be the enum type");
 			var entries = Utils.resolveSingleOptionalMethod(type, "entries", true);

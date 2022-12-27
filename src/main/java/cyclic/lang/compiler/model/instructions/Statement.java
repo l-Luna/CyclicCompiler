@@ -105,8 +105,6 @@ public abstract class Statement{
 			boolean isFinal = decl.modifiers().modifier().stream().anyMatch(x -> x.getText().equals("final")) || typeName.equals("val");
 			boolean infer = typeName.equals("var") || typeName.equals("val");
 			Value initial = decl.value() != null ? Value.fromAst(decl.value(), in, type, callable) : null;
-			if(infer && initial == null)
-				throw new CompileTimeException("Can't infer the type of a variable without an initial value");
 			if(infer){
 				if(initial == null)
 					throw new CompileTimeException("Can't infer the type of a variable without an initial value");
@@ -159,6 +157,7 @@ public abstract class Statement{
 		}else if(uctx.foreachStatement() != null){
 			var fe = uctx.foreachStatement();
 			Value iterating = Value.fromAst(fe.value(), in, type, callable);
+			iterating.typeNN(); // <unknown>s shouldn't be allowed past
 			String varName = fe.idPart().getText();
 			String varTypeName = TypeResolver.getBaseName(fe.typeOrInferred());
 			TypeReference varType = varTypeName.equals("var") || varTypeName.equals("val") ? null : TypeResolver.resolve(fe.typeOrInferred().type(), imports, type.packageName());
