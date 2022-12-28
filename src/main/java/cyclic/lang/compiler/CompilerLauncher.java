@@ -213,6 +213,8 @@ public final class CompilerLauncher{
 		if(!compileErrors.isEmpty()){
 			System.err.println("Error compiling files:");
 			for(Exception e : compileErrors){
+				if(e instanceof TypeNotFoundException)
+					System.err.print("Type not found: ");
 				System.err.println(e.getMessage());
 				System.err.println();
 			}
