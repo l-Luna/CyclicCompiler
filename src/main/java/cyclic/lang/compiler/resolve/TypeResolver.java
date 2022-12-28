@@ -54,6 +54,19 @@ public final class TypeResolver{
 	}
 	
 	/**
+	 * Returns a reference to a type with the given fully qualified name, returning
+	 * the null type (as a "poison" type) if it could not be found.
+	 *
+	 * @param fqName
+	 * 		The fully qualified name of the type to resolve.
+	 * @return A reference to the specified type.
+	 */
+	public static TypeReference resolveFqOrPoison(String fqName){
+		return resolveFqOptional(fqName)
+				.orElse(PlatformDependency.NULL);
+	}
+	
+	/**
 	 * Returns a reference to a type with the given (<em>possibly</em> qualified) name,
 	 * throwing a {@linkplain TypeNotFoundException} if it could not be found in the given
 	 * imports, default imports, or package.

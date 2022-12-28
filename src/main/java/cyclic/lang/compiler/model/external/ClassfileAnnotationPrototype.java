@@ -31,7 +31,7 @@ import java.util.Map;
 	}
 	
 	public AnnotationTag resolve(AnnotatableElement on){
-		TypeReference reference = TypeResolver.resolveFq(typeName);
+		TypeReference reference = TypeResolver.resolveFqOrPoison(typeName);
 		Map<String, Object> convertedValues = new HashMap<>(values.size());
 		values.forEach((s, o) -> convertedValues.put(s, convertToReal(o)));
 		return new AnnotationTag(reference, Map.of(), convertedValues, on);
@@ -44,12 +44,12 @@ import java.util.Map;
 			if(s.startsWith("str:"))
 				return s.substring(4);
 			if(s.startsWith("type:"))
-				return TypeResolver.resolveFq(s.substring(5));
+				return TypeResolver.resolveFqOrPoison(s.substring(5));
 			if(s.startsWith("enum:")){
 				s = s.substring(5);
 				var split = s.split("#");
 				// array patterns when >.<
-				return new EnumConstant(TypeResolver.resolveFq(split[0]), split[1]);
+				return new EnumConstant(TypeResolver.resolveFqOrPoison(split[0]), split[1]);
 			}
 		}
 		if(prototype instanceof Object[] arr)

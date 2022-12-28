@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 		}
 		
 		public void resolveRefs(){
-			type = TypeResolver.resolveFq(typeName.replace('/', '.'));
+			type = TypeResolver.resolveFqOrPoison(typeName.replace('/', '.'));
 		}
 	}
 	
@@ -101,10 +101,10 @@ import java.util.stream.Collectors;
 		}
 		
 		public void resolveRefs(){
-			returns = TypeResolver.resolveFq(returnsName.replace('/', '.'));
+			returns = TypeResolver.resolveFqOrPoison(returnsName.replace('/', '.'));
 			paramTypes = paramTypeNames.stream()
 					.map(x -> x.replace('/', '.'))
-					.map(TypeResolver::resolveFq)
+					.map(TypeResolver::resolveFqOrPoison)
 					.collect(Collectors.toList());
 		}
 	}
@@ -153,7 +153,7 @@ import java.util.stream.Collectors;
 		public void resolveRefs(){
 			paramTypes = paramTypeNames.stream()
 					.map(x -> x.replace('/', '.'))
-					.map(TypeResolver::resolveFq)
+					.map(TypeResolver::resolveFqOrPoison)
 					.collect(Collectors.toList());
 		}
 	}
