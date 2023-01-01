@@ -30,7 +30,7 @@ static single Magic8Ball {
         val DONT_KNOW("don't know");
 
         String text;
-        Answer(String text) -> this.text = text;
+        new Answer(String text) -> this.text = text;
 
         static Answer random() {
             return (Answer) Magic8Ball.random.nextInt(entries().size()) |> entries().get();
@@ -60,7 +60,7 @@ single Magic8Ball {
 class Answer {
     String text;
     
-    public Answer(String text) -> this.text = text;
+    public new Answer(String text) -> this.text = text;
     String getText() -> text;
     void throwOnBadText() ->
         if(text == null)
@@ -80,7 +80,7 @@ val data = args[0]
 ```cyclic
 enum Answer{
     String text;
-    Answer(String text) -> this.text = text;
+    new Answer(String text) -> this.text = text;
     
     val YES("yes");
     val NO("no");
@@ -88,7 +88,7 @@ enum Answer{
     val DONT_KNOW;
     val ONE_DAY("one day");
     
-    Answer() -> this("idk");
+    new Answer() -> this("idk");
 
     static Answer byName(String name) {
         for(Answer answer : Answer) {
@@ -154,10 +154,10 @@ type Element = Leaf | Node;
 type MatchErrors = NullPointerException | IncompatibleClassChangeError;
 type SerializableFunction<T, R> = Function<T, R> & Serializable;
 ```
-- Defining methods with the type `this!`, with subtypes returning their exact type, avoiding the `Foo<F extends Foo>` dance. (Should `this!` be usable as a type in other contexts?)
+- Defining methods with the type `This`, with subtypes returning their exact type, avoiding the `Foo<F extends Foo>` dance. (Should `this!` be usable as a type in other contexts?)
 ```
 class CoolCollection<T> {
-    this! mapButCool(Function<T, T> f) -> ...;
+    This mapButCool(Function<T, T> f) -> ...;
 }
 class CoolList<T> extends CoolCollection<T> {
     ...
