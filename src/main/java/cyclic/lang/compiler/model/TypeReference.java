@@ -306,7 +306,6 @@ public interface TypeReference extends AnnotatableElement, GenericElement<TypeRe
 		if(fullyQualifiedName().equals(target.fullyQualifiedName())){
 			if(this instanceof ParameterizedTypeRef thisPtr && target instanceof ParameterizedTypeRef targetPtr)
 				return GenericUtils.isAllSubstitutableFor(targetPtr.getTypeArguments(), thisPtr.getTypeArguments());
-				//return thisPtr.getTypeArguments().equals(targetPtr.getTypeArguments());
 			return true;
 		}
 		
