@@ -3,7 +3,6 @@ package cyclic.lang.compiler.model.generic;
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.*;
 import cyclic.lang.compiler.resolve.TypeResolver;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -20,7 +19,7 @@ public class WildcardTypeRef implements TypeReference{
 			throw new IllegalArgumentException();
 	}
 	
-	public static WildcardTypeRef wildcard(){
+	public static WildcardTypeRef any(){
 		return ANY;
 	}
 	
@@ -30,6 +29,18 @@ public class WildcardTypeRef implements TypeReference{
 	
 	public static WildcardTypeRef anySuper(TypeReference subclass){
 		return new WildcardTypeRef(null, subclass);
+	}
+	
+	public TypeReference getUpper(){
+		return upper;
+	}
+	
+	public TypeReference getLower(){
+		return lower;
+	}
+	
+	public boolean isAny(){
+		return upper == null && lower == null;
 	}
 	
 	public String shortName(){
@@ -52,7 +63,7 @@ public class WildcardTypeRef implements TypeReference{
 		return null;
 	}
 	
-	public @Nullable("null -> Object or primitives") TypeReference superClass(){
+	public TypeReference superClass(){
 		return upper != null ? upper : TypeResolver.resolveFq(Constants.OBJECT);
 	}
 	

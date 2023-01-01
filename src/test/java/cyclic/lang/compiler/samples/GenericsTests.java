@@ -98,6 +98,14 @@ public class GenericsTests{
 					List<Integer> is = (List<Integer>)(List)List.of("a", "b", "c");
 				}
 				""");
+		
+		compile("""
+				static void test(){
+					List<String> l = new ArrayList<String>();
+					l.add("a");
+					List<String> l2 = List.copyOf(l);
+				}
+				""");
 	}
 	
 	@Test

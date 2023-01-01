@@ -108,8 +108,7 @@ public abstract class Statement{
 			if(infer){
 				if(initial == null)
 					throw new CompileTimeException("Can't infer the type of a variable without an initial value");
-				if(initial.type() == null)
-					throw new CompileTimeException("Can't infer the type of a variable using an untyped expression");
+				initial.typeNN();
 				if(initial.type() == PlatformDependency.NULL)
 					throw new CompileTimeException("A variable cannot have the null type");
 			}

@@ -29,4 +29,26 @@ public final class GenericUtils{
 	                                                    Map<TypeParameterReference, TypeReference> substitutions){
 		return types.stream().map(t -> substitute(t, substitutions)).collect(Collectors.toList());
 	}
+	
+	public static boolean isSubstitutableFor(TypeReference type, TypeReference with){
+		if(type.equals(with)) // List<String> instanceof List<String>
+			return true;
+		if(!(type instanceof WildcardTypeRef wtr)) // List<String> !instanceof List<CS>
+			return false;
+		if(wtr.isAny()) // List<String> instanceof List<?>
+			return true;
+		if(wtr.getUpper() != null && with.isAssignableTo(wtr.getUpper())) // List<String> instanceof List<? extends CS>
+			return true;
+		return wtr.getLower().isAssignableTo(with); // List<CS> instanceof List<? super String>
+	}
+	
+	public static boolean isAllSubstitutableFor(Map<TypeParameterReference, TypeReference> types,
+	                                            Map<TypeParameterReference, TypeReference> with){
+		if(!types.keySet().equals(with.keySet()))
+			return false;
+		for(TypeParameterReference param : types.keySet())
+			if(!isSubstitutableFor(types.get(param), with.get(param)))
+				return false;
+		return true;
+	}
 }

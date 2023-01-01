@@ -34,7 +34,7 @@ public final class JdkUtils{
 				// TODO: under what circumstances can something have upper & lower bounds, or multiple lower bounds?
 				// TODO: multiple upper bounds (i.e. T extends A & B)
 				if(wildcard.getUpperBounds().length + wildcard.getLowerBounds().length == 0)
-					yield WildcardTypeRef.wildcard();
+					yield WildcardTypeRef.any();
 				else if(wildcard.getLowerBounds().length > 0)
 					yield WildcardTypeRef.anySuper(fromReflectType(wildcard.getLowerBounds()[0]));
 				else

@@ -1,6 +1,7 @@
 package cyclic.lang.compiler.resolve;
 
 import cyclic.lang.compiler.CompilerLauncher;
+import cyclic.lang.compiler.CyclicAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.invoke.MethodHandles;
@@ -25,5 +26,12 @@ class TypeResolverTest{
 				}
 				""", lookup);
 		assertEquals(Class.class, method.invoke(null));
+	}
+	
+	@Test
+	void testInvalidTypeName(){
+		CyclicAssertions.assertThrows(TypeNotFoundException.class, """
+				INVALID i() -> null;
+				""");
 	}
 }

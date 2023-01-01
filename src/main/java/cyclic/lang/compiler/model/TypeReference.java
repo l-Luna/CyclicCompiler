@@ -2,6 +2,7 @@ package cyclic.lang.compiler.model;
 
 import cyclic.lang.compiler.Constants;
 import cyclic.lang.compiler.model.cyclic.CyclicTypeBuilder;
+import cyclic.lang.compiler.model.generic.GenericUtils;
 import cyclic.lang.compiler.model.generic.ParameterizedTypeRef;
 import cyclic.lang.compiler.model.platform.PrimitiveTypeRef;
 import cyclic.lang.compiler.resolve.TypeResolver;
@@ -304,7 +305,8 @@ public interface TypeReference extends AnnotatableElement, GenericElement<TypeRe
 		// either we're the target, we're a subtype of the target, or we implement the target
 		if(fullyQualifiedName().equals(target.fullyQualifiedName())){
 			if(this instanceof ParameterizedTypeRef thisPtr && target instanceof ParameterizedTypeRef targetPtr)
-				return thisPtr.getTypeArguments().equals(targetPtr.getTypeArguments());
+				return GenericUtils.isAllSubstitutableFor(targetPtr.getTypeArguments(), thisPtr.getTypeArguments());
+				//return thisPtr.getTypeArguments().equals(targetPtr.getTypeArguments());
 			return true;
 		}
 		

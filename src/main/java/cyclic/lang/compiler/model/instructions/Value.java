@@ -863,6 +863,10 @@ public abstract class Value{
 		public void simplify(Statement in){
 			ProblemsHolder.checkReference(of, in, text);
 		}
+		
+		public String toString(){
+			return text != null ? Utils.format(text) : of.shortName() + ".class";
+		}
 	}
 	
 	public static class PrimitiveClassValue extends Value{
