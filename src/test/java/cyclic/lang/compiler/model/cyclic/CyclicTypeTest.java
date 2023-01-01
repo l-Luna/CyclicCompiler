@@ -47,15 +47,15 @@ class CyclicTypeTest{
 				() -> compile("enum E{ val A(); }"),
 				() -> assertDoesntCompile("enum E{ val A; static E X = new E(); }"),
 				() -> assertDoesntCompile("enum E{ val A; static E X = new E(\"\", 0); }"),
-				() -> compile("enum E{ val A(3); E(int i){  } }"),
+				() -> compile("enum E{ val A(3); new E(int i){  } }"),
 				
-				() -> assertDoesntCompile("class T{ U(); }"),
+				() -> assertDoesntCompile("class T{ new U(); }"),
 				
 				() -> compile("single S{ }"),
-				() -> compile("single S{ private S(){ } }"),
-				() -> assertDoesntCompile("single S{ S(int i); }"),
-				() -> compile("single S{ S(int i); S(){ this(0); } }"),
-				() -> compile("single S{ S(); void test(){ System.out.println(S); } }"),
+				() -> compile("single S{ private new S(){ } }"),
+				() -> assertDoesntCompile("single S{ new S(int i); }"),
+				() -> compile("single S{ new S(int i); new S(){ this(0); } }"),
+				() -> compile("single S{ new S(); void test(){ System.out.println(S); } }"),
 				
 				() -> compile("static single S{ }"),
 				() -> compile("static single S{ String text = \"\"; void test(){ System.out.println(text); } }"),

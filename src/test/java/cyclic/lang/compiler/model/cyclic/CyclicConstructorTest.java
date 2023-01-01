@@ -12,20 +12,20 @@ class CyclicConstructorTest{
 		assertDoesntCompile("""
 				// base library abstract class with no 0-arg ctors
 				abstract class MR extends java.lang.module.ModuleReference{
-					public MR(){}
+					public new MR(){}
 				}
 				""");
 		
 		compile("""
 				// base library abstract class with no 0-arg ctors
 				abstract class MR extends java.lang.module.ModuleReference{
-					public MR(){ super(null, null); } // invalid args but its never run
+					public new MR(){ super(null, null); } // invalid args but its never run
 				}
 				""");
 		
 		compile("""
 				class T implements Cloneable{
-					public T(){  }
+					public new T(){  }
 				}
 				""");
 	}

@@ -82,7 +82,7 @@ public class WarningsTests{
 		CyclicAssertions.assertWarns(WarningType.DEPRECATION, """
 				class T{
 					@Deprecated
-					public T();
+					public new T();
 				}
 				
 				static Object test() -> new T();
@@ -91,9 +91,9 @@ public class WarningsTests{
 		CyclicAssertions.assertWarns(WarningType.DEPRECATION, """
 				class T{
 					@Deprecated
-					public T();
+					public new T();
 					
-					public T(String dummy){
+					public new T(String dummy){
 						this();
 					}
 				}

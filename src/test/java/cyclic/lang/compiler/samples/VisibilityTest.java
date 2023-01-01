@@ -13,7 +13,7 @@ public class VisibilityTest{
 		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
-						public A();
+						public new A();
 					}
 					class B{
 						Object test() -> new A();
@@ -24,7 +24,7 @@ public class VisibilityTest{
 		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
-						protected A();
+						protected new A();
 					}
 					class B{
 						Object test() -> new A();
@@ -35,7 +35,7 @@ public class VisibilityTest{
 		CompilerLauncher.compileString("""
 				class Holder{
 					class A{
-						A();
+						new A();
 					}
 					class B{
 						Object test() -> new A();
@@ -46,7 +46,7 @@ public class VisibilityTest{
 		Assertions.assertThrows(CompileTimeException.class, () -> CompilerLauncher.compileString("""
 				class Holder{
 					class A{
-						private A();
+						private new A();
 					}
 					class B{
 						Object test() -> new A();

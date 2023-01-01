@@ -218,19 +218,19 @@ public class FlowTests{
 		
 		CyclicAssertions.assertDoesntCompile("""
 				final int i;
-				Holder(){}
+				new Holder(){}
 				""");
 		
 		CyclicAssertions.compile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					i = 0;
 				}
 				""");
 		
 		CyclicAssertions.assertDoesntCompile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					i = 0;
 					i = 1;
 				}
@@ -238,7 +238,7 @@ public class FlowTests{
 		
 		CyclicAssertions.assertDoesntCompile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					i = 0;
 					if(Math.random() > 0.5)
 						i = 1;
@@ -247,20 +247,20 @@ public class FlowTests{
 		
 		CyclicAssertions.compile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					i = 0;
 				}
-				Holder(int dummy){
+				new Holder(int dummy){
 					i = 1;
 				}
 				""");
 		
 		CyclicAssertions.assertDoesntCompile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					i = 0;
 				}
-				Holder(int dummy){
+				new Holder(int dummy){
 					this();
 					i = 1;
 				}
@@ -268,17 +268,17 @@ public class FlowTests{
 		
 		CyclicAssertions.compile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					i = 0;
 				}
-				Holder(int dummy){
+				new Holder(int dummy){
 					this();
 				}
 				""");
 		
 		CyclicAssertions.assertDoesntCompile("""
 				final int i;
-				Holder(){
+				new Holder(){
 					if(Math.random() > 0.5)
 						i = 0;
 				}
@@ -304,14 +304,14 @@ public class FlowTests{
 		
 		CyclicAssertions.compile("""
 				static final int i;
-				static{
+				static new{
 					i = 0;
 				}
 				""");
 		
 		CyclicAssertions.assertDoesntCompile("""
 				static final int i;
-				static{
+				static new{
 					i = 0;
 					i = 1;
 				}
@@ -319,17 +319,17 @@ public class FlowTests{
 		
 		CyclicAssertions.assertDoesntCompile("""
 				static final int i;
-				static{
+				static new{
 					i = 0;
 				}
-				static{
+				static new{
 					i = 1;
 				}
 				""");
 		
 		CyclicAssertions.assertDoesntCompile("""
 				static final int i;
-				static{
+				static new{
 					if(Math.random() > 0.5)
 						i = 0;
 				}
@@ -344,7 +344,7 @@ public class FlowTests{
 
 		CyclicAssertions.compile("""
 				static final String s;
-				static{
+				static new{
 					s = "".intern();
 				}
 				""");

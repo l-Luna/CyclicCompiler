@@ -41,8 +41,8 @@ member
     | SEMICOLON
     ;
 
-constructor: annotation* modifiers idPart LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
-init: STATIC? block;
+constructor: annotation* modifiers NEW idPart LPAREN parameters RPAREN (block | SEMICOLON | DASHARROW statement);
+init: STATIC? NEW block;
 
 function: annotation* modifiers genericTypeDefs? type idPart LPAREN parameters RPAREN (functionBlock | functionArrow);
 
